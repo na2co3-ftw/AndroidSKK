@@ -19,7 +19,7 @@ import android.widget.LinearLayout;
 
 public class SeekBarPreference extends DialogPreference implements SeekBar.OnSeekBarChangeListener {
 	private static final String androidns="http://schemas.android.com/apk/res/android";
-	private static final String seekbarns="http://schemas.android.com/apk/res/jp.deadend.noname.skk";
+	private static final String seekbarns="http://schemas.android.com/apk/res/jp.gr.java_conf.na2co3.skk";
 
 	private SeekBar mSeekBar;
 	private TextView mValueText;

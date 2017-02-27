@@ -1,4 +1,4 @@
-package jp.deadend.noname.skk;
+package jp.gr.java_conf.na2co3.skk;
 
 import android.app.Activity;
 import android.os.AsyncTask;

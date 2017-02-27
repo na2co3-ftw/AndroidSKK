@@ -14,7 +14,7 @@
  * the License.
  */
 
-package jp.deadend.noname.skk;
+package jp.gr.java_conf.na2co3.skk;
 
 import android.content.Context;
 import android.util.AttributeSet;

@@ -1,4 +1,4 @@
-package jp.deadend.noname.skk;
+package jp.gr.java_conf.na2co3.skk;
 
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
-import static jp.deadend.noname.skk.InputMode.*;
+import static jp.gr.java_conf.na2co3.skk.InputMode.*;
 
 public class SKKEngine extends InputMethodService {
 	private CandidateViewContainer mCandidateViewContainer;
@@ -109,8 +109,8 @@ public class SKKEngine extends InputMethodService {
 		}
 	};
 
-	static final String ACTION_COMMIT_USERDIC = "jp.deadend.noname.skk.ACTION_COMMIT_USERDIC";
-	static final String ACTION_READ_PREFS = "jp.deadend.noname.skk.ACTION_READ_PREFS";
+	static final String ACTION_COMMIT_USERDIC = "jp.gr.java_conf.na2co3.skk.ACTION_COMMIT_USERDIC";
+	static final String ACTION_READ_PREFS = "jp.gr.java_conf.na2co3.skk.ACTION_READ_PREFS";
 
 	// ローマ字辞書
 	private Map<String, String> mRomajiMap = new HashMap<String, String>();

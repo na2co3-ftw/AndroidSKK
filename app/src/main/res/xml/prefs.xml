@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:seekbar="http://schemas.android.com/apk/res/jp.deadend.noname.skk"
+	xmlns:seekbar="http://schemas.android.com/apk/res/jp.gr.java_conf.na2co3.skk"
 	android:title="@string/label_pref_activity">
 	<ListPreference
 		android:key="PrefKeyKutoutenType"
@@ -22,12 +22,12 @@
 		android:title="@string/label_dictool_activity"
 		android:summary="ユーザー辞書の編集" >
 		<intent android:action="android.intent.action.MAIN"
-			android:targetPackage="jp.deadend.noname.skk"
-			android:targetClass="jp.deadend.noname.skk.SKKDicTool" />
+			android:targetPackage="jp.gr.java_conf.na2co3.skk"
+			android:targetClass="jp.gr.java_conf.na2co3.skk.SKKDicTool" />
 	</Preference>
 	<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
 		android:title="@string/label_pref_hardkeyboard">
-		<jp.deadend.noname.skk.SetKeyPreference
+		<jp.gr.java_conf.na2co3.skk.SetKeyPreference
 			android:key="PrefKeyKanaKey"
 			android:title="かなキー"
 			android:summary="かなモードに移行するキーを設定 (デフォルトはIS01の「文字」キー)"
@@ -47,7 +47,7 @@
 			android:title="かなキーをトグルに"
 			android:summary="かなモードでかなキーを押すとASCIIモードに戻る"
 			android:defaultValue="true" />
-		<jp.deadend.noname.skk.SetKeyPreference
+		<jp.gr.java_conf.na2co3.skk.SetKeyPreference
 			android:key="PrefKeyCancelKey"
 			android:title="キャンセルキー"
 			android:summary="キャンセルキーを設定"
@@ -168,7 +168,7 @@
 		android:title="辞書ファイル解凍"
 		android:summary="辞書ファイルを用意します" >
 		<intent android:action="android.intent.action.MAIN"
-			android:targetPackage="jp.deadend.noname.skk"
-			android:targetClass="jp.deadend.noname.skk.SKKDicExtractActivity" />
+			android:targetPackage="jp.gr.java_conf.na2co3.skk"
+			android:targetClass="jp.gr.java_conf.na2co3.skk.SKKDicExtractActivity" />
 	</Preference>
 </PreferenceScreen>
