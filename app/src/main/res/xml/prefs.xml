@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:seekbar="http://schemas.android.com/apk/res/jp.deadend.noname.skk"
+	android:title="@string/label_pref_activity">
+	<ListPreference
+		android:key="PrefKeyKutoutenType"
+		android:title="句読点のタイプ"
+		android:summary="かなモードで入力される句読点を選択"
+		android:entries="@array/kutouten_entries"
+		android:entryValues="@array/kutouten_values"
+		android:dialogTitle="句読点のタイプ"
+		android:defaultValue="en" />
+	<com.hlidskialf.android.preference.SeekBarPreference
+		android:key="PrefKeyCandidatesSize"
+		android:title="候補表示のサイズ"
+		android:dialogTitle="候補表示の文字サイズ"
+		android:defaultValue="18"
+		android:text=" sp"
+		seekbar:min="12"
+		android:max="48" />
+	<Preference
+		android:title="@string/label_dictool_activity"
+		android:summary="ユーザー辞書の編集" >
+		<intent android:action="android.intent.action.MAIN"
+			android:targetPackage="jp.deadend.noname.skk"
+			android:targetClass="jp.deadend.noname.skk.SKKDicTool" />
+	</Preference>
+	<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+		android:title="@string/label_pref_hardkeyboard">
+		<jp.deadend.noname.skk.SetKeyPreference
+			android:key="PrefKeyKanaKey"
+			android:title="かなキー"
+			android:summary="かなモードに移行するキーを設定 (デフォルトはIS01の「文字」キー)"
+			android:dialogTitle="Press a key ..."
+			android:negativeButtonText="キャンセル"
+			android:positiveButtonText="OK" />
+		<ListPreference
+			android:key="PrefKeyModKanaKey"
+			android:title="かなキーの修飾キー"
+			android:summary="かなモード移行時に同時押しをするキーを設定"
+			android:entries="@array/modifier_entries"
+			android:entryValues="@array/modifier_values"
+			android:dialogTitle="かなキーの修飾キー"
+			android:defaultValue="none" />
+		<CheckBoxPreference
+			android:key="PrefKeyToggleKanaKey"
+			android:title="かなキーをトグルに"
+			android:summary="かなモードでかなキーを押すとASCIIモードに戻る"
+			android:defaultValue="true" />
+		<jp.deadend.noname.skk.SetKeyPreference
+			android:key="PrefKeyCancelKey"
+			android:title="キャンセルキー"
+			android:summary="キャンセルキーを設定"
+			android:dialogTitle="Press a key ..."
+			android:negativeButtonText="キャンセル"
+			android:positiveButtonText="OK" />
+		<ListPreference
+			android:key="PrefKeyModCancelKey"
+			android:title="キャンセルキーの修飾キー"
+			android:summary="キャンセル時に同時押しをするキーを設定"
+			android:entries="@array/modifier_entries"
+			android:entryValues="@array/modifier_values"
+			android:dialogTitle="キャンセルキーの修飾キー"
+			android:defaultValue="none" />
+		<EditTextPreference
+			android:key="PrefKeyCandidatesOpCount"
+			android:title="候補表示までの回数"
+			android:summary="候補一覧を表示するまでに何回変換するか（ゼロだと表示しない）"
+			android:dialogTitle="候補表示までの回数"
+			android:inputType="number"
+			android:maxLength="1" />
+		<CheckBoxPreference
+			android:key="PrefKeyStickyMeta"
+			android:title="Sticky shift/alt"
+			android:summary="shiftとaltキーを同時押しでなくても効くようにする"
+			android:defaultValue="false" />
+		<CheckBoxPreference
+			android:key="PrefKeySandS"
+			android:title="SandS"
+			android:summary="スペースキーをshiftとして使う"
+			android:defaultValue="false" />
+	</PreferenceScreen>
+	<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+		android:title="@string/label_pref_softkeyboard">
+		<ListPreference
+			android:key="PrefKeyUseSoftKey"
+			android:title="ソフトウェアキーボードの使用"
+			android:entries="@array/usesoftkey_entries"
+			android:entryValues="@array/usesoftkey_values"
+			android:defaultValue="auto" />
+		<com.hlidskialf.android.preference.SeekBarPreference
+			android:key="PrefKeyFlickSensitivity"
+			android:title="フリック感度"
+			android:summary="少ない値のほうが敏感になります"
+			android:dialogMessage="少ない値のほうが敏感になります"
+			android:defaultValue="30"
+			android:text=" px"
+			seekbar:min="5"
+			android:max="150" />
+		<ListPreference
+			android:key="PrefKeyCurveSensitivity"
+			android:title="フリック曲げ角度の感度"
+			android:summary="「低」にすると，鋭く曲げる必要があります"
+			android:entries="@array/curve_sensitivity_entries"
+			android:entryValues="@array/curve_sensitivity_values"
+			android:dialogTitle="フリック曲げ感度"
+			android:defaultValue="high" />
+		<CheckBoxPreference
+			android:key="PrefKeyUsePopup"
+			android:title="ポップアップの使用"
+			android:summary="フリック入力用のガイドを表示します"
+			android:disableDependentsState="false"
+			android:defaultValue="true" />
+		<CheckBoxPreference
+			android:key="PrefKeyFixedPopup"
+			android:title="ポップアップの固定"
+			android:summary="フリック入力ガイドを，常に上部の同じ場所に表示します"
+			android:dependency="PrefKeyUsePopup"
+			android:defaultValue="true" />
+		<CheckBoxPreference
+			android:key="PrefKeyUseSoftCancelKey"
+			android:title="キャンセルキーの使用"
+			android:summary="小文字キーのかわりにキャンセルキーを使います"
+			android:defaultValue="false" />
+		<com.hlidskialf.android.preference.SeekBarPreference
+			android:key="PrefKeyKeyHeightPort"
+			android:title="キーボードの高さ（縦画面）"
+			android:dialogMessage="縦画面での高さを指定してください（画面の高さに対する割合）"
+			android:defaultValue="30"
+			android:text=" %"
+			seekbar:min="20"
+			android:max="50" />
+		<com.hlidskialf.android.preference.SeekBarPreference
+			android:key="PrefKeyKeyHeightLand"
+			android:title="キーボードの高さ（横画面）"
+			android:dialogMessage="横画面での高さを指定してください（画面の高さに対する割合）"
+			android:defaultValue="30"
+			android:text=" %"
+			seekbar:min="20"
+			android:max="50" />
+		<com.hlidskialf.android.preference.SeekBarPreference
+			android:key="PrefKeyKeyWidthPort"
+			android:title="日本語キーボードの幅（縦画面）"
+			android:dialogMessage="縦画面での幅を指定してください（画面の幅に対する割合）"
+			android:defaultValue="100"
+			android:text=" %"
+			seekbar:min="40"
+			android:max="100"
+			seekbar:step="5" />
+		<com.hlidskialf.android.preference.SeekBarPreference
+			android:key="PrefKeyKeyWidthLand"
+			android:title="日本語キーボードの幅（横画面）"
+			android:dialogMessage="横画面での幅を指定してください（画面の幅に対する割合）"
+			android:defaultValue="100"
+			android:text=" %"
+			seekbar:min="40"
+			android:max="100"
+			seekbar:step="5" />
+		<ListPreference
+			android:key="PrefKeyKeyPosition"
+			android:title="日本語キーボードの位置"
+			android:entries="@array/position_entries"
+			android:entryValues="@array/position_values"
+			android:dialogTitle="日本語キーボードの位置"
+			android:defaultValue="center" />
+	</PreferenceScreen>
+	<Preference
+		android:title="辞書ファイル解凍"
+		android:summary="辞書ファイルを用意します" >
+		<intent android:action="android.intent.action.MAIN"
+			android:targetPackage="jp.deadend.noname.skk"
+			android:targetClass="jp.deadend.noname.skk.SKKDicExtractActivity" />
+	</Preference>
+</PreferenceScreen>
