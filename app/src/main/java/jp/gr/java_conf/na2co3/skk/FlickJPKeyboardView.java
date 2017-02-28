@@ -9,6 +9,7 @@ import android.view.MotionEvent;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -747,7 +748,8 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 			mService.keyDownUp(KeyEvent.KEYCODE_SEARCH);
 			return true;
 		} else if (code == KEYCODE_FLICK_JP_SPACE) {
-			mService.sendToMushroom();
+			//mService.sendToMushroom();
+			((InputMethodManager)mService.getSystemService(Context.INPUT_METHOD_SERVICE)).showInputMethodPicker();
 			return true;
 		}
 
