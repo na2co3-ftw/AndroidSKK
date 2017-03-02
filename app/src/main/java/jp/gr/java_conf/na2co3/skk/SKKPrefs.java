@@ -23,6 +23,7 @@ public class SKKPrefs extends PreferenceActivity {
 	private static final String PREFKEY_CURVE_SENSITIVITY = "PrefKeyCurveSensitivity";
 	private static final String PREFKEY_USE_SOFTKEY = "PrefKeyUseSoftKey";
 	private static final String PREFKEY_USE_POPUP = "PrefKeyUsePopup";
+	private static final String PREFKEY_USE_CURVE = "PrefKeyUseCurve";
 	private static final String PREFKEY_FIXED_POPUP = "PrefKeyFixedPopup";
 	private static final String PREFKEY_KEY_HEIGHT = "PrefKeyKeyHeight";
 	private static final String PREFKEY_KEY_HEIGHT_PORT = "PrefKeyKeyHeightPort";
@@ -140,6 +141,10 @@ public class SKKPrefs extends PreferenceActivity {
 
 	static boolean getUsePopup(Context context) {
 		return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREFKEY_USE_POPUP, true);
+	}
+
+	static boolean getUseCurve(Context context) {
+		return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREFKEY_USE_CURVE, true);
 	}
 
 	static boolean getFixedPopup(Context context) {

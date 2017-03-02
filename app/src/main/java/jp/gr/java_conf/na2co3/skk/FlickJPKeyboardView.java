@@ -70,6 +70,7 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 
 	private boolean mUsePopup = true;
 	private boolean mFixedPopup = false;
+	private boolean mUseCurve = false;
 	private PopupWindow mPopup = null;
 	private TextView[] mPopupTextView = new TextView[15];
 	private int mPopupSize = 120;
@@ -312,6 +313,7 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 	void readPrefs(Context context) {
 		int sensitivity = SKKPrefs.getFlickSensitivity(context);
 		mFlickSensitivitySquared = sensitivity*sensitivity;
+		mUseCurve = SKKPrefs.getUseCurve(context);
 		String curve = SKKPrefs.getCurveSensitivity(context);
 		if (curve.equals("low")) {
 			mCurveSensitivityMultiplier = 0.5f;
@@ -375,6 +377,33 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 			mPopupTextView[i].setText("");
 			mPopupTextView[i].setBackgroundResource(R.drawable.popup_label);
 		}
+
+		if (!mUseCurve) {
+			mPopupTextView[0].setText(mCurrentPopupLabels[0]);
+			mPopupTextView[1].setText(mCurrentPopupLabels[1]);
+			mPopupTextView[2].setText(mCurrentPopupLabels[2]);
+			mPopupTextView[3].setText(mCurrentPopupLabels[3]);
+			mPopupTextView[4].setText(mCurrentPopupLabels[4]);
+			switch (mFlickState) {
+				case FLICK_STATE_NONE:
+					mPopupTextView[0].setBackgroundResource(R.drawable.popup_label_highlighted);
+					break;
+				case FLICK_STATE_LEFT:
+					mPopupTextView[1].setBackgroundResource(R.drawable.popup_label_highlighted);
+					break;
+				case FLICK_STATE_UP:
+					mPopupTextView[2].setBackgroundResource(R.drawable.popup_label_highlighted);
+					break;
+				case FLICK_STATE_RIGHT:
+					mPopupTextView[3].setBackgroundResource(R.drawable.popup_label_highlighted);
+					break;
+				case FLICK_STATE_DOWN:
+					mPopupTextView[4].setBackgroundResource(R.drawable.popup_label_highlighted);
+					break;
+			}
+			return;
+		}
+
 		switch (mFlickState) {
 		case FLICK_STATE_NONE:
 			mPopupTextView[0].setText(mCurrentPopupLabels[0]);
@@ -514,16 +543,22 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 
 			float dx = event.getRawX() - mFlickStartX;
 			float dy = event.getRawY() - mFlickStartY;
-			if (dx*dx + dy*dy < mFlickSensitivitySquared) {return true;}
 
-			if (mFlickState == FLICK_STATE_NONE) {
-				// 一回目の終了座標を記憶
-				mFlickStartX = event.getRawX();
-				mFlickStartY = event.getRawY();
+			if (mUseCurve) {
+				if (dx * dx + dy * dy < mFlickSensitivitySquared) {
+					return true;
+				}
+				if (mFlickState == FLICK_STATE_NONE) {
+					// 一回目の終了座標を記憶
+					mFlickStartX = event.getRawX();
+					mFlickStartY = event.getRawY();
 
-				processFirstFlick(dx, dy);
+					processFirstFlick(dx, dy);
+				} else {
+					processCurveFlick(dx, dy);
+				}
 			} else {
-				processCurveFlick(dx, dy);
+				processSimpleFlick(dx, dy);
 			}
 
 			if (mUsePopup) {setupPopupTextView();}
@@ -611,6 +646,24 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 
 		if ((hasLeftCurve && isLeftCurve(newstate)) || (hasRightCurve && isRightCurve(newstate))) {
 			mFlickState = newstate;
+		}
+	}
+
+	private void processSimpleFlick(float x, float y) {
+		if (x * x + y * y < mFlickSensitivitySquared * 9) {
+			mFlickState = FLICK_STATE_NONE;
+			return;
+		}
+		float d_angle = diamondAngle(x, y);
+
+		if (d_angle >= 0.5f && d_angle < 1.5f) {
+			mFlickState = FLICK_STATE_DOWN;
+		} else if (d_angle >=  1.5f && d_angle < 2.5f) {
+			mFlickState = FLICK_STATE_LEFT;
+		} else if (d_angle >= 2.5f && d_angle < 3.5f) {
+			mFlickState = FLICK_STATE_UP;
+		} else {
+			mFlickState = FLICK_STATE_RIGHT;
 		}
 	}
 

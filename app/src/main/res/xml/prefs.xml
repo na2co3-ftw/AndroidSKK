@@ -97,6 +97,11 @@
 			android:text=" px"
 			seekbar:min="5"
 			android:max="150" />
+		<CheckBoxPreference
+			android:key="PrefKeyUseCurve"
+			android:title="フリック曲げの使用"
+			android:disableDependentsState="false"
+			android:defaultValue="false" />
 		<ListPreference
 			android:key="PrefKeyCurveSensitivity"
 			android:title="フリック曲げ角度の感度"
@@ -104,7 +109,8 @@
 			android:entries="@array/curve_sensitivity_entries"
 			android:entryValues="@array/curve_sensitivity_values"
 			android:dialogTitle="フリック曲げ感度"
-			android:defaultValue="high" />
+			android:defaultValue="high"
+			android:dependency="PrefKeyUseCurve" />
 		<CheckBoxPreference
 			android:key="PrefKeyUsePopup"
 			android:title="ポップアップの使用"
