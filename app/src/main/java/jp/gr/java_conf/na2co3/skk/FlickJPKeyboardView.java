@@ -91,7 +91,6 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 		a.append(KEYCODE_FLICK_JP_CHAR_RA,	new String[]{"ら", "り", "る", "れ", "ろ", "",   ""});
 		a.append(KEYCODE_FLICK_JP_CHAR_WA,	new String[]{"わ", "を", "ん", "ー", "「", "",   ""});
 		a.append(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"、", "。", "？", "！", "」", "",   ""});
-		a.append(KEYCODE_FLICK_JP_KOMOJI,	new String[]{"小", "゛", "",   "゜", "",   "",   ""});
 	}
 
 	// かな小文字変換用
@@ -137,6 +136,40 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 		m.put("ぱ", "は");m.put("ぴ", "ひ");m.put("ぷ", "ふ");m.put("ぺ", "へ");m.put("ぽ", "ほ");
 		m.put("ハ", "パ");m.put("ヒ", "ピ");m.put("フ", "プ");m.put("ヘ", "ペ");m.put("ホ", "ポ");
 		m.put("パ", "ハ");m.put("ピ", "ヒ");m.put("プ", "フ");m.put("ペ", "ヘ");m.put("ポ", "ホ");
+	}
+
+	private Map<String, String> mRotateKanaMap = new HashMap<String, String>();
+	{
+		Map<String, String> m = mRotateKanaMap;
+		m.put("あ", "ぁ");m.put("い", "ぃ");m.put("う", "ぅ");m.put("え", "ぇ");m.put("お", "ぉ");
+		m.put("ぁ", "あ");m.put("ぃ", "い");m.put("ぅ", "う");m.put("ぇ", "え");m.put("ぉ", "お");
+		m.put("か", "が");m.put("き", "ぎ");m.put("く", "ぐ");m.put("け", "げ");m.put("こ", "ご");
+		m.put("が", "か");m.put("ぎ", "き");m.put("ぐ", "く");m.put("げ", "け");m.put("ご", "こ");
+		m.put("さ", "ざ");m.put("し", "じ");m.put("す", "ず");m.put("せ", "ぜ");m.put("そ", "ぞ");
+		m.put("ざ", "さ");m.put("じ", "し");m.put("ず", "す");m.put("ぜ", "せ");m.put("ぞ", "そ");
+		m.put("た", "だ");m.put("ち", "ぢ");m.put("つ", "っ");m.put("て", "で");m.put("と", "ど");
+		m.put("だ", "た");m.put("ぢ", "ち");m.put("っ", "づ");m.put("で", "て");m.put("ど", "と");
+		                                   m.put("づ", "つ");
+		m.put("は", "ば");m.put("ひ", "び");m.put("ふ", "ぶ");m.put("へ", "べ");m.put("ほ", "ぼ");
+		m.put("ば", "ぱ");m.put("び", "ぴ");m.put("ぶ", "ぷ");m.put("べ", "ぺ");m.put("ぼ", "ぽ");
+		m.put("ぱ", "は");m.put("ぴ", "ひ");m.put("ぷ", "ふ");m.put("ぺ", "へ");m.put("ぽ", "ほ");
+		m.put("や", "ゃ");m.put("ゆ", "ゅ");m.put("よ", "ょ");
+		m.put("ゃ", "や");m.put("ゅ", "ゆ");m.put("ょ", "よ");
+		m.put("ア", "ァ");m.put("イ", "ィ");m.put("ウ", "ゥ");m.put("エ", "ェ");m.put("オ", "ォ");
+		m.put("ァ", "ア");m.put("ィ", "イ");m.put("ゥ", "ヴ");m.put("ェ", "エ");m.put("ォ", "オ");
+		                                   m.put("ヴ", "ウ");
+		m.put("カ", "ガ");m.put("キ", "ギ");m.put("ク", "グ");m.put("ケ", "ゲ");m.put("コ", "ゴ");
+		m.put("ガ", "カ");m.put("ギ", "キ");m.put("グ", "ク");m.put("ゲ", "ケ");m.put("ゴ", "コ");
+		m.put("サ", "ザ");m.put("シ", "ジ");m.put("ス", "ズ");m.put("セ", "セ");m.put("ソ", "ゾ");
+		m.put("ザ", "サ");m.put("ジ", "シ");m.put("ズ", "ス");m.put("ゼ", "ゼ");m.put("ゾ", "ソ");
+		m.put("タ", "ダ");m.put("チ", "ヂ");m.put("ツ", "ッ");m.put("テ", "デ");m.put("ト", "ド");
+		m.put("ダ", "タ");m.put("ヂ", "チ");m.put("ッ", "ヅ");m.put("デ", "テ");m.put("ド", "ト");
+	                                       m.put("ヅ", "ツ");
+		m.put("ハ", "バ");m.put("ヒ", "ビ");m.put("フ", "ブ");m.put("ヘ", "ベ");m.put("ホ", "ボ");
+		m.put("バ", "パ");m.put("ビ", "ピ");m.put("ブ", "プ");m.put("ベ", "ペ");m.put("ボ", "ポ");
+		m.put("パ", "ハ");m.put("ピ", "ヒ");m.put("プ", "フ");m.put("ペ", "ヘ");m.put("ポ", "ホ");
+		m.put("ヤ", "ャ");m.put("ユ", "ュ");m.put("ヨ", "ョ");
+		m.put("ャ", "ヤ");m.put("ュ", "ユ");m.put("ョ", "ヨ");
 	}
 
 	public FlickJPKeyboardView(Context context, AttributeSet attrs) {
@@ -833,13 +866,7 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 			}
 			break;
 		case KEYCODE_FLICK_JP_KOMOJI:
-			if (mFlickState == FLICK_STATE_NONE) {
-				mService.changeLastChar(mSmallKanaMap);
-			} else if (mFlickState == FLICK_STATE_LEFT) {
-				mService.changeLastChar(mDakutenMap);
-			} else if (mFlickState == FLICK_STATE_RIGHT) {
-				mService.changeLastChar(mHanDakutenMap);
-			}
+			mService.changeLastChar(mRotateKanaMap);
 			break;
 		case KEYCODE_FLICK_JP_MOJI:
 			mService.processKey('q');
