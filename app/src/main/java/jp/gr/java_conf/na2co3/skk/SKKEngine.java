@@ -1135,6 +1135,8 @@ public class SKKEngine extends InputMethodService {
 				if (rlen > 0) {
 					mRegEntry.deleteCharAt(rlen-1);
 					setComposingTextSKK("", 1);
+				} else if (mUseSoftKeyboard) {
+					return handleCancel();
 				}
 			} else if (mInputMode == ENG2JP) {
 				changeMode(HIRAKANA, true);
@@ -1143,6 +1145,10 @@ public class SKKEngine extends InputMethodService {
 			}
 
 			return true;
+		}
+
+		if (mUseSoftKeyboard && mInputMode == CHOOSE) {
+			return handleCancel();
 		}
 
 		if (clen > 0) {

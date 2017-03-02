@@ -37,7 +37,6 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 	private static final int KEYCODE_FLICK_JP_KOMOJI	= -1006;
 	private static final int KEYCODE_FLICK_JP_ENTER		= -1007;
 	private static final int KEYCODE_FLICK_JP_SEARCH	= -1008;
-	private static final int KEYCODE_FLICK_JP_CANCEL	= -1009;
 	private static final int FLICK_STATE_NONE			= 0;
 	private static final int FLICK_STATE_LEFT			= 1;
 	private static final int FLICK_STATE_UP				= 2;
@@ -257,18 +256,6 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 		}
 	}
 
-	void setCancelKey(boolean useCancel) {
-		for (Keyboard.Key key : getKeyboard().getKeys()) {
-			if (key.codes[0] == KEYCODE_FLICK_JP_KOMOJI && useCancel) {
-				key.label = "CXL";
-				key.codes[0] = KEYCODE_FLICK_JP_CANCEL;
-			} else if (key.codes[0] == KEYCODE_FLICK_JP_CANCEL && !useCancel) {
-				key.label = "小 ゛゜";
-				key.codes[0] = KEYCODE_FLICK_JP_KOMOJI;
-			}
-		}
-	}
-
 	void changeKeyHeight(int px) {
 		((SKKKeyboard)getKeyboard()).changeKeyHeight(px);
 	}
@@ -303,7 +290,6 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 		mUsePopup = SKKPrefs.getUsePopup(context);
 		String kutouten = SKKPrefs.getKutoutenType(context);
 		setKutoutenLabel(kutouten);
-		setCancelKey(SKKPrefs.getUseSoftCancelKey(context));
 		if (mUsePopup) {
 			mFixedPopup = SKKPrefs.getFixedPopup(context);
 			if (mPopup == null) {
@@ -854,9 +840,6 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 			} else if (mFlickState == FLICK_STATE_RIGHT) {
 				mService.changeLastChar(mHanDakutenMap);
 			}
-			break;
-		case KEYCODE_FLICK_JP_CANCEL:
-			mService.handleCancel();
 			break;
 		case KEYCODE_FLICK_JP_MOJI:
 			mService.processKey('q');

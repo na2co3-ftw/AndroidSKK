@@ -24,7 +24,6 @@ public class SKKPrefs extends PreferenceActivity {
 	private static final String PREFKEY_USE_SOFTKEY = "PrefKeyUseSoftKey";
 	private static final String PREFKEY_USE_POPUP = "PrefKeyUsePopup";
 	private static final String PREFKEY_FIXED_POPUP = "PrefKeyFixedPopup";
-	private static final String PREFKEY_USE_SOFT_CANCEL_KEY = "PrefKeyUseSoftCancelKey";
 	private static final String PREFKEY_KEY_HEIGHT = "PrefKeyKeyHeight";
 	private static final String PREFKEY_KEY_HEIGHT_PORT = "PrefKeyKeyHeightPort";
 	private static final String PREFKEY_KEY_HEIGHT_LAND = "PrefKeyKeyHeightLand";
@@ -145,10 +144,6 @@ public class SKKPrefs extends PreferenceActivity {
 
 	static boolean getFixedPopup(Context context) {
 		return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREFKEY_FIXED_POPUP, true);
-	}
-
-	static boolean getUseSoftCancelKey(Context context) {
-		return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREFKEY_USE_SOFT_CANCEL_KEY, false);
 	}
 
 	static int getKeyHeight(Context context) {
