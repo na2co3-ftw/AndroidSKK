@@ -66,6 +66,7 @@ public class QwertyKeyboardView extends KeyboardView implements KeyboardView.OnK
 			return true;
 		} else if (code == KEYCODE_QWERTY_SPACE) {
 			((InputMethodManager)mService.getSystemService(Context.INPUT_METHOD_SERVICE)).showInputMethodPicker();
+			return true;
 		}
 
 		return super.onLongPress(key);

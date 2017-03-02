@@ -66,6 +66,9 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 	private float mFlickStartY = -1;
 	private String[] mCurrentPopupLabels = new String[7];
 
+	private boolean isEnterLongPressed = false;
+	private boolean isSpaceLongPressed = false;
+
 	private boolean mUsePopup = true;
 	private boolean mFixedPopup = false;
 	private PopupWindow mPopup = null;
@@ -746,10 +749,12 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 		int code = key.codes[0];
 		if (code == KEYCODE_FLICK_JP_ENTER) {
 			mService.keyDownUp(KeyEvent.KEYCODE_SEARCH);
+			isEnterLongPressed = true;
 			return true;
 		} else if (code == KEYCODE_FLICK_JP_SPACE) {
 			//mService.sendToMushroom();
 			((InputMethodManager)mService.getSystemService(Context.INPUT_METHOD_SERVICE)).showInputMethodPicker();
+			isSpaceLongPressed = true;
 			return true;
 		}
 
@@ -826,11 +831,19 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
     private void release() {
 		switch (mLastPressedKey) {
 		case KEYCODE_FLICK_JP_SPACE:
-			mService.processKey(' ');
+			if (isSpaceLongPressed) {
+				isSpaceLongPressed = false;
+			} else {
+				mService.processKey(' ');
+			}
 			break;
 		case KEYCODE_FLICK_JP_ENTER:
-			if (!mService.handleEnter()) {
-				mService.pressEnter();
+			if (isEnterLongPressed) {
+				isEnterLongPressed = false;
+			} else {
+				if (!mService.handleEnter()) {
+					mService.pressEnter();
+				}
 			}
 			break;
 		case KEYCODE_FLICK_JP_KOMOJI:
