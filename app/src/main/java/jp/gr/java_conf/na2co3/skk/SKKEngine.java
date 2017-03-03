@@ -1352,6 +1352,24 @@ public class SKKEngine extends InputMethodService {
 		}
 
 		if (mComposing.length() == 0 && mKanji.length() == 0) {
+			if (isRegistering && mRegEntry.length() == 0) {
+				if (mRegOkurigana == null) return;
+				String new_okuri = map.get(mRegOkurigana);
+
+				if (new_okuri != null) {
+					String new_okuri_consonant = mConsonantMap.get(new_okuri);
+					isRegistering = false;
+					mKanji.setLength(0);
+					mKanji.append(mRegKey.substring(0, mRegKey.length() - 1));
+					mKanji.append(new_okuri_consonant);
+					mRegKey = null;
+					mRegEntry.setLength(0);
+					mOkurigana = new_okuri;
+					conversionStart(mKanji); //変換やりなおし
+				}
+				return;
+			}
+
 			String lastchar = null;
 			String new_lastchar = null;
 
