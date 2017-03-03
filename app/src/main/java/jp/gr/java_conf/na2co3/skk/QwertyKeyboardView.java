@@ -116,10 +116,20 @@ public class QwertyKeyboardView extends KeyboardView implements KeyboardView.OnK
 		} else if (primaryCode == KEYCODE_QWERTY_ENTER) {
 			mService.pressEnter();
 		} else if (primaryCode == KEYCODE_QWERTY_TOJP) {
+			setShifted(false);
+			mLatinKeyboard.setShifted(false);
+			mSymbolsKeyboard.setShifted(false);
+			mSymbolsShiftedKeyboard.setShifted(false);
+			setKeyboard(mLatinKeyboard);
 			mService.toggleSKK();
 		} else if (primaryCode == KEYCODE_QWERTY_TOSYM) {
+			setShifted(false);
+			mLatinKeyboard.setShifted(false);
 			setKeyboard(mSymbolsKeyboard);
 		} else if (primaryCode == KEYCODE_QWERTY_TOLATIN) {
+			setShifted(false);
+			mSymbolsKeyboard.setShifted(false);
+			mSymbolsShiftedKeyboard.setShifted(false);
 			setKeyboard(mLatinKeyboard);
 		} else {
 			handleCharacter(primaryCode, keyCodes);
