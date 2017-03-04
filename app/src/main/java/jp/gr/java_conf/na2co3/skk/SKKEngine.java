@@ -1238,6 +1238,9 @@ public class SKKEngine extends InputMethodService {
 				mKanji.setLength(0);
 				mKanji.append(mRegKey);
 				mRegKey = null;
+				if (mRegOkurigana != null) {
+					mKanji.deleteCharAt(mKanji.length() - 1);
+				}
 				mRegEntry.setLength(0);
 				mComposing.setLength(0);
 				changeMode(KANJI, false);
