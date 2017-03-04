@@ -121,8 +121,8 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 		m.put("ば", "は");m.put("び", "ひ");m.put("ぶ", "ふ");m.put("べ", "へ");m.put("ぼ", "ほ");
 		m.put("カ", "ガ");m.put("キ", "ギ");m.put("ク", "グ");m.put("ケ", "ゲ");m.put("コ", "ゴ");
 		m.put("ガ", "カ");m.put("ギ", "キ");m.put("グ", "ク");m.put("ゲ", "ケ");m.put("ゴ", "コ");
-		m.put("サ", "ザ");m.put("シ", "ジ");m.put("ス", "ズ");m.put("セ", "セ");m.put("ソ", "ゾ");
-		m.put("ザ", "サ");m.put("ジ", "シ");m.put("ズ", "ス");m.put("ゼ", "ゼ");m.put("ゾ", "ソ");
+		m.put("サ", "ザ");m.put("シ", "ジ");m.put("ス", "ズ");m.put("セ", "ゼ");m.put("ソ", "ゾ");
+		m.put("ザ", "サ");m.put("ジ", "シ");m.put("ズ", "ス");m.put("ゼ", "セ");m.put("ゾ", "ソ");
 		m.put("タ", "ダ");m.put("チ", "ヂ");m.put("ツ", "ヅ");m.put("テ", "デ");m.put("ト", "ド");
 		m.put("ダ", "タ");m.put("ヂ", "チ");m.put("ヅ", "ツ");m.put("デ", "テ");m.put("ド", "ト");
 		m.put("ハ", "バ");m.put("ヒ", "ビ");m.put("フ", "ブ");m.put("ヘ", "ベ");m.put("ホ", "ボ");
@@ -161,8 +161,8 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 		                                   m.put("ヴ", "ウ");
 		m.put("カ", "ガ");m.put("キ", "ギ");m.put("ク", "グ");m.put("ケ", "ゲ");m.put("コ", "ゴ");
 		m.put("ガ", "カ");m.put("ギ", "キ");m.put("グ", "ク");m.put("ゲ", "ケ");m.put("ゴ", "コ");
-		m.put("サ", "ザ");m.put("シ", "ジ");m.put("ス", "ズ");m.put("セ", "セ");m.put("ソ", "ゾ");
-		m.put("ザ", "サ");m.put("ジ", "シ");m.put("ズ", "ス");m.put("ゼ", "ゼ");m.put("ゾ", "ソ");
+		m.put("サ", "ザ");m.put("シ", "ジ");m.put("ス", "ズ");m.put("セ", "ゼ");m.put("ソ", "ゾ");
+		m.put("ザ", "サ");m.put("ジ", "シ");m.put("ズ", "ス");m.put("ゼ", "セ");m.put("ゾ", "ソ");
 		m.put("タ", "ダ");m.put("チ", "ヂ");m.put("ツ", "ッ");m.put("テ", "デ");m.put("ト", "ド");
 		m.put("ダ", "タ");m.put("ヂ", "チ");m.put("ッ", "ヅ");m.put("デ", "テ");m.put("ド", "ト");
 	                                       m.put("ヅ", "ツ");
