@@ -295,19 +295,16 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 	}
 
 	// widthはパーセントでheightはpxなので注意
-	void prepareNewKeyboard(Context context, int width, int height, String position) {
-		String resName = String.format("keys_flick_jp_%d_%s", width, position);
-
-		int ID = context.getResources().getIdentifier(resName, "xml", context.getPackageName());
-		SKKKeyboard keyboard;
-		if (ID != 0) {
-			keyboard = new SKKKeyboard(context, ID);
-		} else {
-			keyboard = new SKKKeyboard(context, R.xml.keys_flick_jp);
-		}
-
+	void prepareNewKeyboard(Context context, int width, int height, int leftGap) {
+		SKKKeyboard keyboard = new SKKKeyboard(context, R.xml.keys_flick_jp);
 		setKeyboard(keyboard);
 		changeKeyHeight(height);
+		for (Keyboard.Key key : keyboard.getKeys()) {
+			int new_left = key.x * width / 100;
+			int new_right = (key.x + key.width) * width / 100;
+			key.x = new_left + leftGap;
+			key.width = new_right - new_left;
+		}
 	}
 
 	void readPrefs(Context context) {

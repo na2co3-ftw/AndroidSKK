@@ -31,6 +31,7 @@ public class SKKEngine extends InputMethodService {
 	private FlickJPKeyboardView mFlickJPInputView = null;
 	private QwertyKeyboardView mQwertyInputView = null;
 	private int mScreenHeight;
+	private int mScreenWidth;
 
 	public int mChoosedIndex;
 	// 候補はsuggestionsと違ってハードキーモードでも使う（CandidateViewが出てないときがある）ので
@@ -265,7 +266,13 @@ public class SKKEngine extends InputMethodService {
 			keyWidth = SKKPrefs.getKeyWidthLand(context);
 		}
 
-		mFlickJPInputView.prepareNewKeyboard(getApplicationContext(), keyWidth, mScreenHeight*keyHeight/(4*100), SKKPrefs.getKeyPosition(context));
+		int leftGap = 0;
+		if (SKKPrefs.getKeyPosition(context).equals("center")) {
+			leftGap = mScreenWidth * (100 - keyWidth) / 200;
+		} else if (SKKPrefs.getKeyPosition(context).equals("right")) {
+			leftGap = mScreenWidth * (100 - keyWidth) / 100;
+		}
+		mFlickJPInputView.prepareNewKeyboard(getApplicationContext(), keyWidth, mScreenHeight*keyHeight/(4*100), leftGap);
 		mFlickJPInputView.readPrefs(context);
 		mQwertyInputView.setFlickSensitivity(SKKPrefs.getFlickSensitivity(context));
 		mQwertyInputView.changeKeyHeight(mScreenHeight*keyHeight/(4*100));
@@ -302,6 +309,7 @@ public class SKKEngine extends InputMethodService {
 	@Override public void onInitializeInterface() {
 		mUseSoftKeyboard = checkUseSoftKeyboard();
 		mScreenHeight = ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getHeight();
+		mScreenWidth = ((WindowManager)getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getWidth();
     }
 
 	@Override
