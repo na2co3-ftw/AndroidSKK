@@ -757,7 +757,11 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 				mService.processKey('a');
 				break;
 			case FLICK_STATE_LEFT:
-				mService.processKey('w');
+				if (isShifted) {
+					mService.processKey('W');
+				} else {
+					mService.processKey('w');
+				}
 				mService.processKey('o');
 				break;
 			case FLICK_STATE_UP:
