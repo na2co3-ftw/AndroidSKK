@@ -88,10 +88,10 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 		a.append(KEYCODE_FLICK_JP_CHAR_NA,	new String[]{"な", "に", "ぬ", "ね", "の", "",   ""});
 		a.append(KEYCODE_FLICK_JP_CHAR_HA,	new String[]{"は", "ひ", "ふ", "へ", "ほ", "゜", "゛"});
 		a.append(KEYCODE_FLICK_JP_CHAR_MA,	new String[]{"ま", "み", "む", "め", "も", "",   ""});
-		a.append(KEYCODE_FLICK_JP_CHAR_YA,	new String[]{"や", "",   "ゆ", "",   "よ", "小", ""});
+		a.append(KEYCODE_FLICK_JP_CHAR_YA,	new String[]{"や", "「",   "ゆ", "」",   "よ", "小", ""});
 		a.append(KEYCODE_FLICK_JP_CHAR_RA,	new String[]{"ら", "り", "る", "れ", "ろ", "",   ""});
-		a.append(KEYCODE_FLICK_JP_CHAR_WA,	new String[]{"わ", "を", "ん", "ー", "「", "",   ""});
-		a.append(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"、", "。", "？", "！", "」", "",   ""});
+		a.append(KEYCODE_FLICK_JP_CHAR_WA,	new String[]{"わ", "を", "ん", "ー", "", "",   ""});
+		a.append(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"、", "。", "？", "！", "", "",   ""});
 	}
 
 	// かな小文字変換用
@@ -344,11 +344,11 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 			}
 
 			if (kutouten.equals("en")) {
-				mFlickGuideLabelList.put(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"，", "．", "？", "！", "」", "",   ""});
+				mFlickGuideLabelList.put(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"，", "．", "？", "！", "", "",   ""});
 			} else if (kutouten.equals("jp_en")) {
-				mFlickGuideLabelList.put(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"，", "。", "？", "！", "」", "",   ""});
+				mFlickGuideLabelList.put(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"，", "。", "？", "！", "", "",   ""});
 			} else {
-				mFlickGuideLabelList.put(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"、", "。", "？", "！", "」", "",   ""});
+				mFlickGuideLabelList.put(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"、", "。", "？", "！", "", "",   ""});
 			}
 		}
 	}
