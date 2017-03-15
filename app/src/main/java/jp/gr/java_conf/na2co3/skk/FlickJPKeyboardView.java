@@ -127,6 +127,7 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 		m.put("ダ", "タ");m.put("ヂ", "チ");m.put("ヅ", "ツ");m.put("デ", "テ");m.put("ド", "ト");
 		m.put("ハ", "バ");m.put("ヒ", "ビ");m.put("フ", "ブ");m.put("ヘ", "ベ");m.put("ホ", "ボ");
 		m.put("バ", "ハ");m.put("ビ", "ヒ");m.put("ブ", "フ");m.put("ベ", "ヘ");m.put("ボ", "ホ");
+		m.put("う", "ゔ");m.put("ゔ", "う");
 		m.put("ウ", "ヴ");m.put("ヴ", "ウ");
 	}
 	// 濁音変換用
@@ -143,7 +144,8 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 	{
 		Map<String, String> m = mRotateKanaMap;
 		m.put("あ", "ぁ");m.put("い", "ぃ");m.put("う", "ぅ");m.put("え", "ぇ");m.put("お", "ぉ");
-		m.put("ぁ", "あ");m.put("ぃ", "い");m.put("ぅ", "う");m.put("ぇ", "え");m.put("ぉ", "お");
+		m.put("ぁ", "あ");m.put("ぃ", "い");m.put("ぅ", "ゔ");m.put("ぇ", "え");m.put("ぉ", "お");
+		                                   m.put("ゔ", "ぅ");
 		m.put("か", "が");m.put("き", "ぎ");m.put("く", "ぐ");m.put("け", "げ");m.put("こ", "ご");
 		m.put("が", "か");m.put("ぎ", "き");m.put("ぐ", "く");m.put("げ", "け");m.put("ご", "こ");
 		m.put("さ", "ざ");m.put("し", "じ");m.put("す", "ず");m.put("せ", "ぜ");m.put("そ", "ぞ");

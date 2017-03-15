@@ -52,6 +52,10 @@ class SKKDictionary {
 		List<String> list = new ArrayList<String>();
 		String[] va_array;
 
+		if (key.contains("ゔ")) {
+			key = key.replace("ゔ", "う゛");
+		}
+
 		SKKUtils.dlog("findValue(): key = " + key);
 
 		String value = null;
@@ -85,6 +89,10 @@ class SKKDictionary {
 		Tuple         tuple = new Tuple();
 		TupleBrowser  browser;
 		String str = null;
+
+		if (key.contains("ゔ")) {
+			key = key.replace("ゔ", "う゛");
+		}
 
 		try {
 			browser = mBTree.browse(key);

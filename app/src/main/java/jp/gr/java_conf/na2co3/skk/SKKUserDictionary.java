@@ -57,6 +57,10 @@ class SKKUserDictionary extends SKKDictionary {
 		List<List<String>> okr = new ArrayList<List<String>>();
 		String[] va_array;
 
+		if (key.contains("ゔ")) {
+			key = key.replace("ゔ", "う゛");
+		}
+
 		SKKUtils.dlog("userdict getEntries(): key = " + key);
 
 		String value = null;
@@ -105,6 +109,10 @@ class SKKUserDictionary extends SKKDictionary {
 	}
 
 	void addEntry(String key, String val, String okuri) {
+		if (key.contains("ゔ")) {
+			key = key.replace("ゔ", "う゛");
+		}
+
 		mOldKey = key;
 		StringBuilder new_val = new StringBuilder();
 		Entry entry = (Entry)getEntry(key);

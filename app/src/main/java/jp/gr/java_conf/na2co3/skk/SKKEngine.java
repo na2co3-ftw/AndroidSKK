@@ -137,7 +137,7 @@ public class SKKEngine extends InputMethodService {
 		m.put("da", "だ");m.put("di", "ぢ");m.put("du", "づ");m.put("de", "で");m.put("do", "ど");
 		m.put("ba", "ば");m.put("bi", "び");m.put("bu", "ぶ");m.put("be", "べ");m.put("bo", "ぼ");
 		m.put("pa", "ぱ");m.put("pi", "ぴ");m.put("pu", "ぷ");m.put("pe", "ぺ");m.put("po", "ぽ");
-		m.put("va", "う゛ぁ");m.put("vi", "う゛ぃ");m.put("vu", "う゛");m.put("ve", "う゛ぇ");m.put("vo", "う゛ぉ");
+		m.put("va", "ゔぁ");m.put("vi", "ゔぃ");m.put("vu", "ゔ");m.put("ve", "ゔぇ");m.put("vo", "ゔぉ");
 
 		m.put("xa", "ぁ");m.put("xi", "ぃ");m.put("xu", "ぅ");m.put("xe", "ぇ");m.put("xo", "ぉ");
 		m.put("xtu", "っ");m.put("xke", "ヶ");
@@ -170,6 +170,7 @@ public class SKKEngine extends InputMethodService {
 		m.put("-", "ー");m.put("!", "！");m.put("?", "？");m.put("~", "〜");m.put("[", "「");m.put("]", "」");
 	}
 
+	// フリック入力用
 	private Map<String, String> mConsonantMap = new HashMap<String, String>();
 	{
 		Map<String, String> m = mConsonantMap;
@@ -189,7 +190,7 @@ public class SKKEngine extends InputMethodService {
 		m.put("や", "y");                 m.put("ゆ", "y");                 m.put("よ", "y");
 		m.put("ら", "r");m.put("り", "r");m.put("る", "r");m.put("れ", "r");m.put("ろ", "r");
 		m.put("わ", "w");m.put("ゐ", "w");                 m.put("ゑ", "w");m.put("を", "w");
-		m.put("ん", "n");m.put("っ", "t");
+		m.put("ん", "n");m.put("っ", "t");m.put("ゔ", "v");
 	}
 
 	@Override
