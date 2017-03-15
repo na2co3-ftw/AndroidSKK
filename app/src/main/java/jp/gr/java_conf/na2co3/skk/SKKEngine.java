@@ -170,19 +170,26 @@ public class SKKEngine extends InputMethodService {
 		m.put("-", "ー");m.put("!", "！");m.put("?", "？");m.put("~", "〜");m.put("[", "「");m.put("]", "」");
 	}
 
-	// 濁音半濁音変換用
 	private Map<String, String> mConsonantMap = new HashMap<String, String>();
 	{
 		Map<String, String> m = mConsonantMap;
-		m.put("が", "g");m.put("ぎ", "g");m.put("ぐ", "g");m.put("げ", "g");m.put("ご", "g");
+		m.put("あ", "a");m.put("い", "i");m.put("う", "u");m.put("え", "e");m.put("お", "o");
+		m.put("ぁ", "x");m.put("ぃ", "x");m.put("ぅ", "x");m.put("ぇ", "x");m.put("ぉ", "x");
 		m.put("か", "k");m.put("き", "k");m.put("く", "k");m.put("け", "k");m.put("こ", "k");
-		m.put("ざ", "z");m.put("じ", "z");m.put("ず", "z");m.put("ぜ", "z");m.put("ぞ", "z");
+		m.put("が", "g");m.put("ぎ", "g");m.put("ぐ", "g");m.put("げ", "g");m.put("ご", "g");
 		m.put("さ", "s");m.put("し", "s");m.put("す", "s");m.put("せ", "s");m.put("そ", "s");
-		m.put("だ", "d");m.put("ぢ", "d");m.put("づ", "d");m.put("で", "d");m.put("ど", "d");
+		m.put("ざ", "z");m.put("じ", "z");m.put("ず", "z");m.put("ぜ", "z");m.put("ぞ", "z");
 		m.put("た", "t");m.put("ち", "t");m.put("つ", "t");m.put("て", "t");m.put("と", "t");
+		m.put("だ", "d");m.put("ぢ", "d");m.put("づ", "d");m.put("で", "d");m.put("ど", "d");
+		m.put("な", "n");m.put("に", "n");m.put("ぬ", "n");m.put("ね", "n");m.put("の", "n");
+		m.put("は", "h");m.put("ひ", "h");m.put("ふ", "h");m.put("へ", "h");m.put("ほ", "h");
 		m.put("ば", "b");m.put("び", "b");m.put("ぶ", "b");m.put("べ", "b");m.put("ぼ", "b");
 		m.put("ぱ", "p");m.put("ぴ", "p");m.put("ぷ", "p");m.put("ぺ", "p");m.put("ぽ", "p");
-		m.put("は", "h");m.put("ひ", "h");m.put("ふ", "h");m.put("へ", "h");m.put("ほ", "h");
+		m.put("ま", "m");m.put("み", "m");m.put("む", "m");m.put("め", "m");m.put("も", "m");
+		m.put("や", "y");                 m.put("ゆ", "y");                 m.put("よ", "y");
+		m.put("ら", "r");m.put("り", "r");m.put("る", "r");m.put("れ", "r");m.put("ろ", "r");
+		m.put("わ", "w");m.put("ゐ", "w");                 m.put("ゑ", "w");m.put("を", "w");
+		m.put("ん", "n");m.put("っ", "t");
 	}
 
 	@Override
@@ -887,6 +894,90 @@ public class SKKEngine extends InputMethodService {
 		StringBuilder ret = new StringBuilder(orig);
 		ret.deleteCharAt(ret.length()-1);
 		return ret;
+	}
+
+	void processText(String text, boolean isShifted) {
+		switch (mInputMode) {
+			case ZENKAKU:
+				commitTextSKK(text, 1);
+				break;
+			case ENG2JP:
+				mComposing.append(text);
+				setComposingTextSKK(mComposing, 1);
+				if (mUseSoftKeyboard) {
+					updateSuggestions();
+				}
+				break;
+			case CHOOSE:
+				pickCandidate(mChoosedIndex);
+				processText(text, isShifted);
+				break;
+			case OKURIGANA:
+				if (mComposing.length() > 0) {
+					String hchr = mComposing.toString();
+					if (mComposing.length() == 1 && mComposing.charAt(0) == 'n') {
+						hchr = "ん";
+					}
+					mComposing.setLength(0);
+					mOkurigana = hchr + text;
+				} else {
+					mOkurigana = text;
+				}
+				conversionStart(mKanji);
+				break;
+			case HIRAKANA:
+			case KATAKANA:
+				if (mComposing.length() > 0) {
+					String hchr = mComposing.toString();
+					if (mComposing.length() == 1 && mComposing.charAt(0) == 'n') {
+						hchr = "ん";
+						if (mInputMode == KATAKANA) {hchr = SKKUtils.hirakana2katakana(hchr);}
+					}
+					commitTextSKK(hchr, 1);
+					mComposing.setLength(0);
+				}
+				if (isShifted) {
+					// 漢字変換候補入力の開始。KANJIへの移行
+					changeMode(KANJI, false);
+					processText(text, false);
+				} else {
+					if (mInputMode == KATAKANA) {
+						text = SKKUtils.hirakana2katakana(text);
+					}
+					commitTextSKK(text, 1);
+				}
+				break;
+			case KANJI:
+				if (mComposing.length() > 0) {
+					if (mComposing.length() == 1 && mComposing.charAt(0) == 'n') {
+						mKanji.append("ん");
+					} else {
+						mKanji.append(mComposing);
+					}
+					setComposingTextSKK(mKanji, 1);
+					mComposing.setLength(0);
+				}
+				if (isShifted && mKanji.length() > 0) {
+					// 送り仮名
+					String okuri_consonant = mConsonantMap.get(text.substring(0, 1));
+					if (okuri_consonant != null) {
+						mKanji.append(okuri_consonant);
+					}
+					mOkurigana = text;
+					conversionStart(mKanji);
+				} else {
+					// 未確定
+					mKanji.append(text);
+					setComposingTextSKK(mKanji, 1);
+					if (mUseSoftKeyboard) {
+						updateSuggestions();
+					}
+				}
+				break;
+			default:
+				SKKUtils.dlog("Unknown mode!");
+				break;
+		}
 	}
 
 	// commitTextのラッパー 登録作業中なら登録内容に追加し，表示を更新

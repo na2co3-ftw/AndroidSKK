@@ -81,10 +81,10 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 	private SparseArray<String[]> mFlickGuideLabelList = new SparseArray<String[]>();
 	{
 		SparseArray<String[]> a = mFlickGuideLabelList;
-		a.append(KEYCODE_FLICK_JP_CHAR_A,	new String[]{"あ", "い", "う", "え", "お", "小", ""});
+		a.append(KEYCODE_FLICK_JP_CHAR_A,	new String[]{"あ", "い", "う", "え", "お", "小", "゛"});
 		a.append(KEYCODE_FLICK_JP_CHAR_KA,	new String[]{"か", "き", "く", "け", "こ", "",   "゛"});
 		a.append(KEYCODE_FLICK_JP_CHAR_SA,	new String[]{"さ", "し", "す", "せ", "そ", "",   "゛"});
-		a.append(KEYCODE_FLICK_JP_CHAR_TA,	new String[]{"た", "ち", "つ", "て", "と", "",   "゛"});
+		a.append(KEYCODE_FLICK_JP_CHAR_TA,	new String[]{"た", "ち", "つ", "て", "と", "小",   "゛"});
 		a.append(KEYCODE_FLICK_JP_CHAR_NA,	new String[]{"な", "に", "ぬ", "ね", "の", "",   ""});
 		a.append(KEYCODE_FLICK_JP_CHAR_HA,	new String[]{"は", "ひ", "ふ", "へ", "ほ", "゜", "゛"});
 		a.append(KEYCODE_FLICK_JP_CHAR_MA,	new String[]{"ま", "み", "む", "め", "も", "",   ""});
@@ -332,14 +332,14 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 				mPopupTextView[3]  = (TextView)mPopup.getContentView().findViewById(R.id.labelE);
 				mPopupTextView[4]  = (TextView)mPopup.getContentView().findViewById(R.id.labelO);
 				mPopupTextView[5]  = (TextView)mPopup.getContentView().findViewById(R.id.labelLeftA);
-				mPopupTextView[6]  = (TextView)mPopup.getContentView().findViewById(R.id.labelRightA);
-				mPopupTextView[7]  = (TextView)mPopup.getContentView().findViewById(R.id.labelLeftI);
-				mPopupTextView[8]  = (TextView)mPopup.getContentView().findViewById(R.id.labelRightI);
-				mPopupTextView[9]  = (TextView)mPopup.getContentView().findViewById(R.id.labelLeftU);
-				mPopupTextView[10] = (TextView)mPopup.getContentView().findViewById(R.id.labelRightU);
-				mPopupTextView[11] = (TextView)mPopup.getContentView().findViewById(R.id.labelLeftE);
-				mPopupTextView[12] = (TextView)mPopup.getContentView().findViewById(R.id.labelRightE);
-				mPopupTextView[13] = (TextView)mPopup.getContentView().findViewById(R.id.labelLeftO);
+				mPopupTextView[6]  = (TextView)mPopup.getContentView().findViewById(R.id.labelLeftI);
+				mPopupTextView[7]  = (TextView)mPopup.getContentView().findViewById(R.id.labelLeftU);
+				mPopupTextView[8]  = (TextView)mPopup.getContentView().findViewById(R.id.labelLeftE);
+				mPopupTextView[9]  = (TextView)mPopup.getContentView().findViewById(R.id.labelLeftO);
+				mPopupTextView[10] = (TextView)mPopup.getContentView().findViewById(R.id.labelRightA);
+				mPopupTextView[11] = (TextView)mPopup.getContentView().findViewById(R.id.labelRightI);
+				mPopupTextView[12] = (TextView)mPopup.getContentView().findViewById(R.id.labelRightU);
+				mPopupTextView[13] = (TextView)mPopup.getContentView().findViewById(R.id.labelRightE);
 				mPopupTextView[14] = (TextView)mPopup.getContentView().findViewById(R.id.labelRightO);
 			}
 
@@ -367,6 +367,40 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 		return popup;
 	}
 
+	private boolean hasLeftCurve(int flick) {
+		switch (flick) {
+			case FLICK_STATE_NONE:
+				return (getModifiedHiragana(mCurrentPopupLabels[0], mCurrentPopupLabels[5]) != null);
+			case FLICK_STATE_LEFT:
+				return (getModifiedHiragana(mCurrentPopupLabels[1], mCurrentPopupLabels[5]) != null);
+			case FLICK_STATE_UP:
+				return (getModifiedHiragana(mCurrentPopupLabels[2], mCurrentPopupLabels[5]) != null);
+			case FLICK_STATE_RIGHT:
+				return (getModifiedHiragana(mCurrentPopupLabels[3], mCurrentPopupLabels[5]) != null);
+			case FLICK_STATE_DOWN:
+				return (getModifiedHiragana(mCurrentPopupLabels[4], mCurrentPopupLabels[5]) != null);
+			default:
+				return false;
+		}
+	}
+
+	private boolean hasRightCurve(int flick) {
+		switch (flick) {
+			case FLICK_STATE_NONE:
+				return (getModifiedHiragana(mCurrentPopupLabels[0], mCurrentPopupLabels[6]) != null);
+			case FLICK_STATE_LEFT:
+				return (getModifiedHiragana(mCurrentPopupLabels[1], mCurrentPopupLabels[6]) != null);
+			case FLICK_STATE_UP:
+				return (getModifiedHiragana(mCurrentPopupLabels[2], mCurrentPopupLabels[6]) != null);
+			case FLICK_STATE_RIGHT:
+				return (getModifiedHiragana(mCurrentPopupLabels[3], mCurrentPopupLabels[6]) != null);
+			case FLICK_STATE_DOWN:
+				return (getModifiedHiragana(mCurrentPopupLabels[4], mCurrentPopupLabels[6]) != null);
+			default:
+				return false;
+		}
+	}
+
 	private void setupPopupTextView() {
 		if (!mUsePopup) {return;}
 
@@ -375,134 +409,61 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 			mPopupTextView[i].setBackgroundResource(R.drawable.popup_label);
 		}
 
-		if (!mUseCurve) {
+		int baseKey = 0;
+		switch (mFlickState) {
+			case FLICK_STATE_LEFT:
+			case FLICK_STATE_LEFT_LEFT:
+			case FLICK_STATE_LEFT_RIGHT:
+				baseKey = 1;
+				break;
+			case FLICK_STATE_UP:
+			case FLICK_STATE_UP_LEFT:
+			case FLICK_STATE_UP_RIGHT:
+				baseKey = 2;
+				break;
+			case FLICK_STATE_RIGHT:
+			case FLICK_STATE_RIGHT_LEFT:
+			case FLICK_STATE_RIGHT_RIGHT:
+				baseKey = 3;
+				break;
+			case FLICK_STATE_DOWN:
+			case FLICK_STATE_DOWN_LEFT:
+			case FLICK_STATE_DOWN_RIGHT:
+				baseKey = 4;
+				break;
+		}
+
+		if (!mUseCurve || mFlickState == FLICK_STATE_NONE) {
 			mPopupTextView[0].setText(mCurrentPopupLabels[0]);
 			mPopupTextView[1].setText(mCurrentPopupLabels[1]);
 			mPopupTextView[2].setText(mCurrentPopupLabels[2]);
 			mPopupTextView[3].setText(mCurrentPopupLabels[3]);
 			mPopupTextView[4].setText(mCurrentPopupLabels[4]);
-			switch (mFlickState) {
-				case FLICK_STATE_NONE:
-					mPopupTextView[0].setBackgroundResource(R.drawable.popup_label_highlighted);
-					break;
-				case FLICK_STATE_LEFT:
-					mPopupTextView[1].setBackgroundResource(R.drawable.popup_label_highlighted);
-					break;
-				case FLICK_STATE_UP:
-					mPopupTextView[2].setBackgroundResource(R.drawable.popup_label_highlighted);
-					break;
-				case FLICK_STATE_RIGHT:
-					mPopupTextView[3].setBackgroundResource(R.drawable.popup_label_highlighted);
-					break;
-				case FLICK_STATE_DOWN:
-					mPopupTextView[4].setBackgroundResource(R.drawable.popup_label_highlighted);
-					break;
-			}
+		} else {
+			mPopupTextView[baseKey].setText(mCurrentPopupLabels[baseKey]);
+		}
+
+		if (!mUseCurve) {
+			mPopupTextView[baseKey].setBackgroundResource(R.drawable.popup_label_highlighted);
 			return;
 		}
 
-		switch (mFlickState) {
-		case FLICK_STATE_NONE:
-			mPopupTextView[0].setText(mCurrentPopupLabels[0]);
-			mPopupTextView[1].setText(mCurrentPopupLabels[1]);
-			mPopupTextView[2].setText(mCurrentPopupLabels[2]);
-			mPopupTextView[3].setText(mCurrentPopupLabels[3]);
-			mPopupTextView[4].setText(mCurrentPopupLabels[4]);
-			mPopupTextView[5].setText(mCurrentPopupLabels[5]);
-			mPopupTextView[6].setText(mCurrentPopupLabels[6]);
-			mPopupTextView[0].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
-		case FLICK_STATE_NONE_LEFT:
-			mPopupTextView[0].setText(mCurrentPopupLabels[0]);
-			mPopupTextView[5].setText(mCurrentPopupLabels[5]);
-			mPopupTextView[5].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
-		case FLICK_STATE_NONE_RIGHT:
-			mPopupTextView[0].setText(mCurrentPopupLabels[0]);
-			mPopupTextView[6].setText(mCurrentPopupLabels[6]);
-			mPopupTextView[6].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
-		case FLICK_STATE_LEFT:
-			mPopupTextView[1].setText(mCurrentPopupLabels[1]);
-			mPopupTextView[7].setText(mCurrentPopupLabels[5]);
-			mPopupTextView[8].setText(mCurrentPopupLabels[6]);
-			mPopupTextView[1].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
-		case FLICK_STATE_LEFT_LEFT:
-			mPopupTextView[1].setText(mCurrentPopupLabels[1]);
-			mPopupTextView[7].setText(mCurrentPopupLabels[5]);
-			mPopupTextView[7].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
-		case FLICK_STATE_LEFT_RIGHT:
-			mPopupTextView[1].setText(mCurrentPopupLabels[1]);
-			mPopupTextView[8].setText(mCurrentPopupLabels[6]);
-			mPopupTextView[8].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
-		case FLICK_STATE_UP:
-			mPopupTextView[2].setText(mCurrentPopupLabels[2]);
-			mPopupTextView[9].setText(mCurrentPopupLabels[5]);
-			mPopupTextView[10].setText(mCurrentPopupLabels[6]);
-			if (mLastPressedKey == KEYCODE_FLICK_JP_CHAR_TA) {
-				// 例外：小さい「っ」
-				mPopupTextView[9].setText("小");
+		if (isLeftCurve(mFlickState)) {
+			mPopupTextView[baseKey + 5].setText(mCurrentPopupLabels[5]);
+			mPopupTextView[baseKey + 5].setBackgroundResource(R.drawable.popup_label_highlighted);
+		} else if (isRightCurve(mFlickState)) {
+			mPopupTextView[baseKey + 10].setText(mCurrentPopupLabels[6]);
+			mPopupTextView[baseKey + 10].setBackgroundResource(R.drawable.popup_label_highlighted);
+		} else {
+			if (hasLeftCurve(mFlickState)) {
+				mPopupTextView[baseKey + 5].setText(mCurrentPopupLabels[5]);
 			}
-			if (mLastPressedKey == KEYCODE_FLICK_JP_CHAR_A && !isHiragana) {
-				// 例外：「ヴ」
-				mPopupTextView[10].setText("゛");
+			if (hasRightCurve(mFlickState)) {
+				mPopupTextView[baseKey + 10].setText(mCurrentPopupLabels[6]);
 			}
-			mPopupTextView[2].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
-		case FLICK_STATE_UP_LEFT:
-			mPopupTextView[2].setText(mCurrentPopupLabels[2]);
-			mPopupTextView[9].setText(mCurrentPopupLabels[5]);
-			if (mLastPressedKey == KEYCODE_FLICK_JP_CHAR_TA) {
-				// 例外：小さい「っ」
-				mPopupTextView[9].setText("小");
-			}
-			mPopupTextView[9].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
-		case FLICK_STATE_UP_RIGHT:
-			mPopupTextView[2].setText(mCurrentPopupLabels[2]);
-			mPopupTextView[10].setText(mCurrentPopupLabels[6]);
-			if (mLastPressedKey == KEYCODE_FLICK_JP_CHAR_A && !isHiragana) {
-				// 例外：「ヴ」
-				mPopupTextView[10].setText("゛");
-			}
-			mPopupTextView[10].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
-		case FLICK_STATE_RIGHT:
-			mPopupTextView[3].setText(mCurrentPopupLabels[3]);
-			mPopupTextView[11].setText(mCurrentPopupLabels[5]);
-			mPopupTextView[12].setText(mCurrentPopupLabels[6]);
-			mPopupTextView[3].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
-		case FLICK_STATE_RIGHT_LEFT:
-			mPopupTextView[3].setText(mCurrentPopupLabels[3]);
-			mPopupTextView[11].setText(mCurrentPopupLabels[5]);
-			mPopupTextView[11].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
-		case FLICK_STATE_RIGHT_RIGHT:
-			mPopupTextView[3].setText(mCurrentPopupLabels[3]);
-			mPopupTextView[12].setText(mCurrentPopupLabels[6]);
-			mPopupTextView[12].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
-		case FLICK_STATE_DOWN:
-			mPopupTextView[4].setText(mCurrentPopupLabels[4]);
-			mPopupTextView[13].setText(mCurrentPopupLabels[5]);
-			mPopupTextView[14].setText(mCurrentPopupLabels[6]);
-			mPopupTextView[4].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
-		case FLICK_STATE_DOWN_LEFT:
-			mPopupTextView[4].setText(mCurrentPopupLabels[4]);
-			mPopupTextView[13].setText(mCurrentPopupLabels[5]);
-			mPopupTextView[13].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
-		case FLICK_STATE_DOWN_RIGHT:
-			mPopupTextView[4].setText(mCurrentPopupLabels[4]);
-			mPopupTextView[14].setText(mCurrentPopupLabels[6]);
-			mPopupTextView[14].setBackgroundResource(R.drawable.popup_label_highlighted);
-			break;
+			mPopupTextView[baseKey].setBackgroundResource(R.drawable.popup_label_highlighted);
 		}
+
 		for (int i=5; i<15; i++) {
 			if (mPopupTextView[i].getText().equals("小")) {
 				mPopupTextView[i].setTextSize(android.util.TypedValue.COMPLEX_UNIT_DIP, 12);
@@ -577,15 +538,13 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 
 	private void processFirstFlick(float dx, float dy) {
 		float d_angle = diamondAngle(dx, dy);
-		boolean hasLeftCurve =  (mCurrentPopupLabels[5].length() != 0);
-		boolean hasRightCurve = (mCurrentPopupLabels[6].length() != 0);
 
 		if (d_angle >= 0.5f && d_angle < 1.5f) {
 			mFlickState = FLICK_STATE_DOWN;
 		} else if (d_angle >=  1.5f && d_angle < 2.29f) {
 			mFlickState = FLICK_STATE_LEFT;
 		} else if (d_angle >= 2.29f && d_angle < 2.71f) {
-			if (hasLeftCurve) {
+			if (hasLeftCurve(FLICK_STATE_NONE)) {
 				mFlickState = FLICK_STATE_NONE_LEFT;
 			} else if (d_angle < 2.5f) {
 				mFlickState = FLICK_STATE_LEFT;
@@ -595,7 +554,7 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 		} else if (d_angle >= 2.71f && d_angle < 3.29f) {
 			mFlickState = FLICK_STATE_UP;
 		} else if (d_angle >= 3.29f && d_angle < 3.71f) {
-			if (hasRightCurve) {
+			if (hasRightCurve(FLICK_STATE_NONE)) {
 				mFlickState = FLICK_STATE_NONE_RIGHT;
 			} else if (d_angle < 3.5f) {
 				mFlickState = FLICK_STATE_UP;
@@ -608,13 +567,7 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 	}
 
 	private void processCurveFlick(float dx, float dy) {
-		boolean hasLeftCurve =  (mCurrentPopupLabels[5].length() != 0);
-		boolean hasRightCurve = (mCurrentPopupLabels[6].length() != 0);
-		//小さい「っ」は特別処理
-		if (mLastPressedKey == KEYCODE_FLICK_JP_CHAR_TA && mFlickState == FLICK_STATE_UP) {hasLeftCurve = true;}
-		//「ヴ」は特別処理
-		if (!isHiragana && mLastPressedKey == KEYCODE_FLICK_JP_CHAR_A && mFlickState == FLICK_STATE_UP) {hasRightCurve = true;}
-		if (!hasLeftCurve && !hasRightCurve) {return;}
+		if (!hasLeftCurve(mFlickState) && !hasRightCurve(mFlickState)) {return;}
 
 		int newstate = -1;
 		switch (mFlickState) {
@@ -641,7 +594,8 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 		}
 		if (newstate == -1) {return;}
 
-		if ((hasLeftCurve && isLeftCurve(newstate)) || (hasRightCurve && isRightCurve(newstate))) {
+		if ((hasLeftCurve(mFlickState)  && isLeftCurve(newstate)) ||
+			(hasRightCurve(mFlickState) && isRightCurve(newstate))) {
 			mFlickState = newstate;
 		}
 	}
@@ -665,155 +619,68 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 	}
 
 	private void processFlickForLetter(int keyCode, int flick, boolean isShifted) {
-		int vowel ='a';
+		String[] labels = mFlickGuideLabelList.get(keyCode);
+		if (labels == null) return;
+
+		String hchr = "";
 		switch (flick) {
-		case FLICK_STATE_LEFT:
-		case FLICK_STATE_LEFT_LEFT:
-		case FLICK_STATE_LEFT_RIGHT:
-			vowel = 'i';
-			break;
-		case FLICK_STATE_UP:
-		case FLICK_STATE_UP_LEFT:
-		case FLICK_STATE_UP_RIGHT:
-			vowel = 'u';
-			break;
-		case FLICK_STATE_RIGHT:
-		case FLICK_STATE_RIGHT_LEFT:
-		case FLICK_STATE_RIGHT_RIGHT:
-			vowel = 'e';
-			break;
-		case FLICK_STATE_DOWN:
-		case FLICK_STATE_DOWN_LEFT:
-		case FLICK_STATE_DOWN_RIGHT:
-			vowel = 'o';
-			break;
-		}
-
-		int consonant = -1;
-		switch (keyCode) {
-		case KEYCODE_FLICK_JP_CHAR_A:
-			if (isLeftCurve(flick)) {
-				mService.processKey('x');
-				mService.processKey(vowel);
-			} else if (!isHiragana && flick == FLICK_STATE_UP_RIGHT) {
-				mService.processKey('v');
-				mService.processKey('u');
-			} else if (isShifted) {
-				mService.processKey(Character.toUpperCase(vowel));
-			} else {
-				mService.processKey(vowel);
-			}
-			return;
-		case KEYCODE_FLICK_JP_CHAR_KA:
-			if (isRightCurve(flick)) {
-				consonant = 'g';
-			} else {
-				consonant = 'k';
-			}
-			break;
-		case KEYCODE_FLICK_JP_CHAR_SA:
-			if (isRightCurve(flick)) {
-				consonant = 'z';
-			} else {
-				consonant = 's';
-			}
-			break;
-		case KEYCODE_FLICK_JP_CHAR_TA:
-			if (isRightCurve(flick)) {
-				consonant = 'd';
-			} else {
-				consonant = 't';
-			}
-			break;
-		case KEYCODE_FLICK_JP_CHAR_NA:
-			consonant = 'n';
-			break;
-		case KEYCODE_FLICK_JP_CHAR_HA:
-			if (isRightCurve(flick)) {
-				consonant = 'b';
-			} else if (isLeftCurve(flick)) {
-				consonant = 'p';
-			} else {
-				consonant = 'h';
-			}
-			break;
-		case KEYCODE_FLICK_JP_CHAR_MA:
-			consonant = 'm';
-			break;
-		case KEYCODE_FLICK_JP_CHAR_YA:
-			consonant = 'y';
-			break;
-		case KEYCODE_FLICK_JP_CHAR_RA:
-			consonant = 'r';
-			break;
-		case KEYCODE_FLICK_JP_CHAR_WA:
-			switch (flick) {
 			case FLICK_STATE_NONE:
-				if (isShifted) {
-					mService.processKey('W');
-				} else {
-					mService.processKey('w');
-				}
-				mService.processKey('a');
+			case FLICK_STATE_NONE_LEFT:
+			case FLICK_STATE_NONE_RIGHT:
+				hchr = labels[0];
 				break;
 			case FLICK_STATE_LEFT:
-				if (isShifted) {
-					mService.processKey('W');
-				} else {
-					mService.processKey('w');
-				}
-				mService.processKey('o');
+			case FLICK_STATE_LEFT_LEFT:
+			case FLICK_STATE_LEFT_RIGHT:
+				hchr = labels[1];
 				break;
 			case FLICK_STATE_UP:
-				if (isShifted) {
-					mService.processKey('N');
-				} else {
-					mService.processKey('n');
-				}
-				mService.processKey('n');
+			case FLICK_STATE_UP_LEFT:
+			case FLICK_STATE_UP_RIGHT:
+				hchr = labels[2];
 				break;
 			case FLICK_STATE_RIGHT:
-				mService.processKey('-');
+			case FLICK_STATE_RIGHT_LEFT:
+			case FLICK_STATE_RIGHT_RIGHT:
+				hchr = labels[3];
 				break;
 			case FLICK_STATE_DOWN:
-				mService.processKey('[');
+			case FLICK_STATE_DOWN_LEFT:
+			case FLICK_STATE_DOWN_RIGHT:
+				hchr = labels[4];
 				break;
-			}
-			return;
-		case KEYCODE_FLICK_JP_CHAR_TEN:
-			switch (flick) {
-			case FLICK_STATE_NONE:
-				mService.processKey(',');
-				break;
-			case FLICK_STATE_LEFT:
-				mService.processKey('.');
-				break;
-			case FLICK_STATE_UP:
-				mService.processKey('?');
-				break;
-			case FLICK_STATE_RIGHT:
-				mService.processKey('!');
-				break;
-			case FLICK_STATE_DOWN:
-				mService.processKey(']');
-				break;
-			}
-			return;
-		default:
+		}
+		if (hchr.length() == 0) {
 			return;
 		}
 
-		if (isShifted) {
-			mService.processKey(Character.toUpperCase(consonant));
-		} else {
-			mService.processKey(consonant);
-		}
-		mService.processKey(vowel);
-
+		String mod = "";
 		if (isLeftCurve(flick)) {
-			if ((consonant == 't' && vowel == 'u') || (consonant == 'y' && (vowel == 'a' || vowel == 'u' || vowel == 'o'))) {
-				mService.changeLastChar(mSmallKanaMap);
-			}
+			mod = labels[5];
+		} else if (isRightCurve(flick)) {
+			mod = labels[6];
+		}
+		mod = getModifiedHiragana(hchr, mod);
+		if (mod != null) {
+			hchr = mod;
+		}
+
+		mService.processText(hchr, isShifted);
+	}
+
+	private String getModifiedHiragana(String hiragana, String mod) {
+		if (mod.length() == 0) {
+			return null;
+		}
+		switch (mod) {
+			case "゛":
+				return mDakutenMap.get(hiragana);
+			case "゜":
+				return mHanDakutenMap.get(hiragana);
+			case "小":
+				return mSmallKanaMap.get(hiragana);
+			default:
+				return mod;
 		}
 	}
 
