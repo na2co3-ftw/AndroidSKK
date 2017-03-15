@@ -6,10 +6,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.ClipboardManager;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.UnderlineSpan;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.View;
@@ -906,7 +911,9 @@ public class SKKEngine extends InputMethodService {
 		InputConnection ic = getCurrentInputConnection();
 		if (ic == null) return;
 
-		StringBuilder ct = new StringBuilder();
+		SpannableStringBuilder ct = new SpannableStringBuilder();
+		BackgroundColorSpan bg = null;
+		int bgStart = 0;
 
 		if (isRegistering) {
 			ct.append("▼");
@@ -918,6 +925,7 @@ public class SKKEngine extends InputMethodService {
 				ct.append(mRegOkurigana);
 			}
 			ct.append("：");
+			ct.setSpan(new BackgroundColorSpan(Color.argb(64, 255, 96, 0)), 0, ct.length(), Spanned.SPAN_COMPOSING);
 			ct.append(mRegEntry);
 		}
 
@@ -926,9 +934,13 @@ public class SKKEngine extends InputMethodService {
 			case KANJI:
 			case ENG2JP:
 			case OKURIGANA:
+				bg = new BackgroundColorSpan(Color.argb(64, 0, 96, 255));
+				bgStart = ct.length();
 				ct.append("▽");
 				break;
 			case CHOOSE:
+				bg = new BackgroundColorSpan(Color.argb(64, 255, 96, 0));
+				bgStart = ct.length();
 				ct.append("▼");
 				break;
 			default:
@@ -936,6 +948,11 @@ public class SKKEngine extends InputMethodService {
 			}
 		}
 		ct.append(text);
+
+		if (bg != null) {
+			ct.setSpan(bg, bgStart, ct.length(), Spanned.SPAN_COMPOSING);
+		}
+		ct.setSpan(new UnderlineSpan(), 0, ct.length(), Spanned.SPAN_COMPOSING);
 
 		ic.setComposingText(ct, newCursorPosition);
 	}
