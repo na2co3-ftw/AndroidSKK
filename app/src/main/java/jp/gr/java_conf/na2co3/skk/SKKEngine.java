@@ -1,8 +1,10 @@
 package jp.gr.java_conf.na2co3.skk;
 
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
@@ -18,9 +20,11 @@ import android.text.style.UnderlineSpan;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -1431,6 +1435,48 @@ public class SKKEngine extends InputMethodService {
 			startActivity(mushroom);
 		} catch (ActivityNotFoundException e) {
 		}
+	}
+
+	void showInputMethodPicker() {
+		((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE)).showInputMethodPicker();
+	}
+
+	void showMenuDialog() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle(getString(R.string.ime_name));
+		builder.setItems(new CharSequence[] {"入力方法", "設定", "マッシュルーム"},
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+						switch (which) {
+							case 0:
+								showInputMethodPicker();
+								break;
+							case 1:
+								Intent intent = new Intent(SKKEngine.this, SKKPrefs.class);
+								intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+										Intent.FLAG_ACTIVITY_CLEAR_TOP);
+								startActivity(intent);
+								break;
+							case 2:
+								sendToMushroom();
+								break;
+						}
+					}
+				});
+		builder.setCancelable(true);
+		AlertDialog dialog = builder.create();
+		Window window = dialog.getWindow();
+		WindowManager.LayoutParams lp = window.getAttributes();
+		if (isSKKOn) {
+			lp.token = mFlickJPInputView.getWindowToken();
+		} else {
+			lp.token = mQwertyInputView.getWindowToken();
+		}
+		lp.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG;
+		window.setAttributes(lp);
+		window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+		dialog.show();
 	}
 
 	// 小文字大文字変換，濁音，半濁音に使う

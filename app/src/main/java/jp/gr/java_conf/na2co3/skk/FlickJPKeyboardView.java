@@ -9,7 +9,6 @@ import android.view.MotionEvent;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -67,6 +66,7 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 
 	private boolean isEnterLongPressed = false;
 	private boolean isSpaceLongPressed = false;
+	private boolean isToQwertyLongPressed = false;
 
 	private boolean mUsePopup = true;
 	private boolean mFixedPopup = false;
@@ -694,9 +694,12 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 			isEnterLongPressed = true;
 			return true;
 		} else if (code == KEYCODE_FLICK_JP_SPACE) {
-			//mService.sendToMushroom();
-			((InputMethodManager)mService.getSystemService(Context.INPUT_METHOD_SERVICE)).showInputMethodPicker();
+			mService.showInputMethodPicker();
 			isSpaceLongPressed = true;
+			return true;
+		} else if (code == KEYCODE_FLICK_JP_TOQWERTY) {
+			mService.showMenuDialog();
+			isToQwertyLongPressed = true;
 			return true;
 		}
 
@@ -795,7 +798,11 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 			mService.processKey('q');
 			break;
 		case KEYCODE_FLICK_JP_TOQWERTY:
-			mService.toggleSKK();
+			if (isToQwertyLongPressed) {
+				isToQwertyLongPressed = false;
+			} else {
+				mService.toggleSKK();
+			}
 			break;
 		case KEYCODE_FLICK_JP_CHAR_A:
 		case KEYCODE_FLICK_JP_CHAR_KA:

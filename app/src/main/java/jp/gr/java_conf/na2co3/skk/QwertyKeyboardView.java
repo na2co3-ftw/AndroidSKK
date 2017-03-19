@@ -5,7 +5,6 @@ import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.inputmethod.InputMethodManager;
 import android.util.AttributeSet;
 
 public class QwertyKeyboardView extends KeyboardView implements KeyboardView.OnKeyboardActionListener {
@@ -65,7 +64,10 @@ public class QwertyKeyboardView extends KeyboardView implements KeyboardView.OnK
 			mService.keyDownUp(KeyEvent.KEYCODE_SEARCH);
 			return true;
 		} else if (code == KEYCODE_QWERTY_SPACE) {
-			((InputMethodManager)mService.getSystemService(Context.INPUT_METHOD_SERVICE)).showInputMethodPicker();
+			mService.showInputMethodPicker();
+			return true;
+		} else if (code == KEYCODE_QWERTY_TOJP) {
+			mService.showMenuDialog();
 			return true;
 		}
 
