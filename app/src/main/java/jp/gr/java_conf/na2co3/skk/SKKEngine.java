@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 
 import static jp.gr.java_conf.na2co3.skk.InputMode.*;
 
@@ -61,12 +62,19 @@ public class SKKEngine extends InputMethodService {
 	// 送りがな 「っ」や「ん」が含まれる場合だけ二文字になる
 	private String mOkurigana = null;
 
-	// 単語登録のキー 登録作業中は不変
-	private String mRegKey = null;
-	// 単語登録する内容
-	private StringBuilder mRegEntry = new StringBuilder();
-	private String mRegOkurigana = null;
-	private boolean isRegistering = false;
+	// 単語登録の状況
+	private Stack<RegisterInfo> mRegisterStack = new Stack<>();
+
+	private class RegisterInfo {
+		String mKey;	// 単語登録のキー
+		String mOkurigana = null;
+		StringBuilder mEntry = new StringBuilder();	// 単語登録する内容
+
+		RegisterInfo(String key, String okurigana) {
+			mKey = key;
+			mOkurigana = okurigana;
+		}
+	}
 
 	private boolean isCandidatesViewShown = false;
 	private int mCandidatesOpCount = 0;
@@ -531,7 +539,7 @@ public class SKKEngine extends InputMethodService {
 					changeMode(HIRAKANA, true);
 					break;
 				case HIRAKANA:
-					if (toggleKanaKey && !isRegistering) toggleSKK();
+					if (toggleKanaKey && mRegisterStack.isEmpty()) toggleSKK();
 					break;
 				case CHOOSE:
 					toggleSKK();
@@ -591,7 +599,7 @@ public class SKKEngine extends InputMethodService {
 		case KeyEvent.KEYCODE_DPAD_UP:
 		case KeyEvent.KEYCODE_DPAD_DOWN:
 			if (mStickyMeta) {mMetaKey.useMetaState();}
-			if (isRegistering || mComposing.length() != 0 || mKanji.length() != 0) {
+			if (!mRegisterStack.isEmpty() || mComposing.length() != 0 || mKanji.length() != 0) {
 				return true;
 			}
 			break;
@@ -662,7 +670,7 @@ public class SKKEngine extends InputMethodService {
 			switch (pcode) {
 			case ' ':
 				if (mChoosedIndex == mCandidateList.size() - 1) {
-					if (!isRegistering) registerStart(mKanji.toString());
+					registerStart(mKanji.toString());
 				} else {
 					chooseNextCandidate();
 				}
@@ -718,7 +726,7 @@ public class SKKEngine extends InputMethodService {
 					return;
 				case 'l':
 					if (mComposing.length() != 1 || mComposing.charAt(0) != 'z') {
-						if (!isRegistering) toggleSKK();
+						if (mRegisterStack.isEmpty()) toggleSKK();
 						return;
 					} // 「→」を入力するための例外
 					break;
@@ -990,8 +998,8 @@ public class SKKEngine extends InputMethodService {
 		InputConnection ic = getCurrentInputConnection();
 		if (ic == null) return;
 
-		if (isRegistering) {
-			mRegEntry.append(text);
+		if (!mRegisterStack.isEmpty()) {
+			mRegisterStack.peek().mEntry.append(text);
 			setComposingTextSKK("", newCursorPosition);
 		} else {
 			ic.commitText(text, newCursorPosition);
@@ -1011,18 +1019,21 @@ public class SKKEngine extends InputMethodService {
 		BackgroundColorSpan bg = null;
 		int bgStart = 0;
 
-		if (isRegistering) {
-			ct.append("▼");
-			if (mRegOkurigana == null) {
-				ct.append(mRegKey);
-			} else {
-				ct.append(mRegKey.substring(0, mRegKey.length()-1));
-				ct.append("*");
-				ct.append(mRegOkurigana);
+		if (!mRegisterStack.isEmpty()) {
+			for (RegisterInfo regInfo : mRegisterStack) {
+				bgStart = ct.length();
+				ct.append("▼");
+				if (regInfo.mOkurigana == null) {
+					ct.append(regInfo.mKey);
+				} else {
+					ct.append(regInfo.mKey.substring(0, regInfo.mKey.length()-1));
+					ct.append("*");
+					ct.append(regInfo.mOkurigana);
+				}
+				ct.append("：");
+				ct.setSpan(new BackgroundColorSpan(Color.argb(64, 255, 96, 0)), bgStart, ct.length(), Spanned.SPAN_COMPOSING);
+				ct.append(regInfo.mEntry);
 			}
-			ct.append("：");
-			ct.setSpan(new BackgroundColorSpan(Color.argb(64, 255, 96, 0)), 0, ct.length(), Spanned.SPAN_COMPOSING);
-			ct.append(mRegEntry);
 		}
 
 		if (!text.equals("") || mInputMode == ENG2JP) {
@@ -1108,14 +1119,7 @@ public class SKKEngine extends InputMethodService {
 	}
 
 	private void registerStart(String str) {
-		mRegKey = str;
-		mRegEntry.setLength(0);
-		if (mOkurigana != null) {
-			mRegOkurigana = new String(mOkurigana);
-		} else {
-			mRegOkurigana = null;
-		}
-		isRegistering = true;
+		mRegisterStack.push(new RegisterInfo(str, mOkurigana));
 		changeMode(HIRAKANA, true);
 		//setComposingTextSKK("", 1);
 	}
@@ -1142,11 +1146,12 @@ public class SKKEngine extends InputMethodService {
 		case HIRAKANA:
 		case KATAKANA:
 		case ZENKAKU:
-			if (isRegistering) {
-				isRegistering = false;
-				mRegKey = null;
-				mRegEntry.setLength(0);
+			if (!mRegisterStack.isEmpty()) {
+				mRegisterStack.pop();
 				reset();
+				if (!mRegisterStack.isEmpty()) {
+					setComposingTextSKK("", 1);
+				}
 
 				return true;
 			}
@@ -1155,10 +1160,8 @@ public class SKKEngine extends InputMethodService {
 		case CHOOSE:
 		case ENG2JP:
 		case OKURIGANA:
-			if (isRegistering) {
-				isRegistering = false;
-				mRegKey = null;
-				mRegEntry.setLength(0);
+			if (!mRegisterStack.isEmpty()) {
+				mRegisterStack.pop();
 			}
 			changeMode(HIRAKANA, true);
 
@@ -1173,7 +1176,7 @@ public class SKKEngine extends InputMethodService {
 		if (mStickyMeta) {mMetaKey.useMetaState();}
 		if (mInputMode == CHOOSE) {
 			choosePreviousCandidate();
-		} else if (!isRegistering && mComposing.length() == 0 && mKanji.length() == 0) {
+		} else if (mRegisterStack.isEmpty() && mComposing.length() == 0 && mKanji.length() == 0) {
 			return false;
 		}
 
@@ -1184,7 +1187,7 @@ public class SKKEngine extends InputMethodService {
 		if (mStickyMeta) {mMetaKey.useMetaState();}
 		if (mInputMode == CHOOSE) {
 			chooseNextCandidate();
-		} else if (!isRegistering && mComposing.length() == 0 && mKanji.length() == 0) {
+		} else if (mRegisterStack.isEmpty() && mComposing.length() == 0 && mKanji.length() == 0) {
 			return false;
 		}
 
@@ -1215,21 +1218,21 @@ public class SKKEngine extends InputMethodService {
 			break;
 		default:
 			if (mComposing.length() == 0) {
-				if (isRegistering) {
+				if (!mRegisterStack.isEmpty()) {
 					// 単語登録終了
-					isRegistering = false;
-					if (mRegEntry.length() != 0) {
-						mUserDict.addEntry(mRegKey, mRegEntry.toString(), mRegOkurigana);
+					RegisterInfo regInfo = mRegisterStack.pop();
+					if (regInfo.mEntry.length() != 0) {
+						mUserDict.addEntry(regInfo.mKey, regInfo.mEntry.toString(), regInfo.mOkurigana);
 						mUserDict.commitChanges();
-						getCurrentInputConnection().commitText(mRegEntry.toString(), 1);
-						if (mRegOkurigana != null) {
-							getCurrentInputConnection().commitText(mRegOkurigana, 1);
+						commitTextSKK(regInfo.mEntry.toString(), 1);
+						if (regInfo.mOkurigana != null) {
+							commitTextSKK(regInfo.mOkurigana, 1);
 						}
 					}
-					mRegKey = null;
-					mRegOkurigana = null;
-					mRegEntry.setLength(0);
 					reset();
+					if (!mRegisterStack.isEmpty()) {
+						setComposingTextSKK("", 1);
+					}
 				} else {
 					return false;
 				}
@@ -1251,10 +1254,10 @@ public class SKKEngine extends InputMethodService {
 		int klen = mKanji.length();
 
 		if (clen == 0 && klen == 0) {
-			if (isRegistering) {
-				int rlen = mRegEntry.length();
-				if (rlen > 0) {
-					mRegEntry.deleteCharAt(rlen-1);
+			if (!mRegisterStack.isEmpty()) {
+				StringBuilder regEntry = mRegisterStack.peek().mEntry;
+				if (regEntry.length() > 0) {
+					regEntry.deleteCharAt(regEntry.length()-1);
 					setComposingTextSKK("", 1);
 				} else if (mUseSoftKeyboard) {
 					return handleCancel();
@@ -1346,15 +1349,13 @@ public class SKKEngine extends InputMethodService {
 		case HIRAKANA:
 		case KATAKANA:
 		case ZENKAKU:
-			if (isRegistering) {
-				isRegistering = false;
+			if (!mRegisterStack.isEmpty()) {
+				RegisterInfo regInfo = mRegisterStack.pop();
 				mKanji.setLength(0);
-				mKanji.append(mRegKey);
-				mRegKey = null;
-				if (mRegOkurigana != null) {
+				mKanji.append(regInfo.mKey);
+				if (regInfo.mOkurigana != null) {
 					mKanji.deleteCharAt(mKanji.length() - 1);
 				}
-				mRegEntry.setLength(0);
 				mComposing.setLength(0);
 				changeMode(KANJI, false);
 				setComposingTextSKK(mKanji, 1);
@@ -1424,6 +1425,7 @@ public class SKKEngine extends InputMethodService {
 
 		if (mInputMode == HIRAKANA || mInputMode == KATAKANA || mInputMode == ZENKAKU) {
 			reset();
+			mRegisterStack.clear();
 		} else {
 			changeMode(HIRAKANA, true);
 		}
@@ -1518,18 +1520,17 @@ public class SKKEngine extends InputMethodService {
 		}
 
 		if (mComposing.length() == 0 && mKanji.length() == 0) {
-			if (isRegistering && mRegEntry.length() == 0) {
-				if (mRegOkurigana == null) return;
-				String new_okuri = map.get(mRegOkurigana);
+			if (!mRegisterStack.isEmpty() && mRegisterStack.peek().mEntry.length() == 0) {
+				RegisterInfo regInfo = mRegisterStack.peek();
+				if (regInfo.mOkurigana == null) return;
+				String new_okuri = map.get(regInfo.mOkurigana);
 
 				if (new_okuri != null) {
 					String new_okuri_consonant = mConsonantMap.get(new_okuri);
-					isRegistering = false;
+					mRegisterStack.pop();
 					mKanji.setLength(0);
-					mKanji.append(mRegKey.substring(0, mRegKey.length() - 1));
+					mKanji.append(regInfo.mKey.substring(0, regInfo.mKey.length() - 1));
 					mKanji.append(new_okuri_consonant);
-					mRegKey = null;
-					mRegEntry.setLength(0);
 					mOkurigana = new_okuri;
 					conversionStart(mKanji); //変換やりなおし
 				}
@@ -1547,10 +1548,11 @@ public class SKKEngine extends InputMethodService {
 					new_lastchar = map.get(lastchar);
 
 					if (new_lastchar != null) {
-						if (isRegistering) {
-							mRegEntry.deleteCharAt(mRegEntry.length()-1);
-							mRegEntry.append(new_lastchar);
-							ic.setComposingText("▼" + mRegKey + "：" + mRegEntry, 1);
+						if (!mRegisterStack.isEmpty()) {
+							StringBuilder regEntry = mRegisterStack.peek().mEntry;
+							regEntry.deleteCharAt(regEntry.length()-1);
+							regEntry.append(new_lastchar);
+							setComposingTextSKK("", 1);
 						} else {
 							ic.deleteSurroundingText(1, 0);
 							ic.commitText(new_lastchar, 1);
@@ -1707,7 +1709,7 @@ public class SKKEngine extends InputMethodService {
 			if (mOkurigana != null) commitTextSKK(mOkurigana, 1);
 			mUserDict.addEntry(mKanji.toString(), s, mOkurigana);
 
-			if (!isRegistering) {
+			if (mRegisterStack.isEmpty()) {
 				if (mOkurigana != null) {
 					mLastConversion = new ConversionInfo(s_noAnnotation + mOkurigana, mCandidateList, index, mOpCount, mKanji.toString(), mOkurigana);
 				} else {
@@ -1813,6 +1815,7 @@ public class SKKEngine extends InputMethodService {
 			isSKKOn = false;
 			hideStatusIcon();
 			reset();
+			mRegisterStack.clear();
 			if (mUseSoftKeyboard) {
 				setInputView(mQwertyInputView);
 			}
@@ -1880,7 +1883,7 @@ public class SKKEngine extends InputMethodService {
 		} else if (icon != 0) {
 			showStatusIcon(icon);
 		}
-		if (isRegistering && doReset) {
+		if (!mRegisterStack.isEmpty() && doReset) {
 			setComposingTextSKK("", 1);
 		}
 		// ComposingTextのflush回避のためreset()で一旦消してるので，登録中はここまで来てからComposingText復活
