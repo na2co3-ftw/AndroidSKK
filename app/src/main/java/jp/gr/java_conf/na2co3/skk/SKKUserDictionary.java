@@ -39,6 +39,7 @@ class SKKUserDictionary extends SKKDictionary {
 				SKKUtils.dlog("New user dictionary created");
 			} else {
 				mBTree = BTree.load(mRecMan, mRecID);
+				SKKUtils.dlog("user dict: loaded");
 			}
 		} catch (Exception e) {
 			Log.e("SKK", "Error in opening the user dic: " + e.toString());
@@ -203,7 +204,7 @@ class SKKUserDictionary extends SKKDictionary {
 	void commitChanges() {
 		try {
 			mRecMan.commit();
-			SKKUtils.dlog("user dict: commited changes");
+			SKKUtils.dlog("user dict: committed changes");
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

@@ -75,9 +75,6 @@ public class SKKDicTool extends ListActivity {
 				showDialog(DIALOG_CONFIRM_CLEAR);
 			}
 		});
-
-		InputMethodManager inputMethodManager = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-		inputMethodManager.sendAppPrivateCommand(null, SKKEngine.ACTION_COMMIT_USERDIC, null);
 	}
 
 	private void openFileActivity(int requestCode) {
@@ -121,6 +118,7 @@ public class SKKDicTool extends ListActivity {
 
 	@Override public void onPause() {
 		closeUserDict();
+		sendCommandToService(SKKEngine.ACTION_RELOAD_USERDIC);
 
 		super.onPause();
 	}
@@ -137,15 +135,17 @@ public class SKKDicTool extends ListActivity {
 			mRecMan.setNamedObject(BTREE_NAME, mBtree.getRecid());
 			mRecMan.commit();
 			isOpened = true;
-			SKKUtils.dlog("New user dictionary created");
+			SKKUtils.dlog("DicTool: New user dictionary created");
 		} catch (Exception e) {
 			Log.e("SKK", "recreateUserDic() Error: " + e.toString());
 		}
+		sendCommandToService(SKKEngine.ACTION_RELOAD_USERDIC);
 
 		updateListItems();
 	}
 
 	private void openUserDict() {
+		sendCommandToService(SKKEngine.ACTION_COMMIT_USERDIC);
 		try {
 			mRecMan = RecordManagerFactory.createRecordManager(getFilesDir().getAbsolutePath() + "/" + USER_DICT);
 			long recID = mRecMan.getNamedObject(BTREE_NAME);
@@ -159,6 +159,7 @@ public class SKKDicTool extends ListActivity {
 		} catch (Exception e) {
 			Log.e("SKKDicTool", "openUserDict() Error: " + e.toString());
 		}
+		SKKUtils.dlog("DicTool: loaded user dict");
 
 		updateListItems();
 	}
@@ -168,6 +169,7 @@ public class SKKDicTool extends ListActivity {
 		try {
 			mRecMan.commit();
 			mRecMan.close();
+			SKKUtils.dlog("DicTool: committed changes");
 			isOpened = false;
 		} catch (Exception e) {
 			Log.e("SKKDicTool", "closeUserDict() Error: " + e.toString());
@@ -284,12 +286,14 @@ public class SKKDicTool extends ListActivity {
 				addToDic((String)tuple.getKey(), (String)tuple.getValue());
 				if (++count % 1000 == 0) {
 					mRecMan.commit();
+					SKKUtils.dlog("DicTool: committed changes");
 				}
 			}
 			tmpRecMan.close();
 		} catch (Exception e) {
 			Log.e("SKKDicTool", "importDic() add entry Error: " + e.toString());
 		}
+		sendCommandToService(SKKEngine.ACTION_RELOAD_USERDIC);
 
 		updateListItems();
 	}
@@ -326,11 +330,13 @@ public class SKKDicTool extends ListActivity {
 				addToDic(key, value);
 				if (++count % 1000 == 0) {
 					mRecMan.commit();
+					SKKUtils.dlog("DicTool: committed changes");
 				}
 			}
 		} catch (Exception e) {
 			Log.e("SKKDicTool", "importTextDic() add entry Error: " + e.toString());
 		}
+		sendCommandToService(SKKEngine.ACTION_RELOAD_USERDIC);
 
 		updateListItems();
 	}
@@ -354,6 +360,11 @@ public class SKKDicTool extends ListActivity {
 		} catch (Exception e) {
 			Log.e("SKKDicTool", "writeToExternalStorage() Error: " + e.toString());
 		}
+	}
+
+	private void sendCommandToService(String action) {
+		InputMethodManager inputMethodManager = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+		inputMethodManager.sendAppPrivateCommand(null, action, null);
 	}
 
 	@Override

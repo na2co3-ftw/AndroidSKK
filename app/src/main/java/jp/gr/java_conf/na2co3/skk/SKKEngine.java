@@ -128,6 +128,7 @@ public class SKKEngine extends InputMethodService {
 	};
 
 	static final String ACTION_COMMIT_USERDIC = "jp.gr.java_conf.na2co3.skk.ACTION_COMMIT_USERDIC";
+	static final String ACTION_RELOAD_USERDIC = "jp.gr.java_conf.na2co3.skk.ACTION_RELOAD_USERDIC";
 	static final String ACTION_READ_PREFS = "jp.gr.java_conf.na2co3.skk.ACTION_READ_PREFS";
 
 	// ローマ字辞書
@@ -451,10 +452,15 @@ public class SKKEngine extends InputMethodService {
 
 	public void onAppPrivateCommand(String action, Bundle data) {
 		if (action.equals(ACTION_COMMIT_USERDIC)) {
-			SKKUtils.dlog("commit user dictionary!");
 			mUserDict.commitChanges();
 		} else if (action.equals(ACTION_READ_PREFS)) {
 			readPrefs();
+		} else if (action.equals(ACTION_RELOAD_USERDIC)) {
+			mUserDict = new SKKUserDictionary(getFilesDir().getAbsolutePath() + "/" + USER_DICT);
+			if (!mUserDict.isValid()) {
+				Toast.makeText(SKKEngine.this, getString(R.string.error_user_dic), Toast.LENGTH_LONG).show();
+				stopSelf();
+			}
 		}
 	}
 
