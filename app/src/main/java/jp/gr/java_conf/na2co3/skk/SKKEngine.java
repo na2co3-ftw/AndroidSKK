@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
+import static jp.gr.java_conf.na2co3.skk.InputState.*;
 import static jp.gr.java_conf.na2co3.skk.InputMode.*;
 
 public class SKKEngine extends InputMethodService {
@@ -49,6 +50,7 @@ public class SKKEngine extends InputMethodService {
 	private List<String> mCandidateList;
 
 	private InputMode mInputMode = HIRAKANA;
+	private InputState mInputState = NORMAL;
 
 	private boolean isSKKOn = true;
 
@@ -540,15 +542,11 @@ public class SKKEngine extends InputMethodService {
 			if ((modKanaKey == 0 && meta == 0) || ((modKanaKey & meta) != 0)) {
 				switch (mInputMode) {
 				case ZENKAKU:
-				case ENG2JP:
 				case KATAKANA:
-					changeMode(HIRAKANA, true);
+					changeMode(HIRAKANA);
 					break;
 				case HIRAKANA:
 					if (toggleKanaKey && mRegisterStack.isEmpty()) toggleSKK();
-					break;
-				case CHOOSE:
-					toggleSKK();
 					break;
 				default:
 					break;
@@ -649,12 +647,13 @@ public class SKKEngine extends InputMethodService {
 	}
 
 	void processKey(int pcode) {
-		switch (mInputMode) {
-		case ZENKAKU:
+		if (mInputMode == ZENKAKU) {
 			// 全角変換しcommitして終了
 			pcode = SKKUtils.hankaku2zenkaku(pcode);
 			commitTextSKK(String.valueOf((char) pcode), 1);
-			break;
+			return;
+		}
+		switch (mInputState) {
 		case ENG2JP:
 			// スペースで変換するかそのままComposingに積む
 			if (pcode == ' ') {
@@ -684,7 +683,7 @@ public class SKKEngine extends InputMethodService {
 			case '>':
 				// 接尾辞入力
 				pickCandidate(mChoosedIndex);
-				changeMode(KANJI, false);
+				changeState(KANJI);
 				mKanji.append('>');
 				setComposingTextSKK(mKanji, 1);
 				break;
@@ -697,11 +696,11 @@ public class SKKEngine extends InputMethodService {
 							mKanji.deleteCharAt(mKanji.length() -1);
 						}
 						setComposingTextSKK(mKanji, 1);
-						changeMode(KANJI, false);
+						changeState(KANJI);
 					} else {
 						mKanji.setLength(0);
 						setComposingTextSKK(mComposing, 1);
-						changeMode(ENG2JP, false);
+						changeState(ENG2JP);
 					}
 					if (mUseSoftKeyboard) {
 						updateSuggestions();
@@ -716,18 +715,17 @@ public class SKKEngine extends InputMethodService {
 				break;
 			}
 			break;
-		case HIRAKANA:
-		case KATAKANA:
+		case NORMAL:
 		case KANJI:
 		case OKURIGANA:
 			// モード変更操作
-			if (mInputMode == HIRAKANA || mInputMode == KATAKANA) {
+			if (mInputState == NORMAL) {
 				switch (pcode) {
 				case 'q':
 					if (mInputMode == HIRAKANA) {
-						changeMode(KATAKANA, true);
+						changeMode(KATAKANA);
 					} else {
-						changeMode(HIRAKANA, true);
+						changeMode(HIRAKANA);
 					}
 					return;
 				case 'l':
@@ -737,11 +735,15 @@ public class SKKEngine extends InputMethodService {
 					} // 「→」を入力するための例外
 					break;
 				case 'L':
-					changeMode(ZENKAKU, true);
+					changeMode(ZENKAKU);
 					return;
 				case '/':
 					if (mComposing.length() != 1 || mComposing.charAt(0) != 'z') {
-						changeMode(ENG2JP, true);
+						reset();
+						changeState(ENG2JP);
+						if (!mRegisterStack.isEmpty()) {
+							setComposingTextSKK("", 1);
+						}
 						return;
 					} // 中黒を入力するための例外
 					break;
@@ -769,7 +771,7 @@ public class SKKEngine extends InputMethodService {
 			pcode = Character.toLowerCase(pcode);
 		}
 
-		switch (mInputMode) {
+		switch (mInputState) {
 		case OKURIGANA:
 			hchr = checkSpecialConsonants(pcode);
 			// 「ん」か「っ」を処理したらここで終わり
@@ -801,8 +803,7 @@ public class SKKEngine extends InputMethodService {
 				}
 			}
 			break;
-		case HIRAKANA:
-		case KATAKANA:
+		case NORMAL:
 			hchr = checkSpecialConsonants(pcode);
 			if (hchr != null) {
 				if (mInputMode == KATAKANA) {hchr = SKKUtils.hirakana2katakana(hchr);}
@@ -815,7 +816,7 @@ public class SKKEngine extends InputMethodService {
 					commitTextSKK(mComposing, 1);
 					mComposing.setLength(0);
 				}
-				changeMode(KANJI, false);
+				changeState(KANJI);
 				doJapaneseConversion(pcode);
 			} else {
 				mComposing.append((char) pcode);
@@ -854,7 +855,7 @@ public class SKKEngine extends InputMethodService {
 					String str = SKKUtils.hirakana2katakana(mKanji.toString());
 					commitTextSKK(str, 1);
 				}
-				changeMode(HIRAKANA, true);
+				changeState(NORMAL);
 			} else if (pcode == ' ' || pcode == '>') {
 				// 変換開始
 				// 最後に単体の'n'で終わっている場合、'ん'に変換
@@ -881,7 +882,7 @@ public class SKKEngine extends InputMethodService {
 				} else { // それ以外は送り仮名モード
 					mComposing.append((char) pcode);
 					setComposingTextSKK(createTrimmedBuilder(mKanji).append('*').append((char)pcode), 1);
-					changeMode(OKURIGANA, false);
+					changeState(OKURIGANA);
 				}
 			} else {
 				// 未確定
@@ -916,10 +917,11 @@ public class SKKEngine extends InputMethodService {
 	}
 
 	void processText(String text, boolean isShifted) {
-		switch (mInputMode) {
-			case ZENKAKU:
-				commitTextSKK(text, 1);
-				break;
+		if (mInputMode == ZENKAKU) {
+			commitTextSKK(text, 1);
+			return;
+		}
+		switch (mInputState) {
 			case ENG2JP:
 				mComposing.append(text);
 				setComposingTextSKK(mComposing, 1);
@@ -944,8 +946,7 @@ public class SKKEngine extends InputMethodService {
 				}
 				conversionStart(mKanji);
 				break;
-			case HIRAKANA:
-			case KATAKANA:
+			case NORMAL:
 				if (mComposing.length() > 0) {
 					String hchr = mComposing.toString();
 					if (mComposing.length() == 1 && mComposing.charAt(0) == 'n') {
@@ -957,7 +958,7 @@ public class SKKEngine extends InputMethodService {
 				}
 				if (isShifted) {
 					// 漢字変換候補入力の開始。KANJIへの移行
-					changeMode(KANJI, false);
+					changeState(KANJI);
 					processText(text, false);
 				} else {
 					if (mInputMode == KATAKANA) {
@@ -1042,8 +1043,8 @@ public class SKKEngine extends InputMethodService {
 			}
 		}
 
-		if (!text.equals("") || mInputMode == ENG2JP) {
-			switch (mInputMode) {
+		if (mInputState != NORMAL) {
+			switch (mInputState) {
 			case KANJI:
 			case ENG2JP:
 			case OKURIGANA:
@@ -1076,7 +1077,7 @@ public class SKKEngine extends InputMethodService {
 	private void conversionStart(StringBuilder composing) {
 		String str = composing.toString();
 
-		changeMode(CHOOSE, false);
+		changeState(CHOOSE);
 
 		List<String> list = findKanji(str);
 		if (list == null) {
@@ -1111,7 +1112,7 @@ public class SKKEngine extends InputMethodService {
 		mCandidateList = mLastConversion.list;
 		mChoosedIndex = mLastConversion.index;
 
-		changeMode(CHOOSE, false);
+		changeState(CHOOSE);
 
 		if (mOkurigana != null) {
 			setComposingTextSKK(SKKUtils.removeAnnotation(mCandidateList.get(mChoosedIndex)).concat(mOkurigana), 1);
@@ -1126,7 +1127,7 @@ public class SKKEngine extends InputMethodService {
 
 	private void registerStart(String str) {
 		mRegisterStack.push(new RegisterInfo(str, mOkurigana));
-		changeMode(HIRAKANA, true);
+		changeState(NORMAL);
 		//setComposingTextSKK("", 1);
 	}
 
@@ -1148,10 +1149,8 @@ public class SKKEngine extends InputMethodService {
 	}
 
 	private boolean handleBackKey() {
-		switch (mInputMode) {
-		case HIRAKANA:
-		case KATAKANA:
-		case ZENKAKU:
+		switch (mInputState) {
+		case NORMAL:
 			if (!mRegisterStack.isEmpty()) {
 				mRegisterStack.pop();
 				reset();
@@ -1169,7 +1168,7 @@ public class SKKEngine extends InputMethodService {
 			if (!mRegisterStack.isEmpty()) {
 				mRegisterStack.pop();
 			}
-			changeMode(HIRAKANA, true);
+			changeState(NORMAL);
 
 			return true;
 		}
@@ -1180,7 +1179,7 @@ public class SKKEngine extends InputMethodService {
 	boolean handleLeftKey() {
 		// Shift・Altキーの状態を消費
 		if (mStickyMeta) {mMetaKey.useMetaState();}
-		if (mInputMode == CHOOSE) {
+		if (mInputState == CHOOSE) {
 			choosePreviousCandidate();
 		} else if (mRegisterStack.isEmpty() && mComposing.length() == 0 && mKanji.length() == 0) {
 			return false;
@@ -1191,7 +1190,7 @@ public class SKKEngine extends InputMethodService {
 
 	boolean handleRightKey() {
 		if (mStickyMeta) {mMetaKey.useMetaState();}
-		if (mInputMode == CHOOSE) {
+		if (mInputState == CHOOSE) {
 			chooseNextCandidate();
 		} else if (mRegisterStack.isEmpty() && mComposing.length() == 0 && mKanji.length() == 0) {
 			return false;
@@ -1204,7 +1203,7 @@ public class SKKEngine extends InputMethodService {
 		// Shift・Altキーの状態を消費
 		if (mStickyMeta) {mMetaKey.useMetaState();}
 
-		switch (mInputMode) {
+		switch (mInputState) {
 		case CHOOSE:
 			pickCandidate(mChoosedIndex);
 			break;
@@ -1213,14 +1212,14 @@ public class SKKEngine extends InputMethodService {
 				commitTextSKK(mComposing, 1);
 				mComposing.setLength(0);
 			}
-			changeMode(HIRAKANA, true);
+			changeState(NORMAL);
 			break;
 		case KANJI:
 		case OKURIGANA:
 			commitTextSKK(mKanji, 1);
 			mComposing.setLength(0);
 			mKanji.setLength(0);
-			changeMode(HIRAKANA, true);
+			changeState(NORMAL);
 			break;
 		default:
 			if (mComposing.length() == 0) {
@@ -1259,7 +1258,7 @@ public class SKKEngine extends InputMethodService {
 		int clen = mComposing.length();
 		int klen = mKanji.length();
 
-		if (clen == 0 && klen == 0) {
+		if (clen == 0 && klen == 0 || mInputMode == ZENKAKU) {
 			if (!mRegisterStack.isEmpty()) {
 				StringBuilder regEntry = mRegisterStack.peek().mEntry;
 				if (regEntry.length() > 0) {
@@ -1268,8 +1267,8 @@ public class SKKEngine extends InputMethodService {
 				} else if (mUseSoftKeyboard) {
 					return handleCancel();
 				}
-			} else if (mInputMode == ENG2JP) {
-				changeMode(HIRAKANA, true);
+			} else if (mInputState == ENG2JP) {
+				changeState(NORMAL);
 			} else {
 				return false;
 			}
@@ -1277,7 +1276,7 @@ public class SKKEngine extends InputMethodService {
 			return true;
 		}
 
-		if (mUseSoftKeyboard && mInputMode == CHOOSE) {
+		if (mUseSoftKeyboard && mInputState == CHOOSE) {
 			return handleCancel();
 		}
 
@@ -1289,14 +1288,13 @@ public class SKKEngine extends InputMethodService {
 		clen = mComposing.length();
 		klen = mKanji.length();
 
-		switch (mInputMode) {
-		case HIRAKANA:
-		case KATAKANA:
+		switch (mInputState) {
+		case NORMAL:
 			setComposingTextSKK(mComposing, 1);
 			break;
 		case KANJI:
 			if (klen == 0 && clen == 0) {
-				changeMode(HIRAKANA, true);
+				changeState(NORMAL);
 			} else {
 				setComposingTextSKK(mKanji.toString() + mComposing.toString(), 1);
 				if (mUseSoftKeyboard) {
@@ -1306,7 +1304,7 @@ public class SKKEngine extends InputMethodService {
 			break;
 		case ENG2JP:
 			if (clen == 0) {
-				changeMode(HIRAKANA, true);
+				changeState(NORMAL);
 			} else {
 				setComposingTextSKK(mComposing, 1);
 				if (mUseSoftKeyboard) {
@@ -1318,14 +1316,14 @@ public class SKKEngine extends InputMethodService {
 			mComposing.setLength(0);
 			mOkurigana = null;
 			setComposingTextSKK(mKanji, 1);
-			changeMode(KANJI, false);
+			changeState(KANJI);
 			break;
 		case CHOOSE:
 			if (klen == 0) {
-				changeMode(HIRAKANA, true);
+				changeState(NORMAL);
 			} else {
 				if (clen > 0) { // 英語変換中
-					changeMode(ENG2JP, false);
+					changeState(ENG2JP);
 					setComposingTextSKK(mComposing, 1);
 					if (mUseSoftKeyboard) {
 						updateSuggestions();
@@ -1334,7 +1332,7 @@ public class SKKEngine extends InputMethodService {
 					if (mOkurigana != null) {
 						mOkurigana = null;
 					}
-					changeMode(KANJI, false);
+					changeState(KANJI);
 					setComposingTextSKK(mKanji, 1);
 					if (mUseSoftKeyboard) {
 						updateSuggestions();
@@ -1351,10 +1349,8 @@ public class SKKEngine extends InputMethodService {
 	}
 
 	boolean handleCancel() {
-		switch (mInputMode) {
-		case HIRAKANA:
-		case KATAKANA:
-		case ZENKAKU:
+		switch (mInputState) {
+		case NORMAL:
 			if (!mRegisterStack.isEmpty()) {
 				RegisterInfo regInfo = mRegisterStack.pop();
 				mKanji.setLength(0);
@@ -1363,7 +1359,7 @@ public class SKKEngine extends InputMethodService {
 					mKanji.deleteCharAt(mKanji.length() - 1);
 				}
 				mComposing.setLength(0);
-				changeMode(KANJI, false);
+				changeState(KANJI);
 				setComposingTextSKK(mKanji, 1);
 				if (mUseSoftKeyboard) {
 					updateSuggestions();
@@ -1383,18 +1379,18 @@ public class SKKEngine extends InputMethodService {
 		case ENG2JP:
 			mComposing.setLength(0);
 			mKanji.setLength(0);
-			changeMode(HIRAKANA, true);
+			changeState(NORMAL);
 			break;
 		case CHOOSE:
 			if (mComposing.length() > 0) { // 英語変換中
-				changeMode(ENG2JP, false);
+				changeState(ENG2JP);
 				setComposingTextSKK(mComposing, 1);
 			} else { // 漢字変換中
 				if (mOkurigana != null) {
 					mOkurigana = null;
 					mKanji.deleteCharAt(mKanji.length() -1);
 				}
-				changeMode(KANJI, false);
+				changeState(KANJI);
 				setComposingTextSKK(mKanji, 1);
 			}
 			if (mUseSoftKeyboard) {
@@ -1405,7 +1401,7 @@ public class SKKEngine extends InputMethodService {
 			mComposing.setLength(0);
 			mOkurigana = null;
 			mKanji.deleteCharAt(mKanji.length()-1);
-			changeMode(KANJI, false);
+			changeState(KANJI);
 			setComposingTextSKK(mKanji, 1);
 			break;
 		default:
@@ -1417,7 +1413,7 @@ public class SKKEngine extends InputMethodService {
 
 	void sendToMushroom() {
 		String str;
-		if (mInputMode == KANJI || mInputMode == ENG2JP) {
+		if (mInputState == KANJI || mInputState == ENG2JP) {
 			str = mKanji.toString();
 		} else {
 			ClipboardManager cm = (ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
@@ -1429,11 +1425,12 @@ public class SKKEngine extends InputMethodService {
 			}
 		}
 
-		if (mInputMode == HIRAKANA || mInputMode == KATAKANA || mInputMode == ZENKAKU) {
-			reset();
+		if (mInputState == NORMAL) {
 			mRegisterStack.clear();
+			reset();
 		} else {
-			changeMode(HIRAKANA, true);
+			mRegisterStack.clear();
+			changeState(NORMAL);
 		}
 
 		try {
@@ -1489,7 +1486,7 @@ public class SKKEngine extends InputMethodService {
 
 	// 小文字大文字変換，濁音，半濁音に使う
 	void changeLastChar(Map<String, String> map) {
-		if (mInputMode == KANJI && mComposing.length() == 0) {
+		if (mInputState == KANJI && mComposing.length() == 0) {
 			String s = mKanji.toString();
 			int idx = s.length() - 1;
 			String lastchar = s.substring(idx);
@@ -1506,7 +1503,7 @@ public class SKKEngine extends InputMethodService {
 			return;
 		}
 
-		if (mInputMode == CHOOSE) {
+		if (mInputState == CHOOSE) {
 			if (mOkurigana == null) return;
 			String new_okuri = map.get(mOkurigana);
 
@@ -1619,7 +1616,7 @@ public class SKKEngine extends InputMethodService {
 		mChoosedIndex = 0;
 
 		String str = null;
-		switch (mInputMode) {
+		switch (mInputState) {
 		case ENG2JP:
 			str = mComposing.toString();
 			break;
@@ -1627,7 +1624,7 @@ public class SKKEngine extends InputMethodService {
 			str = mKanji.toString();
 			break;
 		default:
-			SKKUtils.dlog("updateSuggestions(): " + mInputMode);
+			SKKUtils.dlog("updateSuggestions(): " + mInputState);
 			setSuggestions(null);
 			return;
 		}
@@ -1703,7 +1700,7 @@ public class SKKEngine extends InputMethodService {
 	}
 
 	private void pickCandidate(int index) {
-		if (mInputMode != CHOOSE) {
+		if (mInputState != CHOOSE) {
 			return;
 		}
 
@@ -1723,24 +1720,24 @@ public class SKKEngine extends InputMethodService {
 				}
 			}
 
-			changeMode(HIRAKANA, true);
+			changeState(NORMAL);
 		}
 	}
 
 	public void pickCandidateViewManually(int index) {
-		if (mInputMode == CHOOSE) {
+		if (mInputState == CHOOSE) {
 			pickCandidate(index);
 			return;
 		}
 
 		String s = mCandidateView.get(index);
 		if (!s.equals("")) {
-			if (mInputMode == ENG2JP) {
+			if (mInputState == ENG2JP) {
 				setComposingTextSKK(s, 1);
 				mComposing.setLength(0);
 				mComposing.append(s);
 				conversionStart(mComposing);
-			} else if (mInputMode == KANJI) {
+			} else if (mInputState == KANJI) {
 				setComposingTextSKK(s, 1);
 				int li = s.length() - 1;
 				int last = s.codePointAt(li);
@@ -1815,13 +1812,13 @@ public class SKKEngine extends InputMethodService {
 
 	void toggleSKK() {
 		if (isSKKOn) {
-			if (mInputMode == CHOOSE) {
+			if (mInputState == CHOOSE) {
 				pickCandidate(mChoosedIndex);
 			}
 			isSKKOn = false;
 			hideStatusIcon();
-			reset();
 			mRegisterStack.clear();
+			reset();
 			if (mUseSoftKeyboard) {
 				setInputView(mQwertyInputView);
 			}
@@ -1830,58 +1827,54 @@ public class SKKEngine extends InputMethodService {
 			if (mUseSoftKeyboard) {
 				setInputView(mFlickJPInputView);
 			}
-			changeMode(HIRAKANA, true);
+			changeState(NORMAL);
 		}
 		if (mStickyMeta) {mMetaKey.clearMetaKeyState();}
 	}
 
 	// change the mode and set the status icon
-	private void changeMode(InputMode im, boolean doReset) {
+	private void changeMode(InputMode mode) {
+		changeMode(mode, true);
+	}
+
+	private void changeMode(InputMode mode, boolean doReset) {
 		if (!isSKKOn) return;
 
 		int icon = 0;
 
 		if (doReset) reset();
 
-		switch (im) {
-		case HIRAKANA:
-			mInputMode = HIRAKANA;
-			icon = R.drawable.immodeic_hiragana;
-			if (mUseSoftKeyboard) {
-				if (mFlickJPInputView != null) {
-					mFlickJPInputView.setHiraganaMode();
+		switch (mode) {
+			case HIRAKANA:
+				mInputMode = HIRAKANA;
+				icon = R.drawable.immodeic_hiragana;
+				if (mUseSoftKeyboard) {
+					if (mFlickJPInputView != null) {
+						mFlickJPInputView.setHiraganaMode();
+					}
 				}
-			}
-			break;
-		case KATAKANA:
-			mInputMode = KATAKANA;
-			icon = R.drawable.immodeic_katakana;
-			if (mUseSoftKeyboard) {
-				if (mFlickJPInputView != null) {
-					mFlickJPInputView.setKatakanaMode();
+				break;
+			case KATAKANA:
+				mInputMode = KATAKANA;
+				icon = R.drawable.immodeic_katakana;
+				if (mUseSoftKeyboard) {
+					if (mFlickJPInputView != null) {
+						mFlickJPInputView.setKatakanaMode();
+					}
 				}
-			}
-			break;
-		case KANJI:
-			mInputMode = KANJI;
-			break;
-		case CHOOSE:
-			mInputMode = CHOOSE;
-			break;
-		case ZENKAKU:
-			mInputMode = ZENKAKU;
-			icon = R.drawable.immodeic_full_alphabet;
-			break;
-		case ENG2JP:
-			mInputMode = ENG2JP;
-			icon = R.drawable.immodeic_eng2jp;
-			setComposingTextSKK("", 1);
-			break;
-		case OKURIGANA:
-			mInputMode = OKURIGANA;
-			break;
-		default:
-			break;
+				break;
+			case ZENKAKU:
+				mInputMode = ZENKAKU;
+				changeState(NORMAL, doReset);
+				icon = R.drawable.immodeic_full_alphabet;
+				break;
+//			case ENG2JP:
+//				mInputMode = ENG2JP;
+//				icon = R.drawable.immodeic_eng2jp;
+//				setComposingTextSKK("", 1);
+//				break;
+			default:
+				break;
 		}
 
 		if (mUseSoftKeyboard) {
@@ -1890,6 +1883,19 @@ public class SKKEngine extends InputMethodService {
 			showStatusIcon(icon);
 		}
 		if (!mRegisterStack.isEmpty() && doReset) {
+			setComposingTextSKK("", 1);
+		}
+		// ComposingTextのflush回避のためreset()で一旦消してるので，登録中はここまで来てからComposingText復活
+	}
+
+	private void changeState(InputState state) {
+		changeState(state, state == NORMAL);
+	}
+
+	private void changeState(InputState state, boolean doReset) {
+		if (doReset) reset();
+		mInputState = state;
+		if (!mRegisterStack.isEmpty() && doReset || state == ENG2JP) {
 			setComposingTextSKK("", 1);
 		}
 		// ComposingTextのflush回避のためreset()で一旦消してるので，登録中はここまで来てからComposingText復活
