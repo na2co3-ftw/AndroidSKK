@@ -776,6 +776,7 @@ public class SKKEngine extends InputMethodService {
 			hchr = checkSpecialConsonants(pcode);
 			// 「ん」か「っ」を処理したらここで終わり
 			if (hchr != null) {
+				if (mInputMode == KATAKANA) {hchr = SKKUtils.hirakana2katakana(hchr);}
 				mOkurigana = hchr;
 				setComposingTextSKK(createTrimmedBuilder(mKanji).append('*').append(hchr).append((char)pcode), 1);
 				mComposing.setLength(0);
@@ -787,6 +788,7 @@ public class SKKEngine extends InputMethodService {
 			hchr = mRomajiMap.get(mComposing.toString());
 			if (mOkurigana != null) { //「ん」か「っ」がある場合
 				if (hchr != null) {
+					if (mInputMode == KATAKANA) {hchr = SKKUtils.hirakana2katakana(hchr);}
 					mComposing.setLength(0);
 					mOkurigana = mOkurigana + hchr;
 					conversionStart(mKanji);
@@ -795,6 +797,7 @@ public class SKKEngine extends InputMethodService {
 				}
 			} else {
 				if (hchr != null) {
+					if (mInputMode == KATAKANA) {hchr = SKKUtils.hirakana2katakana(hchr);}
 					mComposing.setLength(0);
 					mOkurigana = hchr;
 					conversionStart(mKanji);
@@ -845,14 +848,20 @@ public class SKKEngine extends InputMethodService {
 		case KANJI:
 			hchr = checkSpecialConsonants(pcode);
 			if (hchr != null) {
+				if (mInputMode == KATAKANA) {hchr = SKKUtils.hirakana2katakana(hchr);}
 				mKanji.append(hchr);
 				setComposingTextSKK(mKanji, 1);
 				mComposing.setLength(0);
 			}
 			if (pcode == 'q') {
-				// カタカナ変換
+				// トグル変換
 				if (mKanji.length() > 0) {
-					String str = SKKUtils.hirakana2katakana(mKanji.toString());
+					String str = mKanji.toString();
+					if (mInputMode == HIRAKANA) {
+						str = SKKUtils.hirakana2katakana(str);
+					} else {
+						str = SKKUtils.katakana2hirakana(str);
+					}
 					commitTextSKK(str, 1);
 				}
 				changeState(NORMAL);
@@ -860,7 +869,7 @@ public class SKKEngine extends InputMethodService {
 				// 変換開始
 				// 最後に単体の'n'で終わっている場合、'ん'に変換
 				if (mComposing.length() == 1 && mComposing.charAt(0) == 'n') {
-					mKanji.append('ん');
+					mKanji.append(mInputMode == HIRAKANA ? 'ん' : 'ン');
 					setComposingTextSKK(mKanji, 1);
 				}
 				if (pcode == '>') {
@@ -878,6 +887,7 @@ public class SKKEngine extends InputMethodService {
 				mComposing.setLength(0);
 				if (SKKUtils.isVowel(pcode)) { // 母音なら送り仮名決定，変換
 					mOkurigana  = mRomajiMap.get(String.valueOf((char) pcode));
+					if (mInputMode == KATAKANA) {mOkurigana = SKKUtils.hirakana2katakana(mOkurigana);}
 					conversionStart(mKanji);
 				} else { // それ以外は送り仮名モード
 					mComposing.append((char) pcode);
@@ -893,6 +903,7 @@ public class SKKEngine extends InputMethodService {
 				}
 
 				if (hchr != null) {
+					if (mInputMode == KATAKANA) {hchr = SKKUtils.hirakana2katakana(hchr);}
 					mComposing.setLength(0);
 					mKanji.append(hchr);
 					setComposingTextSKK(mKanji, 1);
@@ -934,10 +945,11 @@ public class SKKEngine extends InputMethodService {
 				processText(text, isShifted);
 				break;
 			case OKURIGANA:
+				if (mInputMode == KATAKANA) {text = SKKUtils.hirakana2katakana(text);}
 				if (mComposing.length() > 0) {
 					String hchr = mComposing.toString();
 					if (mComposing.length() == 1 && mComposing.charAt(0) == 'n') {
-						hchr = "ん";
+						hchr = mInputMode == HIRAKANA ? "ん" : "ン";
 					}
 					mComposing.setLength(0);
 					mOkurigana = hchr + text;
@@ -950,8 +962,7 @@ public class SKKEngine extends InputMethodService {
 				if (mComposing.length() > 0) {
 					String hchr = mComposing.toString();
 					if (mComposing.length() == 1 && mComposing.charAt(0) == 'n') {
-						hchr = "ん";
-						if (mInputMode == KATAKANA) {hchr = SKKUtils.hirakana2katakana(hchr);}
+						hchr = mInputMode == HIRAKANA ? "ん" : "ン";
 					}
 					commitTextSKK(hchr, 1);
 					mComposing.setLength(0);
@@ -970,7 +981,7 @@ public class SKKEngine extends InputMethodService {
 			case KANJI:
 				if (mComposing.length() > 0) {
 					if (mComposing.length() == 1 && mComposing.charAt(0) == 'n') {
-						mKanji.append("ん");
+						mKanji.append(mInputMode == HIRAKANA ? "ん" : "ン");
 					} else {
 						mKanji.append(mComposing);
 					}
@@ -983,10 +994,12 @@ public class SKKEngine extends InputMethodService {
 					if (okuri_consonant != null) {
 						mKanji.append(okuri_consonant);
 					}
+					if (mInputMode == KATAKANA) {text = SKKUtils.hirakana2katakana(text);}
 					mOkurigana = text;
 					conversionStart(mKanji);
 				} else {
 					// 未確定
+					if (mInputMode == KATAKANA) {text = SKKUtils.hirakana2katakana(text);}
 					mKanji.append(text);
 					setComposingTextSKK(mKanji, 1);
 					if (mUseSoftKeyboard) {
@@ -1229,7 +1242,9 @@ public class SKKEngine extends InputMethodService {
 					if (regInfo.mEntry.length() != 0) {
 						mUserDict.addEntry(regInfo.mKey, regInfo.mEntry.toString(), regInfo.mOkurigana);
 						mUserDict.commitChanges();
-						commitTextSKK(regInfo.mEntry.toString(), 1);
+						String entry = regInfo.mEntry.toString();
+						if (mInputMode == KATAKANA) {entry = SKKUtils.hirakana2katakana(entry);}
+						commitTextSKK(entry, 1);
 						if (regInfo.mOkurigana != null) {
 							commitTextSKK(regInfo.mOkurigana, 1);
 						}
@@ -1684,6 +1699,7 @@ public class SKKEngine extends InputMethodService {
 		}
 
 		String cad = SKKUtils.removeAnnotation(mCandidateList.get(mChoosedIndex));
+		if (mInputMode == KATAKANA) {cad = SKKUtils.hirakana2katakana(cad);}
 		if (mOkurigana != null) {
 			cad = cad.concat(mOkurigana);
 		}
@@ -1707,6 +1723,7 @@ public class SKKEngine extends InputMethodService {
 		if (mCandidateList.size() > 0) {
 			String s = mCandidateList.get(index);
 			String s_noAnnotation = SKKUtils.removeAnnotation(s);
+			if (mInputMode == KATAKANA) {s_noAnnotation = SKKUtils.hirakana2katakana(s_noAnnotation);}
 
 			commitTextSKK(s_noAnnotation, 1);
 			if (mOkurigana != null) commitTextSKK(mOkurigana, 1);
@@ -1738,6 +1755,7 @@ public class SKKEngine extends InputMethodService {
 				mComposing.append(s);
 				conversionStart(mComposing);
 			} else if (mInputState == KANJI) {
+				if (mInputMode == KATAKANA) {s = SKKUtils.hirakana2katakana(s);}
 				setComposingTextSKK(s, 1);
 				int li = s.length() - 1;
 				int last = s.codePointAt(li);

@@ -27,8 +27,25 @@ class SKKUtils {
 		for (int i=0; i<str.length(); i++) {
 			char ch = str.charAt(i);
 
-			if (ch >= 0x3040 && ch <= 0x3096) {
+			if (ch >= 0x3041 && ch <= 0x3096) {
 				ch += 0x60;
+			}
+			str2.append(ch);
+		}
+
+		return str2.toString();
+	}
+
+	static String katakana2hirakana(String str) {
+		if (str == null) return null;
+
+		StringBuilder str2 = new StringBuilder();
+
+		for (int i=0; i<str.length(); i++) {
+			char ch = str.charAt(i);
+
+			if (ch >= 0x30a1 && ch <= 0x30f6) {
+				ch -= 0x60;
 			}
 			str2.append(ch);
 		}

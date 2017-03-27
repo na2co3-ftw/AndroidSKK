@@ -52,6 +52,7 @@ class SKKDictionary {
 		List<String> list = new ArrayList<String>();
 		String[] va_array;
 
+		key = SKKUtils.katakana2hirakana(key);
 		if (key.contains("ゔ")) {
 			key = key.replace("ゔ", "う゛");
 		}
@@ -90,6 +91,7 @@ class SKKDictionary {
 		TupleBrowser  browser;
 		String str = null;
 
+		key = SKKUtils.katakana2hirakana(key);
 		if (key.contains("ゔ")) {
 			key = key.replace("ゔ", "う゛");
 		}

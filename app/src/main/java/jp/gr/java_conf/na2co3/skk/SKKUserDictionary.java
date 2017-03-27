@@ -58,6 +58,7 @@ class SKKUserDictionary extends SKKDictionary {
 		List<List<String>> okr = new ArrayList<List<String>>();
 		String[] va_array;
 
+		key = SKKUtils.katakana2hirakana(key);
 		if (key.contains("ゔ")) {
 			key = key.replace("ゔ", "う゛");
 		}
@@ -110,9 +111,11 @@ class SKKUserDictionary extends SKKDictionary {
 	}
 
 	void addEntry(String key, String val, String okuri) {
+		key = SKKUtils.katakana2hirakana(key);
 		if (key.contains("ゔ")) {
 			key = key.replace("ゔ", "う゛");
 		}
+		okuri = SKKUtils.katakana2hirakana(okuri);
 
 		mOldKey = key;
 		StringBuilder new_val = new StringBuilder();
