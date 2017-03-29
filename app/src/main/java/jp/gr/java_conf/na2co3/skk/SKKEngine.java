@@ -27,7 +27,6 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
@@ -84,8 +83,7 @@ public class SKKEngine extends InputMethodService {
 
 	private static final String DICTIONARY = "skk_dict_btree";
 	private static final String USER_DICT = "skk_userdict";
-	private SKKDictionary mDict;
-	private SKKUserDictionary mUserDict;
+	private DictionaryManager mDictionary;
 
 	private SKKMetaKey mMetaKey = new SKKMetaKey(this);
 	private boolean mStickyMeta = false;
@@ -216,16 +214,17 @@ public class SKKEngine extends InputMethodService {
 
 		String dd = getFilesDir().getAbsolutePath();
 		SKKUtils.dlog("dict dir: " + dd);
-		mDict = new SKKDictionary(dd + "/" + DICTIONARY);
-		if (!mDict.isValid()) {
+		SKKDictionary mainDict = new SKKDictionary(dd + "/" + DICTIONARY);
+		if (!mainDict.isValid()) {
 			Toast.makeText(SKKEngine.this, getString(R.string.error_dic), Toast.LENGTH_LONG).show();
 			stopSelf();
 		}
-		mUserDict = new SKKUserDictionary(dd + "/" + USER_DICT);
-		if (!mUserDict.isValid()) {
+		SKKUserDictionary userDict = new SKKUserDictionary(dd + "/" + USER_DICT);
+		if (!userDict.isValid()) {
 			Toast.makeText(SKKEngine.this, getString(R.string.error_user_dic), Toast.LENGTH_LONG).show();
 			stopSelf();
 		}
+		mDictionary = new DictionaryManager(mainDict, userDict);
 
 		mMushroomReceiver = new BroadcastReceiver() {
 			@Override
@@ -440,7 +439,7 @@ public class SKKEngine extends InputMethodService {
 
 	@Override
 	public void onDestroy() {
-		mUserDict.commitChanges();
+		mDictionary.commitChanges();
 		unregisterReceiver(mMushroomReceiver);
 
 		super.onDestroy();
@@ -454,15 +453,16 @@ public class SKKEngine extends InputMethodService {
 
 	public void onAppPrivateCommand(String action, Bundle data) {
 		if (action.equals(ACTION_COMMIT_USERDIC)) {
-			mUserDict.commitChanges();
+			mDictionary.commitChanges();
 		} else if (action.equals(ACTION_READ_PREFS)) {
 			readPrefs();
 		} else if (action.equals(ACTION_RELOAD_USERDIC)) {
-			mUserDict = new SKKUserDictionary(getFilesDir().getAbsolutePath() + "/" + USER_DICT);
-			if (!mUserDict.isValid()) {
+			SKKUserDictionary userDict = new SKKUserDictionary(getFilesDir().getAbsolutePath() + "/" + USER_DICT);
+			if (!userDict.isValid()) {
 				Toast.makeText(SKKEngine.this, getString(R.string.error_user_dic), Toast.LENGTH_LONG).show();
 				stopSelf();
 			}
+			mDictionary.setUserDict(userDict);
 		}
 	}
 
@@ -1092,7 +1092,7 @@ public class SKKEngine extends InputMethodService {
 
 		changeState(CHOOSE);
 
-		List<String> list = findKanji(str);
+		List<String> list = mDictionary.findKanji(str, mOkurigana);
 		if (list == null) {
 			registerStart(str);
 			return;
@@ -1116,7 +1116,7 @@ public class SKKEngine extends InputMethodService {
 	private void reConversionStart() {
 		if (mLastConversion == null) { return; }
 
-		mUserDict.rollBack();
+		mDictionary.rollBack();
 
 		mComposing.setLength(0);
 		mKanji.setLength(0);
@@ -1240,8 +1240,8 @@ public class SKKEngine extends InputMethodService {
 					// 単語登録終了
 					RegisterInfo regInfo = mRegisterStack.pop();
 					if (regInfo.mEntry.length() != 0) {
-						mUserDict.addEntry(regInfo.mKey, regInfo.mEntry.toString(), regInfo.mOkurigana);
-						mUserDict.commitChanges();
+						mDictionary.addEntry(regInfo.mKey, regInfo.mEntry.toString(), regInfo.mOkurigana);
+						mDictionary.commitChanges();
 						String entry = regInfo.mEntry.toString();
 						if (mInputMode == KATAKANA) {entry = SKKUtils.hirakana2katakana(entry);}
 						commitTextSKK(entry, 1);
@@ -1581,52 +1581,6 @@ public class SKKEngine extends InputMethodService {
 		}
 	}
 
-	private List<String> findKanji(String key) {
-		List<String> list1 = mDict.getCandidates(key);
-		List<String> list2 = null;
-
-		SKKUserDictionary.Entry entry = mUserDict.getEntry(key);
-		SKKUtils.dlog("*** User dict entry ***");
-		if (entry != null) {
-			SKKUtils.dlog("  *** Candidates ***");
-			SKKUtils.dlog("  " + entry.candidates.toString());
-			SKKUtils.dlog("  *** Okuri blocks ***");
-			for (List<String> lst : entry.okuri_blocks) {
-				SKKUtils.dlog("  " + lst.toString());
-			}
-			list2 = entry.candidates;
-		}
-
-		if (list1 == null && list2 == null) {
-			SKKUtils.dlog("Dictoinary: Can't find Kanji for " + key);
-			return null;
-		}
-
-		if (list1 == null) list1 = new ArrayList<String>();
-		if (list2 != null) {
-			int idx = 0;
-			for (String s : list2) {
-				if (mOkurigana != null) {
-					boolean found = false;
-					for (List<String> lst : entry.okuri_blocks) {
-						if (lst.get(0).equals(mOkurigana) && lst.contains(s)) {
-							found = true;
-							break;
-						}
-					}
-					if (!found) {continue;} //送りがなブロックに見つからなければ，追加しない
-				}
-				//個人辞書の候補を先頭に追加
-				list1.remove(s);
-				list1.add(idx, s);
-				idx++;
-			}
-		}
-		if (list1.size() == 0) {list1 = null;}
-
-		return list1;
-	}
-
 	private void updateSuggestions() {
 		mChoosedIndex = 0;
 
@@ -1646,17 +1600,7 @@ public class SKKEngine extends InputMethodService {
 
 		if (str.length() == 0) {setSuggestions(null); return;}
 
-		List<String> list = mDict.findKeys(str);
-		List<String> list2 = mUserDict.findKeys(str);
-		int idx = 0;
-		for (String s : list2) {
-			//個人辞書のキーを先頭に追加
-			list.remove(s);
-			list.add(idx, s);
-			idx++;
-		}
-
-		setSuggestions(list);
+		setSuggestions(mDictionary.findKeys(str));
 	}
 
 	private void setSuggestions(List<String> suggestions) {
@@ -1727,7 +1671,7 @@ public class SKKEngine extends InputMethodService {
 
 			commitTextSKK(s_noAnnotation, 1);
 			if (mOkurigana != null) commitTextSKK(mOkurigana, 1);
-			mUserDict.addEntry(mKanji.toString(), s, mOkurigana);
+			mDictionary.addEntry(mKanji.toString(), s, mOkurigana);
 
 			if (mRegisterStack.isEmpty()) {
 				if (mOkurigana != null) {

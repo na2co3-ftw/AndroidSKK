@@ -48,17 +48,7 @@ class SKKDictionary {
 		return isValid;
 	}
 
-	List<String> getCandidates(String key) {
-		List<String> list = new ArrayList<String>();
-		String[] va_array;
-
-		key = SKKUtils.katakana2hirakana(key);
-		if (key.contains("ゔ")) {
-			key = key.replace("ゔ", "う゛");
-		}
-
-		SKKUtils.dlog("findValue(): key = " + key);
-
+	String get(String key) {
 		String value = null;
 		try {
 			value = (String)mBTree.find(key);
@@ -66,35 +56,14 @@ class SKKDictionary {
 			throw new RuntimeException(e);
 		}
 
-		if (value == null) return null;
-
-		va_array = value.split("/");
-		SKKUtils.dlog("dic: " + mDicFile + " " + value);
-		SKKUtils.dlog("length = " + va_array.length);
-
-		if (va_array.length <= 0) {
-			Log.e("SKK", "Invalid value found: Key=" + key + " value=" + value);
-			return null;
-		}
-
-		// va_array[0]は常に空文字列なので1から始める
-		for (int i=1; i<va_array.length; i++) {
-			list.add(va_array[i]);
-		}
-
-		return list;
+		return value;
 	}
 
 	List<String> findKeys(String key) {
 		List<String> list = new ArrayList<String>();
-		Tuple         tuple = new Tuple();
-		TupleBrowser  browser;
+		Tuple tuple = new Tuple();
+		TupleBrowser browser;
 		String str = null;
-
-		key = SKKUtils.katakana2hirakana(key);
-		if (key.contains("ゔ")) {
-			key = key.replace("ゔ", "う゛");
-		}
 
 		try {
 			browser = mBTree.browse(key);
