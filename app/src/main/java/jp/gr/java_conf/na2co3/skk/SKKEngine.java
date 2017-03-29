@@ -27,11 +27,13 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
+import static jp.gr.java_conf.na2co3.skk.DictionaryManager.*;
 import static jp.gr.java_conf.na2co3.skk.InputState.*;
 import static jp.gr.java_conf.na2co3.skk.InputMode.*;
 
@@ -46,7 +48,7 @@ public class SKKEngine extends InputMethodService {
 	public int mChoosedIndex;
 	// 候補はsuggestionsと違ってハードキーモードでも使う（CandidateViewが出てないときがある）ので
 	// こっちでもListを保持する必要がある
-	private List<String> mCandidateList;
+	private List<Candidate> mCandidateList;
 
 	private InputMode mInputMode = HIRAKANA;
 	private InputState mInputState = NORMAL;
@@ -95,13 +97,13 @@ public class SKKEngine extends InputMethodService {
 
 	private class ConversionInfo {
 		String candidate;
-		List<String> list;
+		List<Candidate> list;
 		int index;
 		int opCount;
 		String kanjiKey;
 		String okuri;
 
-		ConversionInfo(String cand, List<String> clist, int idx, int count, String key, String okuri) {
+		ConversionInfo(String cand, List<Candidate> clist, int idx, int count, String key, String okuri) {
 			this.candidate = cand;
 			this.list = clist;
 			this.index = idx;
@@ -907,8 +909,14 @@ public class SKKEngine extends InputMethodService {
 					mComposing.setLength(0);
 					mKanji.append(hchr);
 					setComposingTextSKK(mKanji, 1);
-				} else {
-					setComposingTextSKK(mKanji.toString() + mComposing.toString(), 1);
+				} else { // アルファベットならComposingに積む
+					if (SKKUtils.isAlphabet(pcode)) {
+						setComposingTextSKK(mKanji.toString() + mComposing.toString(), 1);
+					} else {
+						mKanji.append(mComposing);
+						mComposing.setLength(0);
+						setComposingTextSKK(mKanji.toString(), 1);
+					}
 				}
 				if (mUseSoftKeyboard) {
 					updateSuggestions();
@@ -1092,7 +1100,7 @@ public class SKKEngine extends InputMethodService {
 
 		changeState(CHOOSE);
 
-		List<String> list = mDictionary.findKanji(str, mOkurigana);
+		List<Candidate> list = mDictionary.findKanji(str, mOkurigana);
 		if (list == null) {
 			registerStart(str);
 			return;
@@ -1101,9 +1109,9 @@ public class SKKEngine extends InputMethodService {
 		mChoosedIndex = 0;
 
 		if (mOkurigana != null) {
-			setComposingTextSKK(SKKUtils.removeAnnotation(list.get(0)).concat(mOkurigana), 1);
+			setComposingTextSKK(list.get(0).value.concat(mOkurigana), 1);
 		} else {
-			setComposingTextSKK(SKKUtils.removeAnnotation(list.get(0)), 1);
+			setComposingTextSKK(list.get(0).value, 1);
 		}
 
 		mCandidateList = list;
@@ -1128,9 +1136,9 @@ public class SKKEngine extends InputMethodService {
 		changeState(CHOOSE);
 
 		if (mOkurigana != null) {
-			setComposingTextSKK(SKKUtils.removeAnnotation(mCandidateList.get(mChoosedIndex)).concat(mOkurigana), 1);
+			setComposingTextSKK(mCandidateList.get(mChoosedIndex).value.concat(mOkurigana), 1);
 		} else {
-			setComposingTextSKK(SKKUtils.removeAnnotation(mCandidateList.get(mChoosedIndex)), 1);
+			setComposingTextSKK(mCandidateList.get(mChoosedIndex).value, 1);
 		}
 
 		mOpCount = mLastConversion.opCount;
@@ -1526,7 +1534,7 @@ public class SKKEngine extends InputMethodService {
 				// 変換やりなおしをしなくてもいい例外
 				// 送りがなが「っ」になる場合は，どのみち必ずt段の音なので
 				mOkurigana = new_okuri;
-				setComposingTextSKK(SKKUtils.removeAnnotation(mCandidateList.get(mChoosedIndex)).concat(mOkurigana), 1);
+				setComposingTextSKK(mCandidateList.get(mChoosedIndex).value.concat(mOkurigana), 1);
 			} else if (new_okuri != null) {
 				String new_okuri_consonant = mConsonantMap.get(new_okuri);
 				mKanji.deleteCharAt(mKanji.length() - 1);
@@ -1642,7 +1650,7 @@ public class SKKEngine extends InputMethodService {
 			mCandidateView.choose(mChoosedIndex);
 		}
 
-		String cad = SKKUtils.removeAnnotation(mCandidateList.get(mChoosedIndex));
+		String cad = mCandidateList.get(mChoosedIndex).value;
 		if (mInputMode == KATAKANA) {cad = SKKUtils.hirakana2katakana(cad);}
 		if (mOkurigana != null) {
 			cad = cad.concat(mOkurigana);
@@ -1655,7 +1663,15 @@ public class SKKEngine extends InputMethodService {
 			setCandidatesViewShown(true);
 		}
 		if (mCandidateView != null) {
-			mCandidateView.setSuggestions(mCandidateList);
+			List<String> list = new ArrayList<String>();
+			for (Candidate cand : mCandidateList) {
+				if (cand.annotation != null) {
+					list.add(cand.value + ";" + cand.annotation);
+				} else {
+					list.add(cand.value);
+				}
+			}
+			mCandidateView.setSuggestions(list);
 		}
 	}
 
@@ -1665,19 +1681,19 @@ public class SKKEngine extends InputMethodService {
 		}
 
 		if (mCandidateList.size() > 0) {
-			String s = mCandidateList.get(index);
-			String s_noAnnotation = SKKUtils.removeAnnotation(s);
-			if (mInputMode == KATAKANA) {s_noAnnotation = SKKUtils.hirakana2katakana(s_noAnnotation);}
+			Candidate cand = mCandidateList.get(index);
+			String s = cand.value;
+			if (mInputMode == KATAKANA) {s = SKKUtils.hirakana2katakana(s);}
 
-			commitTextSKK(s_noAnnotation, 1);
+			commitTextSKK(s, 1);
 			if (mOkurigana != null) commitTextSKK(mOkurigana, 1);
-			mDictionary.addEntry(mKanji.toString(), s, mOkurigana);
+			mDictionary.addEntry(mKanji.toString(), cand.dictionaryForm, mOkurigana);
 
 			if (mRegisterStack.isEmpty()) {
 				if (mOkurigana != null) {
-					mLastConversion = new ConversionInfo(s_noAnnotation + mOkurigana, mCandidateList, index, mOpCount, mKanji.toString(), mOkurigana);
+					mLastConversion = new ConversionInfo(s + mOkurigana, mCandidateList, index, mOpCount, mKanji.toString(), mOkurigana);
 				} else {
-					mLastConversion = new ConversionInfo(s_noAnnotation, mCandidateList, index, mOpCount, mKanji.toString(), null);
+					mLastConversion = new ConversionInfo(s, mCandidateList, index, mOpCount, mKanji.toString(), null);
 				}
 			}
 

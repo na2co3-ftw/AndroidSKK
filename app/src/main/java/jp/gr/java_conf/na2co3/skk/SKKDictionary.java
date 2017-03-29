@@ -74,6 +74,7 @@ class SKKDictionary {
 				str = (String)tuple.getKey();
 				if (!str.startsWith(key)) {break;}
 				if (SKKUtils.isAlphabet(str.charAt(str.length()-1)) && !SKKUtils.isAlphabet(str.charAt(0))) {continue;} // 送りありエントリは飛ばす
+				if (str.contains("#")) {continue;}
 
 				list.add(str);
 				i++;

@@ -4,16 +4,34 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 class DictionaryManager {
-	class Entry {
+	static class Entry {
+		List<String> candidates = null;
+		List<List<String>> okuri_blocks = null;
+
 		public Entry(List<String> cd, List<List<String>> okr) {
 			candidates = cd;
 			okuri_blocks = okr;
 		}
+	}
 
-		List<String> candidates = null;
-		List<List<String>> okuri_blocks = null;
+	static class Candidate {
+		String dictionaryForm = null;
+		String annotation = null;
+		String value = null;
+
+		public Candidate(String key, String candidate) {
+			dictionaryForm = candidate;
+			int i = candidate.indexOf(';');
+			if (i != -1) {
+				annotation = candidate.substring(i + 1);
+				candidate = candidate.substring(0, i);
+			}
+			value = convCandidate(key, candidate);
+		}
 	}
 
 	private SKKDictionary mMainDict;
@@ -28,13 +46,13 @@ class DictionaryManager {
 		mUserDict = userDict;
 	}
 
-	List<String> findKanji(String key, String okuri) {
+	List<Candidate> findKanji(String key, String okuri) {
 		SKKUtils.dlog("findKanji(): key = " + key + ", okuri = " + okuri);
-		key = convSearchKey(key);
+		String convertedKey = convSearchKey(key);
 		okuri = convSearchOkuri(okuri);
 
-		Entry mainEntry = parseEntry(mMainDict.get(key));
-		Entry userEntry = parseEntry(mUserDict.get(key));
+		Entry mainEntry = parseEntry(mMainDict.get(convertedKey));
+		Entry userEntry = parseEntry(mUserDict.get(convertedKey));
 
 		if (BuildConfig.DEBUG) {
 			SKKUtils.dlog("*** Main dict entry ***");
@@ -52,7 +70,7 @@ class DictionaryManager {
 			}
 
 			if (mainEntry == null && userEntry == null) {
-				SKKUtils.dlog("Dictoinary: Can't find Kanji for " + key);
+				SKKUtils.dlog("Dictoinary: Can't find Kanji for " + convertedKey);
 				return null;
 			}
 		}
@@ -83,9 +101,16 @@ class DictionaryManager {
 				idx++;
 			}
 		}
-		if (list.size() == 0) {list = null;}
 
-		return list;
+		if (list.size() == 0) {
+			return null;
+		}
+
+		List<Candidate> candidates = new ArrayList<Candidate>();
+		for (String cand : list) {
+			candidates.add(new Candidate(key, cand));
+		}
+		return candidates;
 	}
 
 	void addEntry(String key, String val, String okuri) {
@@ -146,7 +171,7 @@ class DictionaryManager {
 		mUserDict.put(key, new_val.toString());
 	}
 
-	Entry parseEntry(String str) {
+	static Entry parseEntry(String str) {
 		if (str == null) {
 			return null;
 		}
@@ -206,15 +231,18 @@ class DictionaryManager {
 		return mUserDict.findKeys(key);
 	}
 
-	String convSearchKey(String key) {
+	static String convSearchKey(String key) {
 		key = SKKUtils.katakana2hirakana(key);
 		if (key.contains("ゔ")) {
 			key = key.replace("ゔ", "う゛");
 		}
+
+		key = key.replaceAll("\\d+", "#");
+
 		return key;
 	}
 
-	String convSearchOkuri(String okuri) {
+	static String convSearchOkuri(String okuri) {
 		if (okuri == null) {
 			return null;
 		}
@@ -223,6 +251,110 @@ class DictionaryManager {
 			okuri = okuri.replace("ゔ", "う゛");
 		}
 		return okuri;
+	}
+
+	private static final char[] NUM_KANJI = {'〇', '一', '二', '三', '四', '五', '六', '七', '八', '九'};
+	private static final String[] NUM_KANJI_UNIT = {"", "十", "百", "千"};
+	private static final String[] NUM_KANJI_UNIT2 = {"", "万", "億", "兆", "京", "垓", "𥝱", "穣", "溝", "澗", "正", "載", "極",
+			"恒河沙", "阿僧祇", "那由他", "不可思議", "無量大数"};
+
+	private static final char[] NUM_DAIJI = {'零', '壱', '弐', '参', '四', '伍', '六', '七', '八', '九'};
+	private static final String[] NUM_DAIJI_UNIT = {"", "拾", "百", "阡"};
+	private static final String[] NUM_DAIJI_UNIT2 = {"", "萬", "億", "兆", "京", "垓", "𥝱", "穣", "溝", "澗", "正", "載", "極",
+			"恒河沙", "阿僧祇", "那由他", "不可思議", "無量大数"};
+
+	static String convCandidate(String key, String candidate) {
+		Matcher keyMatcher = Pattern.compile("\\d+").matcher(key);
+		Matcher candMatcher = Pattern.compile("#(\\d)").matcher(candidate);
+
+		StringBuffer ret = new StringBuffer ();
+		while (keyMatcher.find() && candMatcher.find()) {
+			String num = keyMatcher.group();
+			String type = candMatcher.group(1);
+			candMatcher.appendReplacement(ret, convNum(num, type));
+		}
+		candMatcher.appendTail(ret);
+
+		return ret.toString();
+	}
+
+	static private String convNum(String num, String type) {
+		StringBuilder ret;
+		switch (type.charAt(0)) {
+			case '0':
+				return num;
+
+			case '1':
+				ret = new StringBuilder();
+				for (int i = 0; i < num.length(); i ++) {
+					ret.append((char)SKKUtils.hankaku2zenkaku(num.charAt(i)));
+				}
+				return ret.toString();
+
+			case '2':
+				ret = new StringBuilder();
+				for (int i = 0; i < num.length(); i ++) {
+					ret.append(NUM_KANJI[num.charAt(i) - '0']);
+				}
+				return ret.toString();
+
+			case '3':
+				return convKanjiNum(num, NUM_KANJI, NUM_KANJI_UNIT, NUM_KANJI_UNIT2);
+
+			case '5':
+				return convKanjiNum(num, NUM_DAIJI, NUM_DAIJI_UNIT, NUM_DAIJI_UNIT2);
+
+			case '8': {
+				int i = num.length() % 3;
+				if (i == 0 && num.length() != 0) {
+					i = 3;
+				}
+				ret = new StringBuilder();
+				ret.append(num.substring(0, i));
+				for (; i < num.length(); i += 3) {
+					ret.append(",");
+					ret.append(num.substring(i, i + 3));
+				}
+				return ret.toString();
+			}
+
+			case '9':
+				if (num.length() != 2) {
+					return num;
+				}
+				ret = new StringBuilder();
+				ret.append((char)SKKUtils.hankaku2zenkaku(num.charAt(0)));
+				ret.append(NUM_KANJI[num.charAt(1) - '0']);
+				return ret.toString();
+
+			default:
+				return "#" + type;
+		}
+	}
+
+	static private String convKanjiNum(String num, char[] kanji, String[] unit, String[] unit2) {
+		StringBuilder ret = new StringBuilder();
+		int len = num.length();
+		int pos = len - 1;
+
+		try {
+			for (int i = 0; i < len; i++) {
+				int digit = num.charAt(i) - '0';
+				if (digit == 0) continue;
+				if (pos % 4 == 0 || digit != 1) {
+					ret.append(kanji[digit]);
+				}
+				ret.append(unit[pos % 4]);
+				if (pos % 4 == 0) {
+					ret.append(unit2[pos / 4]);
+				}
+				pos--;
+			}
+		} catch (ArrayIndexOutOfBoundsException e) {
+			return num;
+		}
+
+		return ret.toString();
 	}
 
 	void rollBack() {
