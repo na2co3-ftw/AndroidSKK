@@ -34,7 +34,7 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
     public CandidateViewContainer(Context screen, AttributeSet attrs) {
         super(screen, attrs);
 
-		mButtonWidth = screen.getResources().getDimensionPixelSize(R.dimen.candidates_scrollbutton_width);
+        mButtonWidth = screen.getResources().getDimensionPixelSize(R.dimen.candidates_scrollbutton_width);
     }
 
     public void initViews() {
@@ -71,21 +71,21 @@ public class CandidateViewContainer extends LinearLayout implements OnTouchListe
         }
     }
 
-	public void setSize(int px) {
-		if (px == mFontSize) {return;}
+    public void setSize(int px) {
+        if (px == mFontSize) {return;}
 
-		if (mCandidates != null)  {
-			mCandidates.setTextSize(px);
-			mCandidates.setLayoutParams(new LinearLayout.LayoutParams(0, px+px/3, 1));
-		}
-		if (mButtonLeft != null)  {
-			mButtonLeft.setLayoutParams(new LinearLayout.LayoutParams(mButtonWidth, px+px/3));
-		}
-		if (mButtonRight != null) {
-			mButtonRight.setLayoutParams(new LinearLayout.LayoutParams(mButtonWidth, px+px/3));
-		}
+        if (mCandidates != null)  {
+            mCandidates.setTextSize(px);
+            mCandidates.setLayoutParams(new LinearLayout.LayoutParams(0, px+px/3, 1));
+        }
+        if (mButtonLeft != null)  {
+            mButtonLeft.setLayoutParams(new LinearLayout.LayoutParams(mButtonWidth, px+px/3));
+        }
+        if (mButtonRight != null) {
+            mButtonRight.setLayoutParams(new LinearLayout.LayoutParams(mButtonWidth, px+px/3));
+        }
         requestLayout();
 
         mFontSize = px;
-	}
+    }
 }

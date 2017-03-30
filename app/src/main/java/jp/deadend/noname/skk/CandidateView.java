@@ -33,10 +33,12 @@ public class CandidateView extends View {
 
     private static final int OUT_OF_BOUNDS = -1;
 
-	private CandidateViewContainer mContainer;
-    private SKKEngine mService;
+    private CandidateViewContainer mContainer;
+    private SKKService mService;
     private List<String> mSuggestions;
     private int mSelectedIndex;
+
+    private int mChoosedIndex = 0;
 
     private int mTouchX = OUT_OF_BOUNDS;
     private Drawable mSelectionHighlight;
@@ -49,7 +51,7 @@ public class CandidateView extends View {
 
     private static final int X_GAP = 5;
 
-    private static final List<String> EMPTY_LIST = new ArrayList<String>();
+    private static final List<String> EMPTY_LIST = new ArrayList<>();
 
     private boolean mScrolled;
 
@@ -128,19 +130,19 @@ public class CandidateView extends View {
      * A connection back to the service to communicate with the text field
      * @param listener
      */
-    public void setService(SKKEngine listener) {
+    public void setService(SKKService listener) {
         mService = listener;
     }
 
     public void setContainer(CandidateViewContainer c) {
-		mContainer = c;
-	}
+        mContainer = c;
+    }
 
-	public void setTextSize(int px) {
-		if (mPaint != null) {
-			mPaint.setTextSize(px);
-		}
-	}
+    public void setTextSize(int px) {
+        if (mPaint != null) {
+            mPaint.setTextSize(px);
+        }
+    }
 
     @Override
     public int computeHorizontalScrollRange() {
@@ -150,7 +152,7 @@ public class CandidateView extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int measuredWidth = resolveSize(50, widthMeasureSpec);
-		mScrollPixels = measuredWidth/12;
+        mScrollPixels = measuredWidth/12;
 
         // Get the desired height of the icon menu view (last row of items does
         // not have a divider below)
@@ -160,7 +162,7 @@ public class CandidateView extends View {
         final int desiredHeight = ((int)mPaint.getTextSize()) + mVerticalPadding
                 + padding.top + padding.bottom;
 */
-		int size = ((int)mPaint.getTextSize());
+        int size = ((int)mPaint.getTextSize());
         final int desiredHeight = size + size/3;
 
         // Maximum possible width and desired height
@@ -184,10 +186,10 @@ public class CandidateView extends View {
             mWordWidth[i] = wordWidth;
 
             x += wordWidth;
-		}
+        }
 
         mTotalWidth = x;
-	}
+    }
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -220,7 +222,7 @@ public class CandidateView extends View {
             }
 
             if (canvas != null) {
-                if (i == mService.mChoosedIndex) {
+                if (i == mChoosedIndex) {
                     paint.setFakeBoldText(true);
                     paint.setColor(mColorRecommended);
                 } else {
@@ -232,7 +234,7 @@ public class CandidateView extends View {
                         mWordX[i] + mWordWidth[i] + 0.5f, height + 1, paint);
                 paint.setFakeBoldText(false);
             }
-		}
+        }
 
         if (scrolled && mTargetScrollX != getScrollX()) {
             scrollToTarget();
@@ -258,23 +260,37 @@ public class CandidateView extends View {
         invalidate();
     }
 
-	private void setScrollButtonsEnabled(int targetX) {
+    private void setScrollButtonsEnabled(int targetX) {
         boolean left  = targetX > 0;
         boolean right = targetX + getWidth() < mTotalWidth;
         if (mContainer != null) {mContainer.setScrollButtonsEnabled(left, right);}
-	}
+    }
 
-    public void setSuggestions(List<String> suggestions) {
-        if (suggestions != null) {
-            mSuggestions = new ArrayList<String>(suggestions);
+    public void setContents(List<String> list) {
+        if (list != null) {
+            mSuggestions = new ArrayList<>();
+            for (String str: list) {
+                int semicolon = str.indexOf(";");
+                String newstr;
+                if (semicolon == -1) {
+                    newstr = SKKUtils.processConcatAndEscape(str);
+                } else {
+                    newstr =
+                        SKKUtils.processConcatAndEscape(str.substring(0, semicolon))
+                        + ";"
+                        + SKKUtils.processConcatAndEscape(str.substring(semicolon+1, str.length()));
+                }
+                mSuggestions.add(newstr);
+            }
         } else {
-			mSuggestions = EMPTY_LIST;
-		}
+            mSuggestions = EMPTY_LIST;
+        }
         scrollTo(0, 0);
         mScrollX = 0;
         mTargetScrollX = 0;
         mTouchX = OUT_OF_BOUNDS;
         mSelectedIndex = -1;
+        mChoosedIndex = 0;
 
         // Compute the total width
         calculateWidths();
@@ -283,7 +299,6 @@ public class CandidateView extends View {
     }
 
     public void scrollPrev() {
-      SKKUtils.dlog("scrollPrev(): mSuggestion.size() = " + mSuggestions.size() + " mScrollX = " + mScrollX + " getWidth() = " + getWidth());
       mScrollX = getScrollX();
       int i = 0;
         final int count = mSuggestions.size();
@@ -299,11 +314,9 @@ public class CandidateView extends View {
         int leftEdge = mWordX[firstItem] + mWordWidth[firstItem] - getWidth();
         if (leftEdge < 0) leftEdge = 0;
         updateScrollPosition(leftEdge);
-        SKKUtils.dlog("ScrollPrev() Finished: leftEdge = " + leftEdge);
     }
 
     public void scrollNext() {
-      SKKUtils.dlog("scrollNext(): mSuggestion.size() = " + mSuggestions.size() + " mScrollX = " + mScrollX);
         int i = 0;
         mScrollX = getScrollX();
         int targetX = mScrollX;
@@ -318,7 +331,6 @@ public class CandidateView extends View {
             i++;
         }
         updateScrollPosition(targetX);
-        SKKUtils.dlog("scrollNext() Finished: targetX = " + targetX);
     }
 
     private void updateScrollPosition(int targetX) {
@@ -335,7 +347,7 @@ public class CandidateView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent me) {
 
-    	// スクロールした時にはここで処理されて終わりのようだ。ソースの頭で定義している。
+        // スクロールした時にはここで処理されて終わりのようだ。ソースの頭で定義している。
         if (mGestureDetector.onTouchEvent(me)) {
             return true;
         }
@@ -374,23 +386,13 @@ public class CandidateView extends View {
         return true;
     }
 
-	public void choose(int choosedIndex) {
+    public void choose(int choosedIndex) {
         if (mWordX[choosedIndex] != getScrollX()) {
-	       	scrollTo(mWordX[choosedIndex], getScrollY());
-			setScrollButtonsEnabled(mWordX[choosedIndex]);
-			invalidate();
-			mScrolled = false;
-		}
-	}
-
-	String get(int index) {
-		String s;
-		try {
-			s = mSuggestions.get(index);
-		} catch (NullPointerException | IndexOutOfBoundsException e) {
-			return "";
-		}
-
-		return s;
-	}
+            scrollTo(mWordX[choosedIndex], getScrollY());
+            setScrollButtonsEnabled(mWordX[choosedIndex]);
+            invalidate();
+            mScrolled = false;
+            mChoosedIndex = choosedIndex;
+        }
+    }
 }

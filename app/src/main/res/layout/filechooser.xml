@@ -8,12 +8,12 @@
 	    android:id="@+id/TextDirName"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:singleLine="true"
+		android:maxLines="1"
 		android:textStyle="bold"
 		android:layout_marginBottom="2dip"
 	/>
 	<ListView
-		android:id="@id/android:list"
+		android:id="@+id/ListFileChooser"
 		android:layout_width="fill_parent"
 		android:layout_height="0dip"
 		android:scrollbars="vertical"
@@ -25,7 +25,7 @@
 	    android:id="@+id/EditTextFileName"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:singleLine="true"
+		android:maxLines="1"
 		android:focusable="true"
 		android:inputType="text"
 		android:layout_marginBottom="2dip"
@@ -37,19 +37,19 @@
 	    android:layout_height="wrap_content"
 	>
 		<Button
-		    android:id="@+id/ButtonOK"
-			android:layout_weight="1"
-			android:layout_width="0dip"
-			android:layout_height="wrap_content"
-			android:text="@string/label_OK"
-			android:layout_gravity="center_horizontal"
-		/>
-		<Button
 		    android:id="@+id/ButtonCancel"
 			android:layout_weight="1"
 			android:layout_width="0dip"
 			android:layout_height="wrap_content"
 			android:text="@string/label_CANCEL"
 		/>
+		<Button
+			android:id="@+id/ButtonOK"
+			android:layout_weight="1"
+			android:layout_width="0dip"
+			android:layout_height="wrap_content"
+			android:text="@string/label_OK"
+			android:layout_gravity="center_horizontal"
+			/>
 	</LinearLayout>
 </LinearLayout>

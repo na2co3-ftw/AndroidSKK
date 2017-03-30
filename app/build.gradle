@@ -1,15 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.3"
+    compileSdkVersion 25
+    buildToolsVersion '25.0.2'
 
     defaultConfig {
         applicationId "jp.deadend.noname.skk"
-        minSdkVersion 4
-        targetSdkVersion 4
-        versionCode 26
-        versionName "2.8.1"
+        minSdkVersion 9
+        targetSdkVersion 25
+        versionCode 27
+        versionName "3.0"
     }
 
     buildTypes {
@@ -22,4 +22,6 @@ android {
 
 dependencies {
     compile files('libs/jdbm-1.0.jar')
+    compile 'com.android.support:support-v4:25.+'
+    compile 'com.android.support:appcompat-v7:25.+'
 }

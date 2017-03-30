@@ -5,39 +5,44 @@
 	<ListPreference
 		android:key="PrefKeyKutoutenType"
 		android:title="句読点のタイプ"
-		android:summary="かなモードで入力される句読点を選択"
+		android:summary="かなモードで入力される句読点"
 		android:entries="@array/kutouten_entries"
 		android:entryValues="@array/kutouten_values"
 		android:dialogTitle="句読点のタイプ"
 		android:defaultValue="en" />
 	<com.hlidskialf.android.preference.SeekBarPreference
 		android:key="PrefKeyCandidatesSize"
-		android:title="候補表示のサイズ"
+		android:title="候補表示の文字サイズ"
 		android:dialogTitle="候補表示の文字サイズ"
 		android:defaultValue="18"
 		android:text=" sp"
 		seekbar:min="12"
 		android:max="48" />
 	<Preference
-		android:title="@string/label_dictool_activity"
-		android:summary="ユーザー辞書の編集" >
+		android:title="@string/label_dicmanager_activity" >
+		<intent android:action="android.intent.action.MAIN"
+				android:targetPackage="jp.deadend.noname.skk"
+				android:targetClass="jp.deadend.noname.skk.SKKDicManager" />
+	</Preference>
+	<Preference
+		android:title="@string/label_dictool_activity" >
 		<intent android:action="android.intent.action.MAIN"
 			android:targetPackage="jp.deadend.noname.skk"
-			android:targetClass="jp.deadend.noname.skk.SKKDicTool" />
+			android:targetClass="jp.deadend.noname.skk.SKKUserDicTool" />
 	</Preference>
 	<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
 		android:title="@string/label_pref_hardkeyboard">
 		<jp.deadend.noname.skk.SetKeyPreference
 			android:key="PrefKeyKanaKey"
 			android:title="かなキー"
-			android:summary="かなモードに移行するキーを設定 (デフォルトはIS01の「文字」キー)"
+			android:summary="かなモードに移行するキー"
 			android:dialogTitle="Press a key ..."
 			android:negativeButtonText="キャンセル"
 			android:positiveButtonText="OK" />
 		<ListPreference
 			android:key="PrefKeyModKanaKey"
 			android:title="かなキーの修飾キー"
-			android:summary="かなモード移行時に同時押しをするキーを設定"
+			android:summary="かなモード移行時に同時押しをするキー"
 			android:entries="@array/modifier_entries"
 			android:entryValues="@array/modifier_values"
 			android:dialogTitle="かなキーの修飾キー"
@@ -45,39 +50,36 @@
 		<CheckBoxPreference
 			android:key="PrefKeyToggleKanaKey"
 			android:title="かなキーをトグルに"
-			android:summary="かなモードでかなキーを押すとASCIIモードに戻る"
+			android:summary="オンだと，かなモードでかなキーを押すとASCIIモードに戻ります"
 			android:defaultValue="true" />
 		<jp.deadend.noname.skk.SetKeyPreference
 			android:key="PrefKeyCancelKey"
 			android:title="キャンセルキー"
-			android:summary="キャンセルキーを設定"
 			android:dialogTitle="Press a key ..."
 			android:negativeButtonText="キャンセル"
 			android:positiveButtonText="OK" />
 		<ListPreference
 			android:key="PrefKeyModCancelKey"
 			android:title="キャンセルキーの修飾キー"
-			android:summary="キャンセル時に同時押しをするキーを設定"
+			android:summary="キャンセル時に同時押しをするキー"
 			android:entries="@array/modifier_entries"
 			android:entryValues="@array/modifier_values"
 			android:dialogTitle="キャンセルキーの修飾キー"
 			android:defaultValue="none" />
-		<EditTextPreference
-			android:key="PrefKeyCandidatesOpCount"
-			android:title="候補表示までの回数"
-			android:summary="候補一覧を表示するまでに何回変換するか（ゼロだと表示しない）"
-			android:dialogTitle="候補表示までの回数"
-			android:inputType="number"
-			android:maxLength="1" />
+		<CheckBoxPreference
+			android:key="PrefKeyUseCandidatesView"
+			android:title="補完・候補の一覧表示"
+			android:summary="補完候補や変換候補を一覧表示します"
+			android:defaultValue="true" />
 		<CheckBoxPreference
 			android:key="PrefKeyStickyMeta"
 			android:title="Sticky shift/alt"
-			android:summary="shiftとaltキーを同時押しでなくても効くようにする"
+			android:summary="shiftとaltキーを同時押しでなくても効くようにします"
 			android:defaultValue="false" />
 		<CheckBoxPreference
 			android:key="PrefKeySandS"
 			android:title="SandS"
-			android:summary="スペースキーをshiftとして使う"
+			android:summary="スペースキーをshiftとして使います"
 			android:defaultValue="false" />
 	</PreferenceScreen>
 	<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
@@ -166,7 +168,7 @@
 	</PreferenceScreen>
 	<Preference
 		android:title="辞書ファイル解凍"
-		android:summary="辞書ファイルを用意します" >
+		android:summary="最初に一回実行してください" >
 		<intent android:action="android.intent.action.MAIN"
 			android:targetPackage="jp.deadend.noname.skk"
 			android:targetClass="jp.deadend.noname.skk.SKKDicExtractActivity" />
