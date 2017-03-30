@@ -5,7 +5,7 @@ android {
     buildToolsVersion '25.0.2'
 
     defaultConfig {
-        applicationId "jp.deadend.noname.skk"
+        applicationId "jp.gr.java_conf.na2co3.skk"
         minSdkVersion 9
         targetSdkVersion 25
         versionCode 27

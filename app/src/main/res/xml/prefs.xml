@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:seekbar="http://schemas.android.com/apk/res/jp.deadend.noname.skk"
+	xmlns:seekbar="http://schemas.android.com/apk/res/jp.gr.java_conf.na2co3.skk"
 	android:title="@string/label_pref_activity">
 	<ListPreference
 		android:key="PrefKeyKutoutenType"
@@ -21,18 +21,18 @@
 	<Preference
 		android:title="@string/label_dicmanager_activity" >
 		<intent android:action="android.intent.action.MAIN"
-				android:targetPackage="jp.deadend.noname.skk"
-				android:targetClass="jp.deadend.noname.skk.SKKDicManager" />
+				android:targetPackage="jp.gr.java_conf.na2co3.skk"
+				android:targetClass="jp.gr.java_conf.na2co3.skk.SKKDicManager" />
 	</Preference>
 	<Preference
 		android:title="@string/label_dictool_activity" >
 		<intent android:action="android.intent.action.MAIN"
-			android:targetPackage="jp.deadend.noname.skk"
-			android:targetClass="jp.deadend.noname.skk.SKKUserDicTool" />
+			android:targetPackage="jp.gr.java_conf.na2co3.skk"
+			android:targetClass="jp.gr.java_conf.na2co3.skk.SKKUserDicTool" />
 	</Preference>
 	<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
 		android:title="@string/label_pref_hardkeyboard">
-		<jp.deadend.noname.skk.SetKeyPreference
+		<jp.gr.java_conf.na2co3.skk.SetKeyPreference
 			android:key="PrefKeyKanaKey"
 			android:title="かなキー"
 			android:summary="かなモードに移行するキー"
@@ -52,7 +52,7 @@
 			android:title="かなキーをトグルに"
 			android:summary="オンだと，かなモードでかなキーを押すとASCIIモードに戻ります"
 			android:defaultValue="true" />
-		<jp.deadend.noname.skk.SetKeyPreference
+		<jp.gr.java_conf.na2co3.skk.SetKeyPreference
 			android:key="PrefKeyCancelKey"
 			android:title="キャンセルキー"
 			android:dialogTitle="Press a key ..."
@@ -170,7 +170,7 @@
 		android:title="辞書ファイル解凍"
 		android:summary="最初に一回実行してください" >
 		<intent android:action="android.intent.action.MAIN"
-			android:targetPackage="jp.deadend.noname.skk"
-			android:targetClass="jp.deadend.noname.skk.SKKDicExtractActivity" />
+			android:targetPackage="jp.gr.java_conf.na2co3.skk"
+			android:targetClass="jp.gr.java_conf.na2co3.skk.SKKDicExtractActivity" />
 	</Preference>
 </PreferenceScreen>
