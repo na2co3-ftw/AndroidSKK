@@ -67,6 +67,9 @@ public class QwertyKeyboardView extends KeyboardView implements KeyboardView.OnK
         if (key.codes[0] == KEYCODE_QWERTY_ENTER) {
             mService.keyDownUp(KeyEvent.KEYCODE_SEARCH);
             return true;
+        } else if (key.codes[0] == KeyEvent.KEYCODE_SPACE) {
+            mService.showInputMethodPicker();
+            return true;
         } else if (key.codes[0] == KEYCODE_QWERTY_TOJP) {
             mService.showMenuDialog();
             return true;

@@ -47,7 +47,10 @@ public class AbbrevKeyboardView extends KeyboardView implements KeyboardView.OnK
 
     @Override
     protected boolean onLongPress (Keyboard.Key key) {
-        if (key.codes[0] == KEYCODE_ABBREV_ZENKAKU) {
+        if (key.codes[0] == KeyEvent.KEYCODE_SPACE) {
+            mService.showInputMethodPicker();
+            return true;
+        } else if (key.codes[0] == KEYCODE_ABBREV_ZENKAKU) {
             mService.showMenuDialog();
             return true;
         }
