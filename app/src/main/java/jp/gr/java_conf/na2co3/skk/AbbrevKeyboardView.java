@@ -46,6 +46,16 @@ public class AbbrevKeyboardView extends KeyboardView implements KeyboardView.OnK
     }
 
     @Override
+    protected boolean onLongPress (Keyboard.Key key) {
+        if (key.codes[0] == KEYCODE_ABBREV_ZENKAKU) {
+            mService.showMenuDialog();
+            return true;
+        }
+
+        return super.onLongPress(key);
+    }
+
+    @Override
     public void onKey(int primaryCode, int[] keyCodes) {
         if (primaryCode == Keyboard.KEYCODE_DELETE) {
             if (!mService.handleBackspace()) {

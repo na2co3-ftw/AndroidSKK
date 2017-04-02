@@ -68,6 +68,8 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
     private float mFlickStartY = -1;
     private String[] mCurrentPopupLabels = POPUP_LABELS_NULL;
 
+    private boolean isToQwertyLongPressed = false;
+
     private boolean mUsePopup = true;
     private boolean mFixedPopup = false;
     private PopupWindow mPopup = null;
@@ -748,6 +750,10 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
         } else if (code == KEYCODE_FLICK_JP_SPACE) {
             mService.sendToMushroom();
             return true;
+        } else if (code == KEYCODE_FLICK_JP_TOQWERTY) {
+            mService.showMenuDialog();
+            isToQwertyLongPressed = true;
+            return true;
         }
 
         return super.onLongPress(key);
@@ -863,10 +869,14 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
             }
             break;
         case KEYCODE_FLICK_JP_TOQWERTY:
-            if (isShifted()) {
-                mService.processKey('/');
+            if (isToQwertyLongPressed) {
+                isToQwertyLongPressed = false;
             } else {
-                mService.processKey('l');
+                if (isShifted()) {
+                    mService.processKey('/');
+                } else {
+                    mService.processKey('l');
+                }
             }
             break;
         case KEYCODE_FLICK_JP_CHAR_A:

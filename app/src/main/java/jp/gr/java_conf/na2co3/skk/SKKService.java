@@ -17,11 +17,13 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import jp.gr.java_conf.na2co3.dialog.ListMenuServiceDialog;
 import jp.gr.java_conf.na2co3.skk.engine.*;
 
 public class SKKService extends InputMethodService {
@@ -617,6 +619,40 @@ public class SKKService extends InputMethodService {
         startActivity(mushroom);
     }
 
+    void showInputMethodPicker() {
+        ((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE)).showInputMethodPicker();
+    }
+
+    void showMenuDialog() {
+        ListMenuServiceDialog dialog = new ListMenuServiceDialog(new String[] {
+                getString(R.string.label_input_method),
+                getString(R.string.label_pref_activity),
+                getString(R.string.label_mushroom)
+        });
+        dialog.setListener(
+                new ListMenuServiceDialog.Listener() {
+                    @Override
+                    public void onClick(int which) {
+                        switch (which) {
+                            case 0:
+                                showInputMethodPicker();
+                                break;
+                            case 1:
+                                Intent intent = new Intent(SKKService.this, SKKPrefs.class);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                                        Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                startActivity(intent);
+                                break;
+                            case 2:
+                                sendToMushroom();
+                                break;
+                        }
+                    }
+                }
+        );
+        dialog.show(getCurrentSoftKeyboard());
+    }
+
     void changeLastChar(String type) { mEngine.changeLastChar(type); }
 
     public void setCandidates(List<String> list) {
@@ -668,6 +704,22 @@ public class SKKService extends InputMethodService {
                 if (mAbbrevKeyboardView != null) { setInputView(mAbbrevKeyboardView); }
             }
         }
+    }
+
+    private View getCurrentSoftKeyboard() {
+        SKKState state = mEngine.getState();
+        if (mUseSoftKeyboard) {
+            if (state == SKKASCIIState.INSTANCE) {
+                return mQwertyInputView;
+            } else if (state == SKKHiraganaState.INSTANCE) {
+                return mFlickJPInputView;
+            } else if (state == SKKKatakanaState.INSTANCE) {
+                return mFlickJPInputView;
+            } else if (state == SKKAbbrevState.INSTANCE) {
+                return mAbbrevKeyboardView;
+            }
+        }
+        return null;
     }
 
     @Override
