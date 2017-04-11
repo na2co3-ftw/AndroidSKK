@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<style name="service_dialog_theme" parent="@android:style/Theme.Dialog"/>
+	<style name="pref_theme" parent="Theme.AppCompat.Light.NoActionBar">
+		<item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+	</style>
+	<style name="service_dialog_theme" parent="@android:style/Theme.Dialog" />
 </resources>

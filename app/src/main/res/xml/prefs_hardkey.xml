@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+	android:title="@string/label_pref_hardkeyboard">
+	<!--<jp.gr.java_conf.na2co3.skk.SetKeyPreference-->
+		<!--android:key="PrefKeyKanaKey"-->
+		<!--android:title="かなキー"-->
+		<!--android:summary="かなモードに移行するキー"-->
+		<!--android:dialogTitle="Press a key ..."-->
+		<!--android:negativeButtonText="キャンセル"-->
+		<!--android:positiveButtonText="OK" />-->
+	<ListPreference
+		android:key="PrefKeyModKanaKey"
+		android:title="かなキーの修飾キー"
+		android:summary="かなモード移行時に同時押しをするキー"
+		android:entries="@array/modifier_entries"
+		android:entryValues="@array/modifier_values"
+		android:dialogTitle="かなキーの修飾キー"
+		android:defaultValue="none" />
+	<CheckBoxPreference
+		android:key="PrefKeyToggleKanaKey"
+		android:title="かなキーをトグルに"
+		android:summary="オンだと，かなモードでかなキーを押すとASCIIモードに戻ります"
+		android:defaultValue="true" />
+	<!--<jp.gr.java_conf.na2co3.skk.SetKeyPreference-->
+		<!--android:key="PrefKeyCancelKey"-->
+		<!--android:title="キャンセルキー"-->
+		<!--android:dialogTitle="Press a key ..."-->
+		<!--android:negativeButtonText="キャンセル"-->
+		<!--android:positiveButtonText="OK" />-->
+	<ListPreference
+		android:key="PrefKeyModCancelKey"
+		android:title="キャンセルキーの修飾キー"
+		android:summary="キャンセル時に同時押しをするキー"
+		android:entries="@array/modifier_entries"
+		android:entryValues="@array/modifier_values"
+		android:dialogTitle="キャンセルキーの修飾キー"
+		android:defaultValue="none" />
+	<CheckBoxPreference
+		android:key="PrefKeyUseCandidatesView"
+		android:title="補完・候補の一覧表示"
+		android:summary="補完候補や変換候補を一覧表示します"
+		android:defaultValue="true" />
+	<CheckBoxPreference
+		android:key="PrefKeyStickyMeta"
+		android:title="Sticky shift/alt"
+		android:summary="shiftとaltキーを同時押しでなくても効くようにします"
+		android:defaultValue="false" />
+	<CheckBoxPreference
+		android:key="PrefKeySandS"
+		android:title="SandS"
+		android:summary="スペースキーをshiftとして使います"
+		android:defaultValue="false" />
+</PreferenceScreen>

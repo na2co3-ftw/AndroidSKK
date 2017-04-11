@@ -13,7 +13,7 @@
 		</service>
 
 		<activity android:name="SKKPrefs"
-			android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+			android:theme="@style/pref_theme"
 			android:label="@string/label_pref_activity" >
 		</activity>
 		<activity android:name="SKKDicExtractActivity"

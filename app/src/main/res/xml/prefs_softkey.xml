@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:seekbar="http://schemas.android.com/apk/res/jp.gr.java_conf.na2co3.skk"
+	android:title="@string/label_pref_softkeyboard">
+	<ListPreference
+		android:key="PrefKeyUseSoftKey"
+		android:title="ソフトウェアキーボードの使用"
+		android:entries="@array/usesoftkey_entries"
+		android:entryValues="@array/usesoftkey_values"
+		android:defaultValue="auto" />
+	<!--<com.hlidskialf.android.preference.SeekBarPreference-->
+		<!--android:key="PrefKeyFlickSensitivity"-->
+		<!--android:title="フリック感度"-->
+		<!--android:summary="少ない値のほうが敏感になります"-->
+		<!--android:dialogMessage="少ない値のほうが敏感になります"-->
+		<!--android:defaultValue="30"-->
+		<!--android:text=" px"-->
+		<!--seekbar:min="5"-->
+		<!--android:max="150" />-->
+	<ListPreference
+		android:key="PrefKeyCurveSensitivity"
+		android:title="フリック曲げ角度の感度"
+		android:summary="「低」にすると，鋭く曲げる必要があります"
+		android:entries="@array/curve_sensitivity_entries"
+		android:entryValues="@array/curve_sensitivity_values"
+		android:dialogTitle="フリック曲げ感度"
+		android:defaultValue="high" />
+	<CheckBoxPreference
+		android:key="PrefKeyUsePopup"
+		android:title="ポップアップの使用"
+		android:summary="フリック入力用のガイドを表示します"
+		android:disableDependentsState="false"
+		android:defaultValue="true" />
+	<CheckBoxPreference
+		android:key="PrefKeyFixedPopup"
+		android:title="ポップアップの固定"
+		android:summary="フリック入力ガイドを，常に上部の同じ場所に表示します"
+		android:dependency="PrefKeyUsePopup"
+		android:defaultValue="true" />
+	<CheckBoxPreference
+		android:key="PrefKeyUseSoftCancelKey"
+		android:title="キャンセルキーの使用"
+		android:summary="小文字キーのかわりにキャンセルキーを使います"
+		android:defaultValue="false" />
+	<!--<com.hlidskialf.android.preference.SeekBarPreference-->
+		<!--android:key="PrefKeyKeyHeightPort"-->
+		<!--android:title="キーボードの高さ（縦画面）"-->
+		<!--android:dialogMessage="縦画面での高さを指定してください（画面の高さに対する割合）"-->
+		<!--android:defaultValue="30"-->
+		<!--android:text=" %"-->
+		<!--seekbar:min="20"-->
+		<!--android:max="50" />-->
+	<!--<com.hlidskialf.android.preference.SeekBarPreference-->
+		<!--android:key="PrefKeyKeyHeightLand"-->
+		<!--android:title="キーボードの高さ（横画面）"-->
+		<!--android:dialogMessage="横画面での高さを指定してください（画面の高さに対する割合）"-->
+		<!--android:defaultValue="30"-->
+		<!--android:text=" %"-->
+		<!--seekbar:min="20"-->
+		<!--android:max="50" />-->
+	<!--<com.hlidskialf.android.preference.SeekBarPreference-->
+		<!--android:key="PrefKeyKeyWidthPort"-->
+		<!--android:title="日本語キーボードの幅（縦画面）"-->
+		<!--android:dialogMessage="縦画面での幅を指定してください（画面の幅に対する割合）"-->
+		<!--android:defaultValue="100"-->
+		<!--android:text=" %"-->
+		<!--seekbar:min="40"-->
+		<!--android:max="100"-->
+		<!--seekbar:step="5" />-->
+	<!--<com.hlidskialf.android.preference.SeekBarPreference-->
+		<!--android:key="PrefKeyKeyWidthLand"-->
+		<!--android:title="日本語キーボードの幅（横画面）"-->
+		<!--android:dialogMessage="横画面での幅を指定してください（画面の幅に対する割合）"-->
+		<!--android:defaultValue="100"-->
+		<!--android:text=" %"-->
+		<!--seekbar:min="40"-->
+		<!--android:max="100"-->
+		<!--seekbar:step="5" />-->
+	<ListPreference
+		android:key="PrefKeyKeyPosition"
+		android:title="日本語キーボードの位置"
+		android:entries="@array/position_entries"
+		android:entryValues="@array/position_values"
+		android:dialogTitle="日本語キーボードの位置"
+		android:defaultValue="center" />
+</PreferenceScreen>

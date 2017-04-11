@@ -1,50 +1,47 @@
 package jp.gr.java_conf.na2co3.skk;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.content.Context;
-import android.preference.CheckBoxPreference;
-import android.preference.Preference;
-import android.preference.Preference.OnPreferenceClickListener;
-import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatDelegate;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.Preference;
+import android.support.v7.preference.PreferenceFragmentCompat;
+import android.support.v7.preference.PreferenceFragmentCompat.OnPreferenceStartFragmentCallback;
 import android.view.inputmethod.InputMethodManager;
 import android.view.KeyEvent;
 import android.support.v7.widget.Toolbar;
 
-public class SKKPrefs extends PreferenceActivity {
+public class SKKPrefs extends AppCompatActivity implements OnPreferenceStartFragmentCallback {
+    public static final String FRAGMENT = "fragment";
+    public static final String TITLE = "title";
+
     @Override
     protected void onCreate(Bundle icicle) {
-        AppCompatDelegate delegate = AppCompatDelegate.create(this, null);
-        delegate.installViewFactory();
-        delegate.onCreate(icicle);
         super.onCreate(icicle);
-        delegate.setContentView(R.layout.skkprefs);
-        delegate.setSupportActionBar((Toolbar)findViewById(R.id.pref_toolbar));
-        addPreferencesFromResource(R.xml.prefs);
+        setContentView(R.layout.skkprefs);
+        setSupportActionBar((Toolbar)findViewById(R.id.pref_toolbar));
 
-        final CheckBoxPreference stickyPr = (CheckBoxPreference)findPreference(getString(R.string.prefkey_sticky_meta));
-        final CheckBoxPreference sandsPr = (CheckBoxPreference)findPreference(getString(R.string.prefkey_sands));
-        stickyPr.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                sandsPr.setEnabled(!stickyPr.isChecked());
-                return true;
+        Fragment fragment = null;
+        Intent intent = getIntent();
+        if (intent != null) {
+            String fragmentName = intent.getStringExtra(FRAGMENT);
+            if (fragmentName != null) {
+                fragment = Fragment.instantiate(this, fragmentName, null);
             }
-        });
-        sandsPr.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                stickyPr.setEnabled(!sandsPr.isChecked());
-                return true;
-            }
-        });
 
-        if (stickyPr.isChecked()) {
-            sandsPr.setEnabled(false);
-        } else if (sandsPr.isChecked()) {
-            stickyPr.setEnabled(false);
+            String title = intent.getStringExtra(TITLE);
+            if (title != null) {
+                setTitle(title);
+            }
         }
+        if (fragment == null) {
+            fragment = new SKKPrefsFragment();
+        }
+
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.pref_content, fragment).commit();
     }
 
     @Override
@@ -53,6 +50,21 @@ public class SKKPrefs extends PreferenceActivity {
 
         InputMethodManager inputMethodManager = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
         inputMethodManager.sendAppPrivateCommand(null, SKKService.ACTION_READ_PREFS, null);
+    }
+
+    @Override
+    public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
+        String fragmentName = pref.getFragment();
+        if (!SKKPrefsFragment.class.getName().equals(fragmentName) &&
+            !HardKeyPrefsFragment.class.getName().equals(fragmentName) &&
+            !SoftKeyPrefsFragment.class.getName().equals(fragmentName)) {
+            throw new IllegalArgumentException("Invalid fragment: " + fragmentName);
+        }
+        Intent intent = new Intent(SKKPrefs.this, SKKPrefs.class);
+        intent.putExtra(FRAGMENT, pref.getFragment());
+        intent.putExtra(TITLE, pref.getTitle());
+        startActivity(intent);
+        return true;
     }
 
     static String getKutoutenType(Context context) {
