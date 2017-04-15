@@ -28,9 +28,9 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 	private static final int KEYCODE_FLICK_JP_CHAR_WA	= -210;
 	private static final int KEYCODE_FLICK_JP_CHAR_TEN	= -211;
 	private static final int KEYCODE_FLICK_JP_NONE		= -1000;
-	private static final int KEYCODE_FLICK_JP_LEFT		= -1001;
-	private static final int KEYCODE_FLICK_JP_RIGHT		= -1002;
-	private static final int KEYCODE_FLICK_JP_MOJI		= -1003;
+	private static final int KEYCODE_FLICK_JP_MOJI		= -1001;
+	private static final int KEYCODE_FLICK_JP_LEFT		= -1002;
+	private static final int KEYCODE_FLICK_JP_RIGHT		= -1003;
 	private static final int KEYCODE_FLICK_JP_SPACE		= -1004;
 	private static final int KEYCODE_FLICK_JP_TOQWERTY	= -1005;
 	private static final int KEYCODE_FLICK_JP_KOMOJI	= -1006;
