@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<style name="pref_theme" parent="Theme.AppCompat.Light.NoActionBar">
-		<item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+		<item name="preferenceTheme">@style/MyPreferenceThemeOverlay</item>
 	</style>
+	<style name="MyPreferenceThemeOverlay" parent="PreferenceThemeOverlay">
+		<item name="android:textAppearanceMedium">@style/textAppearancePrimaryMedium</item>
+	</style>
+	<style name="textAppearancePrimaryMedium" parent="TextAppearance.AppCompat.Medium">
+		<item name="android:textColor">?android:attr/textColorPrimary</item>
+	</style>
+
 	<style name="service_dialog_theme" parent="@android:style/Theme.Dialog" />
 </resources>

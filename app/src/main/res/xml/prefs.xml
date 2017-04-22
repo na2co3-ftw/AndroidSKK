@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res-auto"
-	xmlns:seekbar="http://schemas.android.com/apk/res/jp.gr.java_conf.na2co3.skk"
 	android:title="@string/label_pref_activity">
 	<ListPreference
 		android:key="PrefKeyKutoutenType"
@@ -11,14 +10,13 @@
 		android:entryValues="@array/kutouten_values"
 		android:dialogTitle="句読点のタイプ"
 		android:defaultValue="en" />
-	<!--<com.hlidskialf.android.preference.SeekBarPreference-->
-		<!--android:key="PrefKeyCandidatesSize"-->
-		<!--android:title="候補表示の文字サイズ"-->
-		<!--android:dialogTitle="候補表示の文字サイズ"-->
-		<!--android:defaultValue="18"-->
-		<!--android:text=" sp"-->
-		<!--seekbar:min="12"-->
-		<!--android:max="48" />-->
+	<jp.gr.java_conf.na2co3.skk.SeekBarPreference
+		android:key="PrefKeyCandidatesSize"
+		android:title="候補表示の文字サイズ"
+		android:defaultValue="18"
+		app:unit="sp"
+		app:min="12"
+		android:max="48" />
 	<Preference
 		android:title="@string/label_dicmanager_activity" >
 		<intent android:action="android.intent.action.MAIN"

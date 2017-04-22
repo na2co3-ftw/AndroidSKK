@@ -23,4 +23,6 @@
 	<dimen name="candidate_vertical_padding">6sp</dimen>
 	<dimen name="candidates_scroll_size">40dp</dimen>
 	<dimen name="candidates_scrollbutton_width">40dp</dimen>
+
+	<dimen name="preference_seekbar_value_width">48dp</dimen>
 </resources>
