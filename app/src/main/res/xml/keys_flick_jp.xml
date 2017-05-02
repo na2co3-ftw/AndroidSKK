@@ -6,7 +6,7 @@
 	android:keyHeight="1px"
 	>
 	<Row>
-		<Key android:codes="-1001" android:keyLabel="カナ" />
+		<Key android:codes="-1001" android:keyLabel="かな" />
 		<Key android:codes="-201" android:keyLabel="あ" />
 		<Key android:codes="-202" android:keyLabel="か" />
 		<Key android:codes="-203" android:keyLabel="さ" />

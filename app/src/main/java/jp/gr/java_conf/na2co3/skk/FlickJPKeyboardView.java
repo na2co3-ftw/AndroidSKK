@@ -228,7 +228,7 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 				key.label = "わ";
 				break;
 			case KEYCODE_FLICK_JP_MOJI:
-				key.label = "カナ";
+				key.label = "かな";
 				break;
 			}
 		}
@@ -270,7 +270,7 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 				key.label = "ワ";
 				break;
 			case KEYCODE_FLICK_JP_MOJI:
-				key.label = "かな";
+				key.label = "カナ";
 				break;
 			}
 		}
