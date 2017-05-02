@@ -83,6 +83,8 @@ public class SKKEngine extends InputMethodService {
 	private int mCandidatesOpCount = 0;
 	private int mOpCount = 0;
 
+	private boolean mDisplayState = true;
+
 	private static final String DICTIONARY = "skk_dict_btree";
 	private static final String USER_DICT = "skk_userdict";
 	private DictionaryManager mDictionary;
@@ -255,6 +257,7 @@ public class SKKEngine extends InputMethodService {
 	private void readPrefs() {
 		Context context = getApplicationContext();
 		mCandidatesOpCount = SKKPrefs.getCandidatesOpCount(context);
+		mDisplayState = SKKPrefs.getDisplayState(context);
 		mStickyMeta = SKKPrefs.getStickyMeta(context);
 		mSandS = SKKPrefs.getSandS(context);
 		String kutouten = SKKPrefs.getKutoutenType(context);
@@ -1050,7 +1053,9 @@ public class SKKEngine extends InputMethodService {
 		if (!mRegisterStack.isEmpty()) {
 			for (RegisterInfo regInfo : mRegisterStack) {
 				bgStart = ct.length();
-				ct.append("▼");
+				if (mDisplayState) {
+					ct.append("▼");
+				}
 				if (regInfo.mOkurigana == null) {
 					ct.append(regInfo.mKey);
 				} else {
@@ -1071,12 +1076,16 @@ public class SKKEngine extends InputMethodService {
 			case OKURIGANA:
 				bg = new BackgroundColorSpan(Color.argb(64, 0, 96, 255));
 				bgStart = ct.length();
-				ct.append("▽");
+				if (mDisplayState) {
+					ct.append("▽");
+				}
 				break;
 			case CHOOSE:
 				bg = new BackgroundColorSpan(Color.argb(64, 255, 96, 0));
 				bgStart = ct.length();
-				ct.append("▼");
+				if (mDisplayState) {
+					ct.append("▼");
+				}
 				break;
 			default:
 				break;

@@ -18,6 +18,11 @@
 		android:text=" sp"
 		seekbar:min="12"
 		android:max="48" />
+	<CheckBoxPreference
+			android:key="PrefKeyDisplayState"
+			android:title="▽▼モード表示"
+			android:summary="入力中に▽や▼の表示をする"
+			android:defaultValue="true" />
 	<Preference
 		android:title="@string/label_dictool_activity"
 		android:summary="ユーザー辞書の編集" >

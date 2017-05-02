@@ -19,6 +19,7 @@ public class SKKPrefs extends PreferenceActivity {
 	private static final String PREFKEY_MOD_CANCEL_KEY = "PrefKeyModCancelKey";
 	private static final String PREFKEY_CANDIDATES_OP_COUNT = "PrefKeyCandidatesOpCount";
 	private static final String PREFKEY_CANDIDATES_SIZE = "PrefKeyCandidatesSize";
+	private static final String PREFKEY_USE_DISPLAY_STATE = "PrefKeyDisplayState";
 	private static final String PREFKEY_FLICK_SENSITIVITY = "PrefKeyFlickSensitivity";
 	private static final String PREFKEY_CURVE_SENSITIVITY = "PrefKeyCurveSensitivity";
 	private static final String PREFKEY_USE_SOFTKEY = "PrefKeyUseSoftKey";
@@ -85,6 +86,10 @@ public class SKKPrefs extends PreferenceActivity {
 
 	static int getCandidatesSize(Context context) {
 		return PreferenceManager.getDefaultSharedPreferences(context).getInt(PREFKEY_CANDIDATES_SIZE, 18);
+	}
+
+	static boolean getDisplayState(Context context) {
+		return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(PREFKEY_USE_DISPLAY_STATE, true);
 	}
 
 	static int getKanaKey(Context context) {
