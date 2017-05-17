@@ -1,24 +1,14 @@
 package jp.gr.java_conf.na2co3.skk;
 
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnKeyListener;
 import android.content.res.TypedArray;
-import android.os.Bundle;
-import android.preference.DialogPreference;
+import android.support.v7.preference.DialogPreference;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
-public class SetKeyPreference extends DialogPreference implements OnKeyListener {
+public class SetKeyPreference extends DialogPreference {
     private int mKeyCode;
-    private TextView mTextView;
     private static final int DEFAULT_VALUE = KeyEvent.KEYCODE_UNKNOWN;
-    private static final String FORMAT = "  Key: %s\n  Code: %d";
 
     public SetKeyPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -28,8 +18,13 @@ public class SetKeyPreference extends DialogPreference implements OnKeyListener 
         super(context, attrs, defStyle);
     }
 
-    int getValue(int defaultValue) {
-        return getPersistedInt(defaultValue);
+    void setValue(int keyCode) {
+        mKeyCode = keyCode;
+        persistInt(keyCode);
+    }
+
+    int getValue() {
+        return mKeyCode;
     }
 
     @Override
@@ -46,69 +41,8 @@ public class SetKeyPreference extends DialogPreference implements OnKeyListener 
         return a.getInteger(index, DEFAULT_VALUE);
     }
 
-    @Override
-    protected View onCreateDialogView() {
-        int FP = ViewGroup.LayoutParams.FILL_PARENT;
-        int WC = ViewGroup.LayoutParams.WRAP_CONTENT;
-
-        Context ctx = this.getContext();
-        LinearLayout linearLayout = new LinearLayout(ctx);
-        linearLayout.setOrientation(LinearLayout.HORIZONTAL);
-
-        mTextView = new TextView(ctx);
-        mTextView.setTextSize(25);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, WC);
-        lp.weight=1;
-        linearLayout.addView(mTextView, lp);
-
-        ImageButton button = new ImageButton(ctx);
-        button.setImageResource(android.R.drawable.ic_delete);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mKeyCode = DEFAULT_VALUE;
-                mTextView.setText(String.format(FORMAT, getKeyName(mKeyCode), mKeyCode));
-            }
-        });
-        button.setFocusable(false);
-        linearLayout.addView(button, new LinearLayout.LayoutParams(WC, FP));
-
-        return linearLayout;
-    }
-
-    @Override
-    protected void showDialog(Bundle state) {
-        super.showDialog(state);
-        getDialog().setOnKeyListener(this);
-        getDialog().takeKeyEvents(true);
-        mKeyCode = this.getPersistedInt(DEFAULT_VALUE);
-        mTextView.setText(String.format(FORMAT, getKeyName(mKeyCode), mKeyCode));
-    }
-
-    @Override
-    protected void onDialogClosed(boolean positiveResult) {
-        super.onDialogClosed(positiveResult);
-
-        if (positiveResult) {
-            if (callChangeListener(mKeyCode)) {
-                persistInt(mKeyCode);
-            }
-        }
-    }
-
-    @Override
-    public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-        switch (keyCode) {
-        case KeyEvent.KEYCODE_BACK:
-        case KeyEvent.KEYCODE_ENTER:
-            return false;
-        case KeyEvent.KEYCODE_HOME:
-            return true;
-        default:
-            mKeyCode = keyCode;
-            mTextView.setText(String.format(FORMAT, getKeyName(mKeyCode), mKeyCode));
-            return true;
-        }
+    int getDefaultValue() {
+        return DEFAULT_VALUE;
     }
 
     static String getKeyName(int keyCode) {

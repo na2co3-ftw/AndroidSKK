@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
 	android:title="@string/label_pref_hardkeyboard">
-	<!--<jp.gr.java_conf.na2co3.skk.SetKeyPreference-->
-		<!--android:key="PrefKeyKanaKey"-->
-		<!--android:title="かなキー"-->
-		<!--android:summary="かなモードに移行するキー"-->
-		<!--android:dialogTitle="Press a key ..."-->
-		<!--android:negativeButtonText="キャンセル"-->
-		<!--android:positiveButtonText="OK" />-->
+	<jp.gr.java_conf.na2co3.skk.SetKeyPreference
+		android:key="PrefKeyKanaKey"
+		android:title="かなキー"
+		android:summary="かなモードに移行するキー"
+		android:dialogTitle="Press a key ..."
+		android:negativeButtonText="キャンセル"
+		android:positiveButtonText="OK" />
 	<ListPreference
 		android:key="PrefKeyModKanaKey"
 		android:title="かなキーの修飾キー"
@@ -21,12 +21,12 @@
 		android:title="かなキーをトグルに"
 		android:summary="オンだと，かなモードでかなキーを押すとASCIIモードに戻ります"
 		android:defaultValue="true" />
-	<!--<jp.gr.java_conf.na2co3.skk.SetKeyPreference-->
-		<!--android:key="PrefKeyCancelKey"-->
-		<!--android:title="キャンセルキー"-->
-		<!--android:dialogTitle="Press a key ..."-->
-		<!--android:negativeButtonText="キャンセル"-->
-		<!--android:positiveButtonText="OK" />-->
+	<jp.gr.java_conf.na2co3.skk.SetKeyPreference
+		android:key="PrefKeyCancelKey"
+		android:title="キャンセルキー"
+		android:dialogTitle="Press a key ..."
+		android:negativeButtonText="キャンセル"
+		android:positiveButtonText="OK" />
 	<ListPreference
 		android:key="PrefKeyModCancelKey"
 		android:title="キャンセルキーの修飾キー"
