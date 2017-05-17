@@ -23,6 +23,10 @@ public class SKKPrefs extends AppCompatActivity implements OnPreferenceStartFrag
         setContentView(R.layout.skkprefs);
         setSupportActionBar((Toolbar)findViewById(R.id.pref_toolbar));
 
+        if (icicle != null) {
+            return;
+        }
+
         Fragment fragment = null;
         Intent intent = getIntent();
         if (intent != null) {
