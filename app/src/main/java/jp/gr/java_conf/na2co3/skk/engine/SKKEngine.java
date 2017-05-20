@@ -338,6 +338,27 @@ public class SKKEngine {
         }
 
         if (mComposing.length() == 0 && mKanjiKey.length() == 0) {
+            if (isRegistering && mRegEntry.length() == 0) {
+                if (mRegOkurigana == null) return;
+                String new_okuri = RomajiConverter.INSTANCE.convertLastChar(mRegOkurigana, type);
+
+                if (new_okuri != null) {
+                    mKanjiKey.setLength(0);
+                    mKanjiKey.append(mRegKey);
+                    String new_okuri_consonant = RomajiConverter.INSTANCE.getConsonantForVoiced(new_okuri);
+                    if (new_okuri_consonant != null) {
+                        mKanjiKey.deleteCharAt(mKanjiKey.length() - 1);
+                        mKanjiKey.append(new_okuri_consonant);
+                    }
+                    isRegistering = false;
+                    mRegKey = null;
+                    mRegEntry.setLength(0);
+                    mOkurigana = new_okuri;
+                    conversionStart(mKanjiKey); //変換やりなおし
+                }
+                return;
+            }
+
             String lastchar;
             String new_lastchar;
 
