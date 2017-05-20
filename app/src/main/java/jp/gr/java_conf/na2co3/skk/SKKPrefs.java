@@ -146,10 +146,6 @@ public class SKKPrefs extends AppCompatActivity implements OnPreferenceStartFrag
         return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.prefkey_fixed_popup), true);
     }
 
-    static boolean getUseSoftCancelKey(Context context) {
-        return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.prefkey_use_soft_cancel_key), false);
-    }
-
     static int getKeyHeightPort(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefkey_key_height_port), 30);
     }

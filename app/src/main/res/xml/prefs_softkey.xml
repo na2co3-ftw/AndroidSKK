@@ -36,11 +36,6 @@
 		android:summary="フリック入力ガイドを，常に上部の同じ場所に表示します"
 		android:dependency="PrefKeyUsePopup"
 		android:defaultValue="true" />
-	<CheckBoxPreference
-		android:key="PrefKeyUseSoftCancelKey"
-		android:title="キャンセルキーの使用"
-		android:summary="小文字キーのかわりにキャンセルキーを使います"
-		android:defaultValue="false" />
 	<jp.gr.java_conf.na2co3.skk.SeekBarPreference
 		android:key="PrefKeyKeyHeightPort"
 		android:title="キーボードの高さ（縦画面）"

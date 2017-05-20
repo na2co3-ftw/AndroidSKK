@@ -31,13 +31,12 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
     private static final int KEYCODE_FLICK_JP_NONE		= -1000;
     private static final int KEYCODE_FLICK_JP_LEFT		= -1001;
     private static final int KEYCODE_FLICK_JP_RIGHT		= -1002;
-    private static final int KEYCODE_FLICK_JP_MOJI	    = -1003;
+    private static final int KEYCODE_FLICK_JP_MOJI		= -1003;
     private static final int KEYCODE_FLICK_JP_SPACE		= -1004;
     private static final int KEYCODE_FLICK_JP_TOQWERTY	= -1005;
     private static final int KEYCODE_FLICK_JP_ROTATE	= -1006;
     private static final int KEYCODE_FLICK_JP_ENTER		= -1007;
     private static final int KEYCODE_FLICK_JP_SEARCH	= -1008;
-    private static final int KEYCODE_FLICK_JP_CANCEL	= -1009;
     private static final int KEYCODE_FLICK_JP_TOKANA	= -1010;
     private static final int FLICK_STATE_NONE			= 0;
     private static final int FLICK_STATE_LEFT			= 1;
@@ -98,7 +97,8 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
         a.append(KEYCODE_FLICK_JP_CHAR_RA,	new String[]{"ら", "り", "る", "れ", "ろ", "",   ""});
         a.append(KEYCODE_FLICK_JP_CHAR_WA,	new String[]{"わ", "を", "ん", "ー", "「", "",   ""});
         a.append(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"、", "。", "？", "！", "」", "",   ""});
-        a.append(KEYCODE_FLICK_JP_MOJI,     new String[]{"仮", "",   "数", "",   "",   "",   ""});
+        a.append(KEYCODE_FLICK_JP_MOJI,		new String[]{"仮", "",   "数", "",   "",   "",   ""});
+        a.append(Keyboard.KEYCODE_DELETE,	new String[]{"消", "戻", "",   "",   "",   "",   ""});
     }
 
     public FlickJPKeyboardView(Context context, AttributeSet attrs) {
@@ -232,19 +232,6 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
         }
     }
 
-    private void setCancelKey(Keyboard keyboard, boolean useCancel) {
-        List<Keyboard.Key> keys = keyboard.getKeys();
-        for (Keyboard.Key key : keys) {
-            if (key.codes[0] == KEYCODE_FLICK_JP_ROTATE && useCancel) {
-                key.label = "CXL";
-                key.codes[0] = KEYCODE_FLICK_JP_CANCEL;
-            } else if (key.codes[0] == KEYCODE_FLICK_JP_CANCEL && !useCancel) {
-                key.label = "小 ゛゜";
-                key.codes[0] = KEYCODE_FLICK_JP_ROTATE;
-            }
-        }
-    }
-
     private void adjustKeysHorizontally(SKKKeyboard keyboard, int maxKeyWidth, double ratio, String position) {
         int y = 0;
         int colNo = 0;
@@ -301,8 +288,6 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
         String kutouten = SKKPrefs.getKutoutenType(context);
         setKutoutenLabel(mJPKeyboard, kutouten);
         setKutoutenLabel(mNumKeyboard, kutouten);
-        setCancelKey(mJPKeyboard, SKKPrefs.getUseSoftCancelKey(context));
-        setCancelKey(mNumKeyboard, SKKPrefs.getUseSoftCancelKey(context));
         if (mUsePopup) {
             mFixedPopup = SKKPrefs.getFixedPopup(context);
             if (mPopup == null) {
@@ -815,11 +800,6 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
             setShifted(!isShifted());
             setAbbrevLabel(isShifted());
             break;
-        case Keyboard.KEYCODE_DELETE:
-            if (!mService.handleBackspace()) {
-                mService.keyDownUp(KeyEvent.KEYCODE_DEL);
-            }
-            break;
         case KEYCODE_FLICK_JP_LEFT:
             if (!mService.handleDpad(KeyEvent.KEYCODE_DPAD_LEFT)) {
                 mService.keyDownUp(KeyEvent.KEYCODE_DPAD_LEFT);
@@ -855,11 +835,17 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
                 }
             }
             break;
+        case Keyboard.KEYCODE_DELETE:
+            if (mFlickState == FLICK_STATE_NONE) {
+                if (!mService.handleBackspace()) {
+                    mService.keyDownUp(KeyEvent.KEYCODE_DEL);
+                }
+            } else if (mFlickState == FLICK_STATE_LEFT) {
+                mService.handleCancel();
+            }
+            break;
         case KEYCODE_FLICK_JP_ROTATE:
             mService.changeLastChar(SKKEngine.LAST_CONVERTION_ROTATE);
-            break;
-        case KEYCODE_FLICK_JP_CANCEL:
-            mService.handleCancel();
             break;
         case KEYCODE_FLICK_JP_MOJI:
             if (mFlickState == FLICK_STATE_NONE) {
