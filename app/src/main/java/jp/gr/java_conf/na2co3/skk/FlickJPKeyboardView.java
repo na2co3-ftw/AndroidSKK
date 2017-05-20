@@ -34,7 +34,7 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
     private static final int KEYCODE_FLICK_JP_MOJI	    = -1003;
     private static final int KEYCODE_FLICK_JP_SPACE		= -1004;
     private static final int KEYCODE_FLICK_JP_TOQWERTY	= -1005;
-    private static final int KEYCODE_FLICK_JP_KOMOJI	= -1006;
+    private static final int KEYCODE_FLICK_JP_ROTATE	= -1006;
     private static final int KEYCODE_FLICK_JP_ENTER		= -1007;
     private static final int KEYCODE_FLICK_JP_SEARCH	= -1008;
     private static final int KEYCODE_FLICK_JP_CANCEL	= -1009;
@@ -98,7 +98,6 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
         a.append(KEYCODE_FLICK_JP_CHAR_RA,	new String[]{"ら", "り", "る", "れ", "ろ", "",   ""});
         a.append(KEYCODE_FLICK_JP_CHAR_WA,	new String[]{"わ", "を", "ん", "ー", "「", "",   ""});
         a.append(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"、", "。", "？", "！", "」", "",   ""});
-        a.append(KEYCODE_FLICK_JP_KOMOJI,	new String[]{"小", "゛", "",   "゜", "",   "",   ""});
         a.append(KEYCODE_FLICK_JP_MOJI,     new String[]{"仮", "",   "数", "",   "",   "",   ""});
     }
 
@@ -236,12 +235,12 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
     private void setCancelKey(Keyboard keyboard, boolean useCancel) {
         List<Keyboard.Key> keys = keyboard.getKeys();
         for (Keyboard.Key key : keys) {
-            if (key.codes[0] == KEYCODE_FLICK_JP_KOMOJI && useCancel) {
+            if (key.codes[0] == KEYCODE_FLICK_JP_ROTATE && useCancel) {
                 key.label = "CXL";
                 key.codes[0] = KEYCODE_FLICK_JP_CANCEL;
             } else if (key.codes[0] == KEYCODE_FLICK_JP_CANCEL && !useCancel) {
                 key.label = "小 ゛゜";
-                key.codes[0] = KEYCODE_FLICK_JP_KOMOJI;
+                key.codes[0] = KEYCODE_FLICK_JP_ROTATE;
             }
         }
     }
@@ -856,14 +855,8 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
                 }
             }
             break;
-        case KEYCODE_FLICK_JP_KOMOJI:
-            if (mFlickState == FLICK_STATE_NONE) {
-                mService.changeLastChar(SKKEngine.LAST_CONVERTION_SMALL);
-            } else if (mFlickState == FLICK_STATE_LEFT) {
-                mService.changeLastChar(SKKEngine.LAST_CONVERTION_DAKUTEN);
-            } else if (mFlickState == FLICK_STATE_RIGHT) {
-                mService.changeLastChar(SKKEngine.LAST_CONVERTION_HANDAKUTEN);
-            }
+        case KEYCODE_FLICK_JP_ROTATE:
+            mService.changeLastChar(SKKEngine.LAST_CONVERTION_ROTATE);
             break;
         case KEYCODE_FLICK_JP_CANCEL:
             mService.handleCancel();

@@ -64,6 +64,7 @@ public class SKKEngine {
     public static final String LAST_CONVERTION_SMALL = "small";
     public static final String LAST_CONVERTION_DAKUTEN = "daku";
     public static final String LAST_CONVERTION_HANDAKUTEN = "handaku";
+    public static final String LAST_CONVERTION_ROTATE = "rotate";
 
     public SKKEngine(SKKService engine, List<SKKDictionary> dics, SKKUserDictionary userDic) {
         mService = engine;
@@ -325,10 +326,8 @@ public class SKKEngine {
             String new_okuri = RomajiConverter.INSTANCE.convertLastChar(mOkurigana, type);
 
             if (new_okuri != null) {
-                // 例外: 送りがなが「っ」になる場合は，どのみち必ずt段の音なのでmKanjiKeyはそのまま
-                // 「ゃゅょ」で送りがなが始まる場合はないはず
-                if (!type.equals(LAST_CONVERTION_SMALL)) {
-                    String new_okuri_consonant = RomajiConverter.INSTANCE.getConsonantForVoiced(new_okuri);
+                String new_okuri_consonant = RomajiConverter.INSTANCE.getConsonantForVoiced(new_okuri);
+                if (new_okuri_consonant != null) {
                     mKanjiKey.deleteCharAt(mKanjiKey.length() - 1);
                     mKanjiKey.append(new_okuri_consonant);
                 }
