@@ -130,6 +130,10 @@ public class SKKPrefs extends AppCompatActivity implements OnPreferenceStartFrag
         return PreferenceManager.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefkey_flick_sensitivity), 30);
     }
 
+    static boolean getUseCurve(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.prefkey_use_curve), false);
+    }
+
     static String getCurveSensitivity(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefkey_curve_sensitivity), "high");
     }
