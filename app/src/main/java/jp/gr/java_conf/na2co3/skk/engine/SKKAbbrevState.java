@@ -40,6 +40,13 @@ public enum SKKAbbrevState implements SKKState {
         }
     }
 
+    public void processText(SKKEngine context, String text, boolean isShifted) {
+        StringBuilder composing = context.getComposing();
+        composing.append(text);
+        context.setComposingTextSKK(composing, 1);
+        context.updateSuggestions(composing.toString());
+    }
+
     public void afterBackspace(SKKEngine context) {
         StringBuilder composing = context.getComposing();
 

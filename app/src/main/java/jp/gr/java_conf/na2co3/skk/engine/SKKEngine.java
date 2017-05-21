@@ -108,6 +108,8 @@ public class SKKEngine {
 
     public void processKey(int pcode) { mState.processKey(this, pcode); }
 
+    public void processText(String text, boolean isShifted) { mState.processText(this, text, isShifted); }
+
     public void handleKanaKey() { mState.handleKanaKey(this); }
 
     public boolean handleBackKey() {
@@ -326,7 +328,7 @@ public class SKKEngine {
             String new_okuri = RomajiConverter.INSTANCE.convertLastChar(mOkurigana, type);
 
             if (new_okuri != null) {
-                String new_okuri_consonant = RomajiConverter.INSTANCE.getConsonantForVoiced(new_okuri);
+                String new_okuri_consonant = RomajiConverter.INSTANCE.getConsonant(new_okuri);
                 if (new_okuri_consonant != null) {
                     mKanjiKey.deleteCharAt(mKanjiKey.length() - 1);
                     mKanjiKey.append(new_okuri_consonant);
@@ -345,7 +347,7 @@ public class SKKEngine {
                 if (new_okuri != null) {
                     mKanjiKey.setLength(0);
                     mKanjiKey.append(mRegKey);
-                    String new_okuri_consonant = RomajiConverter.INSTANCE.getConsonantForVoiced(new_okuri);
+                    String new_okuri_consonant = RomajiConverter.INSTANCE.getConsonant(new_okuri);
                     if (new_okuri_consonant != null) {
                         mKanjiKey.deleteCharAt(mKanjiKey.length() - 1);
                         mKanjiKey.append(new_okuri_consonant);

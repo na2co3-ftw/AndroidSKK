@@ -68,9 +68,28 @@ public enum SKKHiraganaState implements SKKState, CommitKana {
         }
     }
 
+    void processKanaText(SKKEngine context, String text, boolean isShifted, CommitKana callback) {
+        StringBuilder composing = context.getComposing();
+
+        if (composing.length() == 1 && composing.charAt(0) == 'n') {
+            callback.commit(context, "ん");
+            composing.setLength(0);
+        }
+        if (isShifted) {
+            context.changeState(SKKKanjiState.INSTANCE);
+            SKKKanjiState.INSTANCE.processText(context, text, false);
+        } else {
+            callback.commit(context, text);
+        }
+    }
+
     public void processKey(SKKEngine context, int pcode) {
         if (context.changeInputMode(pcode, true)) { return; }
         processKana(context, pcode, this);
+    }
+
+    public void processText(SKKEngine context, String text, boolean isShifted) {
+        processKanaText(context, text, isShifted, this);
     }
 
     public void afterBackspace(SKKEngine context) {

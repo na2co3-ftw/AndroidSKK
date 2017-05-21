@@ -42,6 +42,12 @@ public enum SKKChooseState implements SKKState {
         }
     }
 
+    public void processText(SKKEngine context, String text, boolean isShifted) {
+        // 暗黙の確定
+        context.pickCurrentCandidate();
+        SKKHiraganaState.INSTANCE.processText(context, text, isShifted);
+    }
+
     public void afterBackspace(SKKEngine context) {
         if (context.getKanjiKey().length() == 0) {
             context.changeState(SKKHiraganaState.INSTANCE);

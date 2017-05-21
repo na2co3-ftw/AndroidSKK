@@ -53,6 +53,29 @@ public enum SKKOkuriganaState implements SKKState {
         }
     }
 
+    public void processText(SKKEngine context, String text, boolean isShifted) {
+        StringBuilder composing = context.getComposing();
+        StringBuilder kanjiKey = context.getKanjiKey();
+        String okurigana = context.getOkurigana();
+
+        if (composing.length() == 1 && composing.charAt(0) == 'n') {
+            context.setOkurigana("ん");
+            context.setComposingTextSKK(SKKUtils.createTrimmedBuilder(kanjiKey).append('*').append("ん").append(text), 1);
+            composing.setLength(0);
+            composing.append(text);
+            return;
+        }
+        if (okurigana != null) { //「ん」か「っ」がある場合
+            composing.setLength(0);
+            context.setOkurigana(okurigana + text);
+            context.conversionStart(kanjiKey);
+        } else {
+            composing.setLength(0);
+            context.setOkurigana(text);
+            context.conversionStart(kanjiKey);
+        }
+    }
+
     public void afterBackspace(SKKEngine context) {
         context.getComposing().setLength(0);
         context.setOkurigana(null);

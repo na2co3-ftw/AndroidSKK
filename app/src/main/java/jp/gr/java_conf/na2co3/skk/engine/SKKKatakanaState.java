@@ -23,6 +23,10 @@ public enum SKKKatakanaState implements SKKState, CommitKana {
         SKKHiraganaState.INSTANCE.processKana(context, pcode, this);
     }
 
+    public void processText(SKKEngine context, String text, boolean isShifted) {
+        SKKHiraganaState.INSTANCE.processKanaText(context, text, isShifted, this);
+    }
+
     public void afterBackspace(SKKEngine context) {
         SKKHiraganaState.INSTANCE.afterBackspace(context);
     }

@@ -524,6 +524,7 @@ public class SKKService extends InputMethodService {
     }
 
     void processKey(int pcode) { mEngine.processKey(pcode); }
+    void processText(String text, boolean isShifted) { mEngine.processText(text, isShifted); }
     void handleKanaKey() { mEngine.handleKanaKey(); }
     boolean handleCancel() { return mEngine.handleCancel(); }
 

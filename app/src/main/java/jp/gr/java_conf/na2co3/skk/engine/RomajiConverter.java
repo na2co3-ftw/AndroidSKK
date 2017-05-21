@@ -5,7 +5,7 @@ import java.util.Map;
 
 import jp.gr.java_conf.na2co3.skk.SKKUtils;
 
-enum RomajiConverter {
+public enum RomajiConverter {
     INSTANCE;
 
     // ローマ字辞書
@@ -54,19 +54,27 @@ enum RomajiConverter {
         m.put("z,", "‥");m.put("z-", "〜");m.put("z.", "…");m.put("z/", "・");m.put("z[", "『");m.put("z]", "』");m.put("zh", "←");m.put("zj", "↓");m.put("zk", "↑");m.put("zl", "→");
     }
 
-    // 濁音半濁音変換用
+    // フリック入力用
     private Map<String, String> mConsonantMap = new HashMap<>();
     {
         Map<String, String> m = mConsonantMap;
-        m.put("が", "g");m.put("ぎ", "g");m.put("ぐ", "g");m.put("げ", "g");m.put("ご", "g");
+        m.put("あ", "a");m.put("い", "i");m.put("う", "u");m.put("え", "e");m.put("お", "o");
+        m.put("ぁ", "x");m.put("ぃ", "x");m.put("ぅ", "x");m.put("ぇ", "x");m.put("ぉ", "x");
         m.put("か", "k");m.put("き", "k");m.put("く", "k");m.put("け", "k");m.put("こ", "k");
-        m.put("ざ", "z");m.put("じ", "z");m.put("ず", "z");m.put("ぜ", "z");m.put("ぞ", "z");
+        m.put("が", "g");m.put("ぎ", "g");m.put("ぐ", "g");m.put("げ", "g");m.put("ご", "g");
         m.put("さ", "s");m.put("し", "s");m.put("す", "s");m.put("せ", "s");m.put("そ", "s");
-        m.put("だ", "d");m.put("ぢ", "d");m.put("づ", "d");m.put("で", "d");m.put("ど", "d");
+        m.put("ざ", "z");m.put("じ", "z");m.put("ず", "z");m.put("ぜ", "z");m.put("ぞ", "z");
         m.put("た", "t");m.put("ち", "t");m.put("つ", "t");m.put("て", "t");m.put("と", "t");
+        m.put("だ", "d");m.put("ぢ", "d");m.put("づ", "d");m.put("で", "d");m.put("ど", "d");
+        m.put("な", "n");m.put("に", "n");m.put("ぬ", "n");m.put("ね", "n");m.put("の", "n");
+        m.put("は", "h");m.put("ひ", "h");m.put("ふ", "h");m.put("へ", "h");m.put("ほ", "h");
         m.put("ば", "b");m.put("び", "b");m.put("ぶ", "b");m.put("べ", "b");m.put("ぼ", "b");
         m.put("ぱ", "p");m.put("ぴ", "p");m.put("ぷ", "p");m.put("ぺ", "p");m.put("ぽ", "p");
-        m.put("は", "h");m.put("ひ", "h");m.put("ふ", "h");m.put("へ", "h");m.put("ほ", "h");
+        m.put("ま", "m");m.put("み", "m");m.put("む", "m");m.put("め", "m");m.put("も", "m");
+        m.put("や", "y");                 m.put("ゆ", "y");                 m.put("よ", "y");
+        m.put("ら", "r");m.put("り", "r");m.put("る", "r");m.put("れ", "r");m.put("ろ", "r");
+        m.put("わ", "w");m.put("ゐ", "w");                 m.put("ゑ", "w");m.put("を", "w");
+        m.put("ん", "n");m.put("っ", "t");
     }
 
     // かな小文字変換用
@@ -152,11 +160,11 @@ enum RomajiConverter {
         return mRomajiMap.get(romaji);
     }
 
-    String getConsonantForVoiced(String kana) {
+    String getConsonant(String kana) {
         return mConsonantMap.get(kana);
     }
 
-    String convertLastChar(String kana, String type) {
+    public String convertLastChar(String kana, String type) {
         switch (type) {
             case SKKEngine.LAST_CONVERTION_SMALL:
                 return mSmallKanaMap.get(kana);

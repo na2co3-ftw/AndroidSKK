@@ -83,6 +83,32 @@ public enum SKKKanjiState implements SKKState {
         }
     }
 
+    public void processText(SKKEngine context, String text, boolean isShifted) {
+        StringBuilder composing = context.getComposing();
+        StringBuilder kanjiKey = context.getKanjiKey();
+
+        if (composing.length() == 1 && composing.charAt(0) == 'n') {
+            kanjiKey.append("ん");
+            context.setComposingTextSKK(kanjiKey, 1);
+        }
+        if (isShifted && kanjiKey.length() > 0) {
+            // 送り仮名入力，変換
+            String okuri_consonant = RomajiConverter.INSTANCE.getConsonant(text.substring(0, 1));
+            if (okuri_consonant != null) {
+                kanjiKey.append(okuri_consonant); //送りありの場合子音文字追加
+            }
+            composing.setLength(0);
+            context.setOkurigana(text);
+            context.conversionStart(kanjiKey);
+        } else {
+            // 未確定
+            composing.setLength(0);
+            kanjiKey.append(text);
+            context.setComposingTextSKK(kanjiKey, 1);
+            context.updateSuggestions(kanjiKey.toString());
+        }
+    }
+
     public void afterBackspace(SKKEngine context) {
         StringBuilder kanjiKey = context.getKanjiKey();
         StringBuilder composing = context.getComposing();

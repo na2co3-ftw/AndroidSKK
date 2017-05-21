@@ -16,6 +16,10 @@ public enum SKKZenkakuState implements SKKState {
         context.commitTextSKK(String.valueOf((char) pcode), 1);
     }
 
+    public void processText(SKKEngine context, String text, boolean isShifted) {
+        context.commitTextSKK(text, 1);
+    }
+
     public void afterBackspace(SKKEngine context) {}
 
     public boolean handleCancel(SKKEngine context) {
