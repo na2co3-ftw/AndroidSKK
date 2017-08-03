@@ -1,5 +1,10 @@
 package jp.gr.java_conf.na2co3.skk.engine;
 
+import android.content.res.Resources;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.UnderlineSpan;
 import android.view.inputmethod.InputConnection;
 
 import java.util.ArrayList;
@@ -13,6 +18,7 @@ import jp.gr.java_conf.na2co3.skk.SKKPrefs;
 import jp.gr.java_conf.na2co3.skk.SKKService;
 import jp.gr.java_conf.na2co3.skk.SKKUserDictionary;
 import jp.gr.java_conf.na2co3.skk.SKKUtils;
+import jp.gr.java_conf.na2co3.skk.R;
 
 public class SKKEngine {
     private SKKService mService;
@@ -39,6 +45,9 @@ public class SKKEngine {
 
     private List<SKKDictionary> mDicts;
     private SKKUserDictionary mUserDict;
+
+    int mColorComposing;
+    int mColorConverting;
 
     // 再変換のための情報
     private class ConversionInfo {
@@ -78,6 +87,9 @@ public class SKKEngine {
         mZenkakuSeparatorMap.put("[", "「");
         mZenkakuSeparatorMap.put("]", "」");
         setZenkakuPunctuationMarks("en");
+        Resources res = engine.getResources();
+        mColorComposing = res.getColor(R.color.composing_composing);
+        mColorConverting = res.getColor(R.color.composing_converting);
     }
 
     public void reopenDictionaries(List<SKKDictionary> dics) {
@@ -375,7 +387,7 @@ public class SKKEngine {
                         if (isRegistering) {
                             mRegEntry.deleteCharAt(mRegEntry.length()-1);
                             mRegEntry.append(new_lastchar);
-                            ic.setComposingText("▼" + mRegKey + "：" + mRegEntry, 1);
+                            setComposingTextSKK("", 1);
                         } else {
                             ic.deleteSurroundingText(1, 0);
                             ic.commitText(new_lastchar, 1);
@@ -403,7 +415,9 @@ public class SKKEngine {
         InputConnection ic = mService.getCurrentInputConnection();
         if (ic == null) return;
 
-        StringBuilder ct = new StringBuilder();
+        SpannableStringBuilder ct = new SpannableStringBuilder();
+        BackgroundColorSpan bg = null;
+        int bgStart = 0;
 
         if (isRegistering) {
             ct.append("▼");
@@ -415,15 +429,25 @@ public class SKKEngine {
                 ct.append(mRegOkurigana);
             }
             ct.append("：");
+            ct.setSpan(new BackgroundColorSpan(mColorConverting), 0, ct.length(), Spanned.SPAN_COMPOSING);
             ct.append(mRegEntry);
         }
 
         if (mState == SKKAbbrevState.INSTANCE || mState == SKKKanjiState.INSTANCE || mState == SKKOkuriganaState.INSTANCE) {
+            bg = new BackgroundColorSpan(mColorComposing);
+            bgStart = ct.length();
             ct.append("▽");
         } else if (mState == SKKChooseState.INSTANCE) {
+            bg = new BackgroundColorSpan(mColorConverting);
+            bgStart = ct.length();
             ct.append("▼");
         }
         ct.append(text);
+
+        if (bg != null) {
+            ct.setSpan(bg, bgStart, ct.length(), Spanned.SPAN_COMPOSING);
+        }
+        ct.setSpan(new UnderlineSpan(), 0, ct.length(), Spanned.SPAN_COMPOSING);
 
         ic.setComposingText(ct, newCursorPosition);
     }
