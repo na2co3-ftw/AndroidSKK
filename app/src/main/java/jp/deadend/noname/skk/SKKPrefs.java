@@ -7,20 +7,30 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatDelegate;
+import android.util.AttributeSet;
+import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.view.KeyEvent;
 import android.support.v7.widget.Toolbar;
 
 public class SKKPrefs extends PreferenceActivity {
+    private AppCompatDelegate mDelegate;
+
+    private AppCompatDelegate getDelegate() {
+        if (mDelegate == null) {
+            mDelegate = AppCompatDelegate.create(this, null);
+        }
+        return mDelegate;
+    }
+
     @Override
     protected void onCreate(Bundle icicle) {
-        AppCompatDelegate delegate = AppCompatDelegate.create(this, null);
-        delegate.installViewFactory();
-        delegate.onCreate(icicle);
         super.onCreate(icicle);
-        delegate.setContentView(R.layout.skkprefs);
-        delegate.setSupportActionBar((Toolbar)findViewById(R.id.pref_toolbar));
+        getDelegate().onCreate(icicle);
+        getDelegate().setContentView(R.layout.skkprefs);
+        getDelegate().setSupportActionBar((Toolbar)findViewById(R.id.pref_toolbar));
         addPreferencesFromResource(R.xml.prefs);
 
         final CheckBoxPreference stickyPr = (CheckBoxPreference)findPreference(getString(R.string.prefkey_sticky_meta));
@@ -45,6 +55,24 @@ public class SKKPrefs extends PreferenceActivity {
         } else if (sandsPr.isChecked()) {
             stickyPr.setEnabled(false);
         }
+    }
+
+    @Override
+    public View onCreateView(View parent, String name, Context context, AttributeSet attrs) {
+        View view = super.onCreateView(parent, name, context, attrs);
+        if(view != null) {
+            return view;
+        }
+        return getDelegate().createView(parent, name, context, attrs);
+    }
+
+    @Nullable
+    @Override public View onCreateView(String name, Context context, AttributeSet attrs) {
+        View view = super.onCreateView(name, context, attrs);
+        if(view != null) {
+            return view;
+        }
+        return getDelegate().createView(null, name, context, attrs);
     }
 
     @Override

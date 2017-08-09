@@ -3,6 +3,7 @@ package jp.deadend.noname.skk;
 import android.content.Context;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
+import android.text.ClipboardManager;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -12,9 +13,9 @@ import android.view.View;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
-import java.util.List;
-
 import jp.deadend.noname.skk.engine.SKKEngine;
+
+import static android.content.Context.CLIPBOARD_SERVICE;
 
 public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.OnKeyboardActionListener {
     private static final int KEYCODE_FLICK_JP_CHAR_A	= -201;
@@ -28,6 +29,8 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
     private static final int KEYCODE_FLICK_JP_CHAR_RA	= -209;
     private static final int KEYCODE_FLICK_JP_CHAR_WA	= -210;
     private static final int KEYCODE_FLICK_JP_CHAR_TEN	= -211;
+    private static final int KEYCODE_FLICK_JP_CHAR_TEN_SHIFTED	= -212;
+    private static final int KEYCODE_FLICK_JP_CHAR_TEN_NUM = -213;
     private static final int KEYCODE_FLICK_JP_NONE		= -1000;
     private static final int KEYCODE_FLICK_JP_LEFT		= -1001;
     private static final int KEYCODE_FLICK_JP_RIGHT		= -1002;
@@ -39,6 +42,7 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
     private static final int KEYCODE_FLICK_JP_SEARCH	= -1008;
     private static final int KEYCODE_FLICK_JP_CANCEL	= -1009;
     private static final int KEYCODE_FLICK_JP_TOKANA	= -1010;
+    private static final int KEYCODE_FLICK_JP_PASTE     = -1011;
     private static final int FLICK_STATE_NONE			= 0;
     private static final int FLICK_STATE_LEFT			= 1;
     private static final int FLICK_STATE_UP				= 2;
@@ -79,6 +83,10 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
     private SKKKeyboard mJPKeyboard;
     private SKKKeyboard mNumKeyboard;
 
+    private String mKutoutenLabel = "，．？！";
+    private Keyboard.Key mKutoutenKey;
+    private Keyboard.Key mQwertyKey;
+
     //フリックガイドTextView用
     private SparseArray<String[]> mFlickGuideLabelList = new SparseArray<>();
     {
@@ -92,8 +100,10 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
         a.append(KEYCODE_FLICK_JP_CHAR_MA,	new String[]{"ま", "み", "む", "め", "も", "",   ""});
         a.append(KEYCODE_FLICK_JP_CHAR_YA,	new String[]{"や", "",   "ゆ", "",   "よ", "小", ""});
         a.append(KEYCODE_FLICK_JP_CHAR_RA,	new String[]{"ら", "り", "る", "れ", "ろ", "",   ""});
-        a.append(KEYCODE_FLICK_JP_CHAR_WA,	new String[]{"わ", "を", "ん", "ー", "「", "",   ""});
-        a.append(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"、", "。", "？", "！", "」", "",   ""});
+        a.append(KEYCODE_FLICK_JP_CHAR_WA,	new String[]{"わ", "を", "ん", "ー", "",   "",   ""});
+        a.append(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"、", "。", "？", "！", "",   "",   ""});
+        a.append(KEYCODE_FLICK_JP_CHAR_TEN_SHIFTED,	new String[]{"（", "「", "」", "）", "",   "",   ""});
+        a.append(KEYCODE_FLICK_JP_CHAR_TEN_NUM,	new String[]{"，", "．", "−", "：", "",   "",   ""});
         a.append(KEYCODE_FLICK_JP_KOMOJI,	new String[]{"小", "゛", "",   "゜", "",   "",   ""});
         a.append(KEYCODE_FLICK_JP_MOJI,     new String[]{"仮", "",   "数", "",   "",   "",   ""});
     }
@@ -200,46 +210,59 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
         invalidateAllKeys();
     }
 
-    private void setAbbrevLabel(boolean isAbbrev) {
-        for (Keyboard.Key key : getKeyboard().getKeys()) {
-            if (key.codes[0] == KEYCODE_FLICK_JP_TOQWERTY) {
-                if (isAbbrev) {
-                    key.label = "abbr";
-                } else {
-                    key.label = "ABC";
-                }
-                break;
+    private Keyboard.Key findKeyByCode(Keyboard keyboard, int code) {
+        for (Keyboard.Key key : keyboard.getKeys()) {
+            if (key.codes[0] == code) {
+                return key;
+            }
+        }
+
+        return null;
+    }
+
+    private void onSetShifted(boolean isShifted) {
+        if (isShifted) {
+            if (mKutoutenKey != null) {
+                mKutoutenKey.codes[0] = KEYCODE_FLICK_JP_CHAR_TEN_SHIFTED;
+                mKutoutenKey.label = "「」（）";
+            }
+            if (mQwertyKey != null) {
+                mQwertyKey.label = "abbr";
+            }
+        } else {
+            if (mKutoutenKey != null) {
+                mKutoutenKey.codes[0] = KEYCODE_FLICK_JP_CHAR_TEN;
+                mKutoutenKey.label = mKutoutenLabel;
+            }
+            if (mQwertyKey != null) {
+                mQwertyKey.label = "ABC";
             }
         }
     }
 
-    private void setKutoutenLabel(Keyboard keyboard, String kutouten) {
-        List<Keyboard.Key> keys = keyboard.getKeys();
-        for (Keyboard.Key key : keys) {
-            if (key.codes[0] == KEYCODE_FLICK_JP_CHAR_TEN) {
-                if (kutouten.equals("en")) {
-                    key.label = "，．？！";
-                } else if (kutouten.equals("jp_en")) {
-                    key.label = "，。？！";
-                } else {
-                    key.label = "、。？！";
-                }
-                break;
+    void setRegisterMode(boolean isRegistering) {
+        if (isRegistering) {
+            Keyboard.Key key = findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_LEFT);
+            if (key != null) {
+                key.codes[0] = KEYCODE_FLICK_JP_PASTE;
+                key.label = "貼り付け";
+            }
+            key = findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_RIGHT);
+            if (key != null) {
+                key.label = " ";
+            }
+        } else {
+            Keyboard.Key key = findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_PASTE);
+            if (key != null) {
+                key.codes[0] = KEYCODE_FLICK_JP_LEFT;
+                key.label = "←";
+            }
+            key = findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_RIGHT);
+            if (key != null) {
+                key.label = "→";
             }
         }
-    }
-
-    private void setCancelKey(Keyboard keyboard, boolean useCancel) {
-        List<Keyboard.Key> keys = keyboard.getKeys();
-        for (Keyboard.Key key : keys) {
-            if (key.codes[0] == KEYCODE_FLICK_JP_KOMOJI && useCancel) {
-                key.label = "CXL";
-                key.codes[0] = KEYCODE_FLICK_JP_CANCEL;
-            } else if (key.codes[0] == KEYCODE_FLICK_JP_CANCEL && !useCancel) {
-                key.label = "小 ゛゜";
-                key.codes[0] = KEYCODE_FLICK_JP_KOMOJI;
-            }
-        }
+        invalidateAllKeys();
     }
 
     private void adjustKeysHorizontally(SKKKeyboard keyboard, int maxKeyWidth, double ratio, String position) {
@@ -275,6 +298,8 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
         adjustKeysHorizontally(mJPKeyboard, keyWidth, (double)width/100, position);
         mJPKeyboard.changeKeyHeight(height);
         setKeyboard(mJPKeyboard);
+        mKutoutenKey = findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_CHAR_TEN);
+        mQwertyKey = findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_TOQWERTY);
 
         mNumKeyboard = new SKKKeyboard(context, R.xml.keys_flick_number, 4);
         adjustKeysHorizontally(mNumKeyboard, keyWidth, (double)width/100, position);
@@ -284,8 +309,10 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
     }
 
     private void readPrefs(Context context) {
+        // フリック感度
         int sensitivity = SKKPrefs.getFlickSensitivity(context);
         mFlickSensitivitySquared = sensitivity*sensitivity;
+        // カーブフリック感度
         String curve = SKKPrefs.getCurveSensitivity(context);
         if (curve.equals("low")) {
             mCurveSensitivityMultiplier = 0.5f;
@@ -294,12 +321,31 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
         } else {
             mCurveSensitivityMultiplier = 2.0f;
         }
-        mUsePopup = SKKPrefs.getUsePopup(context);
+        // 句読点
         String kutouten = SKKPrefs.getKutoutenType(context);
-        setKutoutenLabel(mJPKeyboard, kutouten);
-        setKutoutenLabel(mNumKeyboard, kutouten);
-        setCancelKey(mJPKeyboard, SKKPrefs.getUseSoftCancelKey(context));
-        setCancelKey(mNumKeyboard, SKKPrefs.getUseSoftCancelKey(context));
+        if (kutouten.equals("en")) {
+            mKutoutenLabel = "，．？！";
+            mFlickGuideLabelList.put(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"，", "．", "？", "！", "", "", ""});
+        } else if (kutouten.equals("jp_en")) {
+            mKutoutenLabel = "，。？！";
+            mFlickGuideLabelList.put(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"，", "。", "？", "！", "", "", ""});
+        } else {
+            mKutoutenLabel = "、。？！";
+            mFlickGuideLabelList.put(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"、", "。", "？", "！", "", "", ""});
+        }
+        if (mKutoutenKey != null) {
+            mKutoutenKey.label = mKutoutenLabel;
+        }
+        // キャンセルキー
+        if (SKKPrefs.getUseSoftCancelKey(context)) {
+            Keyboard.Key key = findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_KOMOJI);
+            if (key != null) {
+                key.label = "CXL";
+                key.codes[0] = KEYCODE_FLICK_JP_CANCEL;
+            }
+        }
+        // ポップアップ
+        mUsePopup = SKKPrefs.getUsePopup(context);
         if (mUsePopup) {
             mFixedPopup = SKKPrefs.getFixedPopup(context);
             if (mPopup == null) {
@@ -319,14 +365,6 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
                 mPopupTextView[12] = (TextView)mPopup.getContentView().findViewById(R.id.labelRightE);
                 mPopupTextView[13] = (TextView)mPopup.getContentView().findViewById(R.id.labelLeftO);
                 mPopupTextView[14] = (TextView)mPopup.getContentView().findViewById(R.id.labelRightO);
-            }
-
-            if (kutouten.equals("en")) {
-                mFlickGuideLabelList.put(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"，", "．", "？", "！", "」", "",   ""});
-            } else if (kutouten.equals("jp_en")) {
-                mFlickGuideLabelList.put(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"，", "。", "？", "！", "」", "",   ""});
-            } else {
-                mFlickGuideLabelList.put(KEYCODE_FLICK_JP_CHAR_TEN,	new String[]{"、", "。", "？", "！", "」", "",   ""});
             }
         }
     }
@@ -697,9 +735,6 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
             case FLICK_STATE_RIGHT:
                 mService.processKey('-');
                 break;
-            case FLICK_STATE_DOWN:
-                mService.processKey('[');
-                break;
             }
             return;
         case KEYCODE_FLICK_JP_CHAR_TEN:
@@ -716,9 +751,38 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
             case FLICK_STATE_RIGHT:
                 mService.processKey('!');
                 break;
-            case FLICK_STATE_DOWN:
+            }
+            return;
+        case KEYCODE_FLICK_JP_CHAR_TEN_SHIFTED:
+            switch (flick) {
+            case FLICK_STATE_NONE:
+                mService.processKey('(');
+                break;
+            case FLICK_STATE_LEFT:
+                mService.processKey('[');
+                break;
+            case FLICK_STATE_UP:
                 mService.processKey(']');
                 break;
+            case FLICK_STATE_RIGHT:
+                mService.processKey(')');
+                break;
+            }
+            return;
+        case KEYCODE_FLICK_JP_CHAR_TEN_NUM:
+            switch (flick) {
+                case FLICK_STATE_NONE:
+                    mService.commitTextSKK(",", 0);
+                    break;
+                case FLICK_STATE_LEFT:
+                    mService.commitTextSKK(".", 0);
+                    break;
+                case FLICK_STATE_UP:
+                    mService.commitTextSKK("-", 0);
+                    break;
+                case FLICK_STATE_RIGHT:
+                    mService.commitTextSKK(":", 0);
+                    break;
             }
             return;
         default:
@@ -804,7 +868,7 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
         switch (primaryCode) {
         case Keyboard.KEYCODE_SHIFT:
             setShifted(!isShifted());
-            setAbbrevLabel(isShifted());
+            onSetShifted(isShifted());
             break;
         case Keyboard.KEYCODE_DELETE:
             if (!mService.handleBackspace()) {
@@ -825,6 +889,16 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
         // 0〜9
             mService.processKey(primaryCode);
             break;
+        case KEYCODE_FLICK_JP_PASTE:
+            String clip;
+            ClipboardManager cm = (ClipboardManager)mService.getSystemService(CLIPBOARD_SERVICE);
+            CharSequence cs = cm.getText();
+            if (cs == null) {
+                clip = "";
+            } else {
+                clip = cs.toString();
+            }
+            mService.commitTextSKK(clip, 1);
         }
     }
 
@@ -880,13 +954,15 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
         case KEYCODE_FLICK_JP_CHAR_RA:
         case KEYCODE_FLICK_JP_CHAR_WA:
         case KEYCODE_FLICK_JP_CHAR_TEN:
+        case KEYCODE_FLICK_JP_CHAR_TEN_SHIFTED:
+        case KEYCODE_FLICK_JP_CHAR_TEN_NUM:
             processFlickForLetter(mLastPressedKey, mFlickState, isShifted());
             break;
         }
 
         if (mLastPressedKey != Keyboard.KEYCODE_SHIFT) {
             setShifted(false);
-            setAbbrevLabel(false);
+            onSetShifted(false);
         }
 
         mLastPressedKey = KEYCODE_FLICK_JP_NONE;

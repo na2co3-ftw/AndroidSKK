@@ -543,17 +543,20 @@ public class SKKService extends InputMethodService {
 
     boolean handleDpad(int keyCode) {
         if (mStickyMeta) {mMetaKey.useMetaState();}
-        if (mEngine.getState() == SKKChooseState.INSTANCE) {
+        if (mEngine.isRegistering()) {
+            return true;
+        } else if (mEngine.getState() == SKKChooseState.INSTANCE) {
             if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
                 mEngine.chooseAdjacentCandidate(false);
             } else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
                 mEngine.chooseAdjacentCandidate(true);
             }
-        } else if (!mEngine.canMoveCursor()) {
-            return false;
+            return true;
+        } else if (mEngine.getState().isTransient()) {
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     /**
@@ -597,6 +600,18 @@ public class SKKService extends InputMethodService {
 
     public void commitTextSKK(CharSequence text, int newCursorPosition) {
         mEngine.commitTextSKK(text, newCursorPosition);
+    }
+
+    public void onStartRegister() {
+        if (mUseSoftKeyboard && (mFlickJPInputView != null)) {
+            mFlickJPInputView.setRegisterMode(true);
+        }
+    }
+
+    public void onFinishRegister() {
+        if (mUseSoftKeyboard && (mFlickJPInputView != null)) {
+            mFlickJPInputView.setRegisterMode(false);
+        }
     }
 
     void sendToMushroom() {
