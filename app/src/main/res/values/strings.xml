@@ -53,6 +53,7 @@
 	<string translatable="false" name="prefkey_cancel_key">PrefKeyCancelKey</string>
 	<string translatable="false" name="prefkey_mod_cancel_key">PrefKeyModCancelKey</string>
 	<string translatable="false" name="prefkey_candidates_size">PrefKeyCandidatesSize</string>
+	<string translatable="false" name="prefkey_display_state">PrefKeyDisplayState</string>
 	<string translatable="false" name="prefkey_use_candidates_view">PrefKeyUseCandidatesView</string>
 	<string translatable="false" name="prefkey_use_curve">PrefKeyUseCurve</string>
 	<string translatable="false" name="prefkey_flick_sensitivity">PrefKeyFlickSensitivity</string>

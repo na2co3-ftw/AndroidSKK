@@ -46,8 +46,10 @@ public class SKKEngine {
     private List<SKKDictionary> mDicts;
     private SKKUserDictionary mUserDict;
 
-    int mColorComposing;
-    int mColorConverting;
+    private int mColorComposing;
+    private int mColorConverting;
+
+    private boolean mDisplayState = true;
 
     // 再変換のための情報
     private class ConversionInfo {
@@ -111,6 +113,10 @@ public class SKKEngine {
             mZenkakuSeparatorMap.put(".", "．");
             mZenkakuSeparatorMap.put(",", "，");
         }
+    }
+
+    public void setDisplayState(boolean displayState) {
+        mDisplayState = displayState;
     }
 
     public SKKState getState() { return mState; }
@@ -420,7 +426,9 @@ public class SKKEngine {
         int bgStart = 0;
 
         if (isRegistering) {
-            ct.append("▼");
+            if (mDisplayState) {
+                ct.append("▼");
+            }
             if (mRegOkurigana == null) {
                 ct.append(mRegKey);
             } else {
@@ -436,11 +444,15 @@ public class SKKEngine {
         if (mState == SKKAbbrevState.INSTANCE || mState == SKKKanjiState.INSTANCE || mState == SKKOkuriganaState.INSTANCE) {
             bg = new BackgroundColorSpan(mColorComposing);
             bgStart = ct.length();
-            ct.append("▽");
+            if (mDisplayState) {
+                ct.append("▽");
+            }
         } else if (mState == SKKChooseState.INSTANCE) {
             bg = new BackgroundColorSpan(mColorConverting);
             bgStart = ct.length();
-            ct.append("▼");
+            if (mDisplayState) {
+                ct.append("▼");
+            }
         }
         ct.append(text);
 

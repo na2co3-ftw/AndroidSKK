@@ -87,6 +87,10 @@ public class SKKPrefs extends AppCompatActivity implements OnPreferenceStartFrag
         return PreferenceManager.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefkey_candidates_size), 18);
     }
 
+    static boolean getDisplayState(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.prefkey_display_state), true);
+    }
+
     static int getKanaKey(Context context) {
         int key = PreferenceManager.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefkey_kana_key), 93);
         if (key == KeyEvent.KEYCODE_UNKNOWN) {key = 93;}

@@ -139,6 +139,7 @@ public class SKKService extends InputMethodService {
         mStickyMeta = SKKPrefs.getStickyMeta(context);
         mSandS = SKKPrefs.getSandS(context);
         mEngine.setZenkakuPunctuationMarks(SKKPrefs.getKutoutenType(context));
+        mEngine.setDisplayState(SKKPrefs.getDisplayState(context));
 
         mUseSoftKeyboard = checkUseSoftKeyboard();
         updateInputViewShown();
