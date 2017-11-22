@@ -496,20 +496,28 @@ public class SKKEngine {
      * @param key 辞書のキー 送りありの場合最後はアルファベット
      */
     void conversionStart(StringBuilder key) {
-        String str = key.toString();
+        if (!conversionStartInternal(key, false)) {
+            registerStart(key.toString());
+        }
+    }
 
-        changeState(SKKChooseState.INSTANCE);
+    private boolean conversionStartInternal(StringBuilder key, boolean lastCandidate) {
+        String str = key.toString();
 
         List<String> list = findCandidates(str);
         if (list == null) {
-            registerStart(str);
-            return;
+            return false;
         }
 
+        changeState(SKKChooseState.INSTANCE);
         mCandidatesList = list;
-        mCurrentCandidateIndex = 0;
+        mCurrentCandidateIndex = lastCandidate ? list.size() - 1 : 0;
         mService.setCandidates(list);
+        if (mCurrentCandidateIndex != 0) {
+            mService.requestChooseCandidate(mCurrentCandidateIndex);
+        }
         setCurrentCandidateToComposing();
+        return true;
     }
 
     boolean reConversion() {
@@ -590,6 +598,16 @@ public class SKKEngine {
         RegistrationInfo regInfo = mRegistrationStack.removeFirst();
         mKanjiKey.setLength(0);
         mKanjiKey.append(regInfo.key);
+        mOkurigana = regInfo.okurigana;
+        if (conversionStartInternal(mKanjiKey, true)) {
+            return;
+        }
+
+        if (mOkurigana != null) {
+            mKanjiKey.deleteCharAt(mKanjiKey.length() - 1);
+            mKanjiKey.append(mOkurigana);
+            mOkurigana = null;
+        }
         mComposing.setLength(0);
         changeState(SKKKanjiState.INSTANCE);
         setComposingTextSKK(mKanjiKey, 1);
