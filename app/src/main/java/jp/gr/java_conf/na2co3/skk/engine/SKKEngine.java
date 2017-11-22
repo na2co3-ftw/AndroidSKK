@@ -134,7 +134,14 @@ public class SKKEngine {
     public boolean canMoveCursor() { return (!mRegistrationStack.isEmpty() || mComposing.length() != 0 || mKanjiKey.length() != 0); }
     public void commitUserDictChanges() { mUserDict. commitChanges(); }
 
-    public void processKey(int pcode) { mState.processKey(this, pcode); }
+    public void processKey(int pcode) {
+        if (pcode == ' ' && !mRegistrationStack.isEmpty()) {
+            if (mRegistrationStack.peekFirst().entry.length() == 0) {
+                return;
+            }
+        }
+        mState.processKey(this, pcode);
+    }
 
     public void processText(String text, boolean isShifted) { mState.processText(this, text, isShifted); }
 
