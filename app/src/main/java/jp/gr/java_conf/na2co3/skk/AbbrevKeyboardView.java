@@ -10,6 +10,7 @@ public class AbbrevKeyboardView extends KeyboardView implements KeyboardView.OnK
     private static final int KEYCODE_ABBREV_CANCEL	= -1009;
     private static final int KEYCODE_ABBREV_ZENKAKU	= -1010;
     private static final int KEYCODE_ABBREV_ENTER	= -1011;
+    private static final int KEYCODE_ABBREV_SPACE   = 32;
 
     private SKKService mService;
 
@@ -47,7 +48,7 @@ public class AbbrevKeyboardView extends KeyboardView implements KeyboardView.OnK
 
     @Override
     protected boolean onLongPress (Keyboard.Key key) {
-        if (key.codes[0] == KeyEvent.KEYCODE_SPACE) {
+        if (key.codes[0] == KEYCODE_ABBREV_SPACE) {
             mService.showInputMethodPicker();
             return true;
         } else if (key.codes[0] == KEYCODE_ABBREV_ZENKAKU) {

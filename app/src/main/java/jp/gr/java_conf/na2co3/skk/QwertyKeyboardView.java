@@ -12,6 +12,7 @@ public class QwertyKeyboardView extends KeyboardView implements KeyboardView.OnK
     private static final int KEYCODE_QWERTY_TOSYM	= -1009;
     private static final int KEYCODE_QWERTY_TOLATIN	= -1010;
     private static final int KEYCODE_QWERTY_ENTER	= -1011;
+    private static final int KEYCODE_QWERTY_SPACE   = 32;
 
     private SKKService mService;
 
@@ -67,7 +68,7 @@ public class QwertyKeyboardView extends KeyboardView implements KeyboardView.OnK
         if (key.codes[0] == KEYCODE_QWERTY_ENTER) {
             mService.keyDownUp(KeyEvent.KEYCODE_SEARCH);
             return true;
-        } else if (key.codes[0] == KeyEvent.KEYCODE_SPACE) {
+        } else if (key.codes[0] == KEYCODE_QWERTY_SPACE) {
             mService.showInputMethodPicker();
             return true;
         } else if (key.codes[0] == KEYCODE_QWERTY_TOJP) {
