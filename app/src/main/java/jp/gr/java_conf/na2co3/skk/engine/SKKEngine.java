@@ -180,7 +180,11 @@ public class SKKEngine {
         } else {
             if (mComposing.length() == 0) {
                 if (!mRegistrationStack.isEmpty()) {
-                    registerWord();
+                    if (mRegistrationStack.peekFirst().entry.length() != 0) {
+                        registerWord();
+                    } else {
+                        cancelRegister();
+                    }
                 } else {
                     return false;
                 }
