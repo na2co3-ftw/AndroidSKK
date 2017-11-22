@@ -298,8 +298,9 @@ public class SKKEngine {
             if (mComposing.length() == 0) {
                 // KANJIモードに戻る
                 if (mOkurigana != null) {
-                    mOkurigana = null;
                     mKanjiKey.deleteCharAt(mKanjiKey.length() -1);
+                    mKanjiKey.append(mOkurigana);
+                    mOkurigana = null;
                 }
                 changeState(SKKKanjiState.INSTANCE);
                 setComposingTextSKK(mKanjiKey, 1);
@@ -312,6 +313,7 @@ public class SKKEngine {
             }
 
             mCurrentCandidateIndex = 0;
+            return;
         }
 
         mService.requestChooseCandidate(mCurrentCandidateIndex);
