@@ -2,12 +2,11 @@ package jp.gr.java_conf.na2co3.skk;
 
 import android.content.Context;
 import android.inputmethodservice.Keyboard;
-import android.inputmethodservice.KeyboardView;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.util.AttributeSet;
 
-public class QwertyKeyboardView extends KeyboardView implements KeyboardView.OnKeyboardActionListener {
+public class QwertyKeyboardView extends SKKKeyboardView {
     private static final int KEYCODE_QWERTY_TOJP	= -1008;
     private static final int KEYCODE_QWERTY_TOSYM	= -1009;
     private static final int KEYCODE_QWERTY_TOLATIN	= -1010;
@@ -46,7 +45,6 @@ public class QwertyKeyboardView extends KeyboardView implements KeyboardView.OnK
         mSymbolsKeyboard = new SKKKeyboard(context, R.xml.symbols, 4);
         mSymbolsShiftedKeyboard = new SKKKeyboard(context, R.xml.symbols_shift, 4);
         setKeyboard(mLatinKeyboard);
-        setOnKeyboardActionListener(this);
     }
 
     public void setService(SKKService listener) {
@@ -105,12 +103,12 @@ public class QwertyKeyboardView extends KeyboardView implements KeyboardView.OnK
     }
 
     @Override
-    public void onKey(int primaryCode, int[] keyCodes) {
-        if (primaryCode == Keyboard.KEYCODE_DELETE) {
+    public void onKey(int code) {
+        if (code == Keyboard.KEYCODE_DELETE) {
             if (!mService.handleBackspace()) {
                 mService.keyDownUp(KeyEvent.KEYCODE_DEL);
             }
-        } else if (primaryCode == Keyboard.KEYCODE_SHIFT) {
+        } else if (code == Keyboard.KEYCODE_SHIFT) {
             setShifted(!isShifted());
             Keyboard cur_keyboard = getKeyboard();
             if (cur_keyboard == mSymbolsKeyboard) {
@@ -122,45 +120,24 @@ public class QwertyKeyboardView extends KeyboardView implements KeyboardView.OnK
                 setKeyboard(mSymbolsKeyboard);
                 mSymbolsKeyboard.setShifted(false);
             }
-        } else if (primaryCode == KEYCODE_QWERTY_ENTER) {
+        } else if (code == KEYCODE_QWERTY_ENTER) {
             if (!mService.handleEnter()) {
                 mService.pressEnter();
             }
-        } else if (primaryCode == KEYCODE_QWERTY_TOJP) {
+        } else if (code == KEYCODE_QWERTY_TOJP) {
             mService.handleKanaKey();
-        } else if (primaryCode == KEYCODE_QWERTY_TOSYM) {
+        } else if (code == KEYCODE_QWERTY_TOSYM) {
             setKeyboard(mSymbolsKeyboard);
-        } else if (primaryCode == KEYCODE_QWERTY_TOLATIN) {
+        } else if (code == KEYCODE_QWERTY_TOLATIN) {
             setKeyboard(mLatinKeyboard);
         } else {
             if (getKeyboard() == mLatinKeyboard) {
                 if (isShifted() ^ mFlicked) {
-                    primaryCode = Character.toUpperCase(primaryCode);
+                    code = Character.toUpperCase(code);
                 }
             }
-            mService.commitTextSKK(String.valueOf((char) primaryCode), 1);
+            mService.commitTextSKK(String.valueOf((char) code), 1);
         }
-    }
-
-    public void onPress(int primaryCode) {
-    }
-
-    public void onRelease(int primaryCode) {
-    }
-
-    public void onText(CharSequence text) {
-    }
-
-    public void swipeRight() {
-    }
-
-    public void swipeLeft() {
-    }
-
-    public void swipeDown() {
-    }
-
-    public void swipeUp() {
     }
 
 }

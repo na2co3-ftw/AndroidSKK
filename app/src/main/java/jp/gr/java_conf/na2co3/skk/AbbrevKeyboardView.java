@@ -2,11 +2,10 @@ package jp.gr.java_conf.na2co3.skk;
 
 import android.content.Context;
 import android.inputmethodservice.Keyboard;
-import android.inputmethodservice.KeyboardView;
 import android.view.KeyEvent;
 import android.util.AttributeSet;
 
-public class AbbrevKeyboardView extends KeyboardView implements KeyboardView.OnKeyboardActionListener {
+public class AbbrevKeyboardView extends SKKKeyboardView {
     private static final int KEYCODE_ABBREV_CANCEL	= -1009;
     private static final int KEYCODE_ABBREV_ZENKAKU	= -1010;
     private static final int KEYCODE_ABBREV_ENTER	= -1011;
@@ -35,7 +34,6 @@ public class AbbrevKeyboardView extends KeyboardView implements KeyboardView.OnK
     private void setup(Context context) {
         mKeyboard = new SKKKeyboard(context, R.xml.abbrev, 5);
         setKeyboard(mKeyboard);
-        setOnKeyboardActionListener(this);
     }
 
     public void setService(SKKService listener) {
@@ -60,46 +58,25 @@ public class AbbrevKeyboardView extends KeyboardView implements KeyboardView.OnK
     }
 
     @Override
-    public void onKey(int primaryCode, int[] keyCodes) {
-        if (primaryCode == Keyboard.KEYCODE_DELETE) {
+    public void onKey(int code) {
+        if (code == Keyboard.KEYCODE_DELETE) {
             if (!mService.handleBackspace()) {
                 mService.keyDownUp(KeyEvent.KEYCODE_DEL);
             }
-        } else if (primaryCode == Keyboard.KEYCODE_SHIFT) {
+        } else if (code == Keyboard.KEYCODE_SHIFT) {
             setShifted(!isShifted());
-        } else if (primaryCode == KEYCODE_ABBREV_ENTER) {
+        } else if (code == KEYCODE_ABBREV_ENTER) {
             if (!mService.handleEnter()) {
                 mService.pressEnter();
             }
-        } else if (primaryCode == KEYCODE_ABBREV_CANCEL) {
+        } else if (code == KEYCODE_ABBREV_CANCEL) {
             mService.handleCancel();
-        } else if (primaryCode == KEYCODE_ABBREV_ZENKAKU) {
-            mService.processKey(primaryCode);
+        } else if (code == KEYCODE_ABBREV_ZENKAKU) {
+            mService.processKey(code);
         } else {
-            if (isShifted()) {primaryCode = Character.toUpperCase(primaryCode);}
-            mService.processKey((char) primaryCode);
+            if (isShifted()) {code = Character.toUpperCase(code);}
+            mService.processKey((char) code);
         }
-    }
-
-    public void onPress(int primaryCode) {
-    }
-
-    public void onRelease(int primaryCode) {
-    }
-
-    public void onText(CharSequence text) {
-    }
-
-    public void swipeRight() {
-    }
-
-    public void swipeLeft() {
-    }
-
-    public void swipeDown() {
-    }
-
-    public void swipeUp() {
     }
 
 }

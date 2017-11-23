@@ -2,7 +2,6 @@ package jp.gr.java_conf.na2co3.skk;
 
 import android.content.Context;
 import android.inputmethodservice.Keyboard;
-import android.inputmethodservice.KeyboardView;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -17,7 +16,7 @@ import java.util.List;
 import jp.gr.java_conf.na2co3.skk.engine.RomajiConverter;
 import jp.gr.java_conf.na2co3.skk.engine.SKKEngine;
 
-public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.OnKeyboardActionListener {
+public class FlickJPKeyboardView extends SKKKeyboardView {
     private static final int KEYCODE_FLICK_JP_CHAR_A	= -201;
     private static final int KEYCODE_FLICK_JP_CHAR_KA	= -202;
     private static final int KEYCODE_FLICK_JP_CHAR_SA	= -203;
@@ -107,14 +106,12 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
 
     public FlickJPKeyboardView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setOnKeyboardActionListener(this);
         setPreviewEnabled(false);
         setBackgroundColor(0x00000000);
     }
 
     public FlickJPKeyboardView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        setOnKeyboardActionListener(this);
         setPreviewEnabled(false);
         setBackgroundColor(0x00000000);
     }
@@ -664,13 +661,13 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
     }
 
     @Override
-    public void onPress(int primaryCode) {
+    public void onPress(int code) {
         if (mFlickState == FLICK_STATE_NONE) {
-            mLastPressedKey = primaryCode;
+            mLastPressedKey = code;
         }
 
         if (mUsePopup) {
-            String[] chars = mFlickCharList.get(primaryCode);
+            String[] chars = mFlickCharList.get(code);
             if (chars == null) {
                 mCurrentPopupLabels = POPUP_LABELS_NULL;
                 return;
@@ -710,8 +707,8 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
     }
 
     @Override
-    public void onKey(int primaryCode, int[] keyCodes) {
-        switch (primaryCode) {
+    public void onKey(int code) {
+        switch (code) {
         case Keyboard.KEYCODE_SHIFT:
             setShifted(!isShifted());
             setAbbrevLabel(isShifted());
@@ -728,7 +725,7 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
             break;
         case 48: case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56: case 57:
         // 0〜9
-            mService.processKey(primaryCode);
+            mService.processKey(code);
             break;
         }
     }
@@ -811,25 +808,6 @@ public class FlickJPKeyboardView extends KeyboardView implements KeyboardView.On
         mFlickStartX = -1;
         mFlickStartY = -1;
         if (mUsePopup && mPopup.isShowing()) {mPopup.dismiss();}
-    }
-
-    @Override
-    public void onRelease(int primaryCode) {
-    }
-
-    public void onText(CharSequence text) {
-    }
-
-    public void swipeRight() {
-    }
-
-    public void swipeLeft() {
-    }
-
-    public void swipeDown() {
-    }
-
-    public void swipeUp() {
     }
 
 }
