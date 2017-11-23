@@ -32,6 +32,7 @@ public class SKKService extends InputMethodService {
     private FlickJPKeyboardView mFlickJPInputView = null;
     private QwertyKeyboardView mQwertyInputView = null;
     private AbbrevKeyboardView mAbbrevKeyboardView = null;
+    private SKKKeyboardView mCurrentInputView = null;
     private int mScreenHeight;
 
     private SKKEngine mEngine;
@@ -227,12 +228,14 @@ public class SKKService extends InputMethodService {
         createInputView();
 
         if (mEngine.getState() == SKKASCIIState.INSTANCE) {
+            mCurrentInputView = mQwertyInputView;
             return mQwertyInputView;
         }
         if (mEngine.getState() == SKKKatakanaState.INSTANCE) {
             mFlickJPInputView.setKatakanaMode();
         }
 
+        mCurrentInputView = mFlickJPInputView;
         return mFlickJPInputView;
     }
 
@@ -652,7 +655,7 @@ public class SKKService extends InputMethodService {
                     }
                 }
         );
-        dialog.show(getCurrentSoftKeyboard());
+        dialog.show(mCurrentInputView);
     }
 
     void changeLastChar(String type) { mEngine.changeLastChar(type); }
@@ -691,37 +694,33 @@ public class SKKService extends InputMethodService {
     public void changeSoftKeyboard(SKKState state) {
         if (mUseSoftKeyboard) {
             if (state == SKKASCIIState.INSTANCE) {
-                if (mQwertyInputView != null) { setInputView(mQwertyInputView); }
+                if (mQwertyInputView != null && mCurrentInputView != mQwertyInputView) {
+                    setInputView(mQwertyInputView);
+                    mCurrentInputView = mQwertyInputView;
+                }
             } else if (state == SKKHiraganaState.INSTANCE) {
                 if (mFlickJPInputView != null) {
                     mFlickJPInputView.setHiraganaMode();
-                    setInputView(mFlickJPInputView);
+                    if (mCurrentInputView != mFlickJPInputView) {
+                        setInputView(mFlickJPInputView);
+                        mCurrentInputView = mFlickJPInputView;
+                    }
                 }
             } else if (state == SKKKatakanaState.INSTANCE) {
                 if (mFlickJPInputView != null) {
                     mFlickJPInputView.setKatakanaMode();
-                    setInputView(mFlickJPInputView);
+                    if (mFlickJPInputView != null && mCurrentInputView != mFlickJPInputView) {
+                        setInputView(mFlickJPInputView);
+                        mCurrentInputView = mFlickJPInputView;
+                    }
                 }
             } else if (state == SKKAbbrevState.INSTANCE) {
-                if (mAbbrevKeyboardView != null) { setInputView(mAbbrevKeyboardView); }
+                if (mAbbrevKeyboardView != null && mCurrentInputView != mAbbrevKeyboardView) {
+                    setInputView(mAbbrevKeyboardView);
+                    mCurrentInputView = mAbbrevKeyboardView;
+                }
             }
         }
-    }
-
-    private View getCurrentSoftKeyboard() {
-        SKKState state = mEngine.getState();
-        if (mUseSoftKeyboard) {
-            if (state == SKKASCIIState.INSTANCE) {
-                return mQwertyInputView;
-            } else if (state == SKKHiraganaState.INSTANCE) {
-                return mFlickJPInputView;
-            } else if (state == SKKKatakanaState.INSTANCE) {
-                return mFlickJPInputView;
-            } else if (state == SKKAbbrevState.INSTANCE) {
-                return mAbbrevKeyboardView;
-            }
-        }
-        return null;
     }
 
     @Override

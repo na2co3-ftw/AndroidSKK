@@ -462,6 +462,8 @@ public class FlickJPKeyboardView extends SKKKeyboardView {
         case MotionEvent.ACTION_MOVE:
             if (isLeftCurve(mFlickState) || isRightCurve(mFlickState)) {return true;}
 
+            int prevFlickState = mFlickState;
+
             float dx = event.getRawX() - mFlickStartX;
             float dy = event.getRawY() - mFlickStartY;
             if (mUseCurve) {
@@ -480,10 +482,20 @@ public class FlickJPKeyboardView extends SKKKeyboardView {
                 processSimpleFlick(dx, dy);
             }
 
+            if (mLastPressedKey == Keyboard.KEYCODE_DELETE && prevFlickState != mFlickState) {
+                if (mFlickState == FLICK_STATE_NONE) {
+                    startKeyRepeat(Keyboard.KEYCODE_DELETE);
+                } else {
+                    endKeyRepeat();
+                }
+            }
+
             if (mUsePopup) {setupPopupTextView();}
             return true;
         case MotionEvent.ACTION_UP:
+            boolean result = super.onTouchEvent(event);
             release();
+            return result;
         }
 
         return super.onTouchEvent(event);
@@ -713,6 +725,15 @@ public class FlickJPKeyboardView extends SKKKeyboardView {
             setShifted(!isShifted());
             setAbbrevLabel(isShifted());
             break;
+        case Keyboard.KEYCODE_DELETE:
+            if (mFlickState == FLICK_STATE_NONE) {
+                if (!mService.handleBackspace()) {
+                    mService.keyDownUp(KeyEvent.KEYCODE_DEL);
+                }
+            } else if (mFlickState == FLICK_STATE_LEFT) {
+                mService.handleCancel();
+            }
+            break;
         case KEYCODE_FLICK_JP_LEFT:
             if (!mService.handleDpad(KeyEvent.KEYCODE_DPAD_LEFT)) {
                 mService.keyDownUp(KeyEvent.KEYCODE_DPAD_LEFT);
@@ -746,15 +767,6 @@ public class FlickJPKeyboardView extends SKKKeyboardView {
                 if (!mService.handleEnter()) {
                     mService.pressEnter();
                 }
-            }
-            break;
-        case Keyboard.KEYCODE_DELETE:
-            if (mFlickState == FLICK_STATE_NONE) {
-                if (!mService.handleBackspace()) {
-                    mService.keyDownUp(KeyEvent.KEYCODE_DEL);
-                }
-            } else if (mFlickState == FLICK_STATE_LEFT) {
-                mService.handleCancel();
             }
             break;
         case KEYCODE_FLICK_JP_ROTATE:

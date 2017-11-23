@@ -72,19 +72,26 @@ class SKKKeyboardView extends KeyboardView {
     protected void onKey(int code) {
     }
 
+    public void startKeyRepeat(int code) {
+        mRepeatingKeyCode = code;
+        mKeyPending = true;
+        Message message = mHandler.obtainMessage(MSG_REPEAT);
+        mHandler.sendMessageDelayed(message, REPEAT_DELAY);
+    }
+
+    public void endKeyRepeat() {
+        mHandler.removeMessages(MSG_REPEAT);
+        mRepeatingKeyCode = KEYCODE_NONE;
+        mKeyPending = false;
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        boolean endRepeat = false;
+        boolean result = super.onTouchEvent(event);
         switch (event.getAction()) {
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                mHandler.removeMessages(MSG_REPEAT);
-                endRepeat = true;
-        }
-        boolean result = super.onTouchEvent(event);
-        if (endRepeat) {
-            mRepeatingKeyCode = KEYCODE_NONE;
-            mKeyPending = false;
+                endKeyRepeat();
         }
         return result;
     }
@@ -97,10 +104,7 @@ class SKKKeyboardView extends KeyboardView {
                 for (SKKKeyboard.Key key : ((SKKKeyboard) keyboard).getSKKKeys()) {
                     if (key.codes[0] == primaryCode) {
                         if (key.skkRepeatable) {
-                            mRepeatingKeyCode = primaryCode;
-                            mKeyPending = true;
-                            Message message = mHandler.obtainMessage(MSG_REPEAT);
-                            mHandler.sendMessageDelayed(message, REPEAT_DELAY);
+                            startKeyRepeat(primaryCode);
                         }
                     }
                 }
