@@ -4,6 +4,7 @@ public interface SKKState {
     void handleKanaKey(SKKEngine context);
     void processKey(SKKEngine context, int pcode);
     void processText(SKKEngine context, String text, boolean isShifted);
+    void beforeBackspace(SKKEngine context);
     void afterBackspace(SKKEngine context);
     boolean handleCancel(SKKEngine context);
     boolean isTransient();

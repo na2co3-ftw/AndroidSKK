@@ -16,6 +16,7 @@ public enum SKKASCIIState implements SKKState {
         context.commitTextSKK(text, 1);
     }
 
+    public void beforeBackspace(SKKEngine context) {}
     public void afterBackspace(SKKEngine context) {}
     public boolean handleCancel(SKKEngine context) { return false; }
     public boolean isTransient() { return false; }

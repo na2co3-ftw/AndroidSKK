@@ -48,6 +48,15 @@ public enum SKKChooseState implements SKKState {
         SKKHiraganaState.INSTANCE.processText(context, text, isShifted);
     }
 
+    public void beforeBackspace(SKKEngine context) {
+        if (context.getOkurigana() != null) {
+            StringBuilder kanjiKey = context.getKanjiKey();
+            kanjiKey.deleteCharAt(kanjiKey.length() - 1);
+            kanjiKey.append(context.getOkurigana());
+            context.setOkurigana(null);
+        }
+    }
+
     public void afterBackspace(SKKEngine context) {
         if (context.getKanjiKey().length() == 0) {
             context.changeState(SKKHiraganaState.INSTANCE);
@@ -66,6 +75,7 @@ public enum SKKChooseState implements SKKState {
     }
 
     public boolean handleCancel(SKKEngine context) {
+        beforeBackspace(context);
         afterBackspace(context);
         return true;
     }

@@ -109,6 +109,8 @@ public enum SKKKanjiState implements SKKState {
         }
     }
 
+    public void beforeBackspace(SKKEngine context) {}
+
     public void afterBackspace(SKKEngine context) {
         StringBuilder kanjiKey = context.getKanjiKey();
         StringBuilder composing = context.getComposing();

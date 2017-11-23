@@ -92,6 +92,8 @@ public enum SKKHiraganaState implements SKKState, CommitKana {
         processKanaText(context, text, isShifted, this);
     }
 
+    public void beforeBackspace(SKKEngine context) {}
+
     public void afterBackspace(SKKEngine context) {
         context.setComposingTextSKK(context.getComposing(), 1);
     }

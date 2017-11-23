@@ -76,6 +76,8 @@ public enum SKKOkuriganaState implements SKKState {
         }
     }
 
+    public void beforeBackspace(SKKEngine context) {}
+
     public void afterBackspace(SKKEngine context) {
         context.getComposing().setLength(0);
         context.setOkurigana(null);

@@ -198,6 +198,8 @@ public class SKKEngine {
     }
 
     public boolean handleBackspace(boolean softKeyboard) {
+        mState.beforeBackspace(this);
+
         int clen = mComposing.length();
         int klen = mKanjiKey.length();
 
