@@ -105,7 +105,7 @@ public class QwertyKeyboardView extends SKKKeyboardView {
     @Override
     public void onKey(int code) {
         if (code == Keyboard.KEYCODE_DELETE) {
-            if (!mService.handleBackspace()) {
+            if (!mService.handleBackspace(true)) {
                 mService.keyDownUp(KeyEvent.KEYCODE_DEL);
             }
         } else if (code == Keyboard.KEYCODE_SHIFT) {

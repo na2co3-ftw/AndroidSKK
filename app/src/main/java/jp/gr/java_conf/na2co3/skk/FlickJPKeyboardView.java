@@ -727,7 +727,7 @@ public class FlickJPKeyboardView extends SKKKeyboardView {
             break;
         case Keyboard.KEYCODE_DELETE:
             if (mFlickState == FLICK_STATE_NONE) {
-                if (!mService.handleBackspace()) {
+                if (!mService.handleBackspace(true)) {
                     mService.keyDownUp(KeyEvent.KEYCODE_DEL);
                 }
             } else if (mFlickState == FLICK_STATE_LEFT) {

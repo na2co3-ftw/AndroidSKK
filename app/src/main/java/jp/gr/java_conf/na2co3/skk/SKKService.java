@@ -470,7 +470,7 @@ public class SKKService extends InputMethodService {
                 if (mEngine.handleBackKey()) {return true;}
                 break;
             case KeyEvent.KEYCODE_DEL:
-                if (handleBackspace()) {return true;}
+                if (handleBackspace(false)) {return true;}
                 break;
             case KeyEvent.KEYCODE_ENTER:
                 if (handleEnter()) {return true;}
@@ -532,9 +532,9 @@ public class SKKService extends InputMethodService {
     void handleKanaKey() { mEngine.handleKanaKey(); }
     boolean handleCancel() { return mEngine.handleCancel(); }
 
-    boolean handleBackspace() {
+    boolean handleBackspace(boolean softKeyboad) {
         if (mStickyMeta) {mMetaKey.useMetaState();}
-        return mEngine.handleBackspace();
+        return mEngine.handleBackspace(softKeyboad);
     }
 
     boolean handleEnter() {

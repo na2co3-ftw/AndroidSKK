@@ -197,7 +197,7 @@ public class SKKEngine {
         return true;
     }
 
-    public boolean handleBackspace() {
+    public boolean handleBackspace(boolean softKeyboard) {
         int clen = mComposing.length();
         int klen = mKanjiKey.length();
 
@@ -208,12 +208,18 @@ public class SKKEngine {
                 if (regEntry.length() > 0) {
                     regEntry.deleteCharAt(regEntry.length() - 1);
                     setComposingTextSKK("", 1);
+                } else if (softKeyboard) {
+                    return handleCancel();
                 }
             } else if (mState.isTransient()) {
                 return true;
             } else {
                 return false;
             }
+        }
+
+        if (softKeyboard && mState == SKKChooseState.INSTANCE) {
+            return handleCancel();
         }
 
         if (clen > 0) {
