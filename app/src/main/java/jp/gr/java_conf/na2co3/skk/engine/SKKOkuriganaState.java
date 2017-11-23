@@ -79,10 +79,25 @@ public enum SKKOkuriganaState implements SKKState {
     public void beforeBackspace(SKKEngine context) {}
 
     public void afterBackspace(SKKEngine context) {
-        context.getComposing().setLength(0);
-        context.setOkurigana(null);
-        context.setComposingTextSKK(context.getKanjiKey(), 1);
-        context.changeState(SKKKanjiState.INSTANCE);
+        if (context.getComposing().length() == 0) {
+            if (context.getOkurigana() == null) {
+                StringBuilder kanjiKey = context.getKanjiKey();
+                kanjiKey.deleteCharAt(kanjiKey.length() - 1);
+                context.setComposingTextSKK(context.getKanjiKey(), 1);
+                context.changeState(SKKKanjiState.INSTANCE);
+                return;
+            }
+        }
+        if (context.getOkurigana() != null) {
+            context.setComposingTextSKK(SKKUtils.createTrimmedBuilder(context.getKanjiKey())
+                    .append('*')
+                    .append(context.getOkurigana())
+                    .append(context.getComposing()), 1);
+        } else {
+            context.setComposingTextSKK(SKKUtils.createTrimmedBuilder(context.getKanjiKey())
+                    .append('*')
+                    .append(context.getComposing()), 1);
+        }
     }
 
     public boolean handleCancel(SKKEngine context) {

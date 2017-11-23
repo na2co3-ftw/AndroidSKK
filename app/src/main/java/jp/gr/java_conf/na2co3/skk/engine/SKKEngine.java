@@ -201,10 +201,11 @@ public class SKKEngine {
         mState.beforeBackspace(this);
 
         int clen = mComposing.length();
+        int olen = mOkurigana != null ? mOkurigana.length() : 0;
         int klen = mKanjiKey.length();
 
         // 変換中のものがない場合
-        if (clen == 0 && klen == 0) {
+        if (clen == 0 && olen == 0 && klen == 0) {
             if (!mRegistrationStack.isEmpty()) {
                 StringBuilder regEntry = mRegistrationStack.peekFirst().entry;
                 if (regEntry.length() > 0) {
@@ -226,6 +227,12 @@ public class SKKEngine {
 
         if (clen > 0) {
             mComposing.deleteCharAt(clen-1);
+        } else if (olen > 0) {
+            if (olen == 1) {
+                mOkurigana = null;
+            } else {
+                mOkurigana = mOkurigana.substring(0, mOkurigana.length() - 1);
+            }
         } else if (klen > 0) {
             mKanjiKey.deleteCharAt(klen-1);
         }
