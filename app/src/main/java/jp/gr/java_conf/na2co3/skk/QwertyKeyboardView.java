@@ -136,7 +136,7 @@ public class QwertyKeyboardView extends SKKKeyboardView {
                     code = Character.toUpperCase(code);
                 }
             }
-            mService.commitTextSKK(String.valueOf((char) code), 1);
+            mService.processKey(code);
         }
     }
 

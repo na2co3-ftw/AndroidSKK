@@ -28,16 +28,20 @@ public class SKKEngine {
 
     private SKKState mState = SKKHiraganaState.INSTANCE;
 
+    private RomajiConverter mConverter = new RomajiConverter(this);
+
     // 候補のリスト．KanjiStateとAbbrevStateでは補完リスト，ChooseStateでは変換候補リストになる
     private List<String> mCandidatesList;
     private int mCurrentCandidateIndex;
 
     // ひらがなや英単語などの入力途中
     private StringBuilder mComposing = new StringBuilder();
-    // 漢字変換のキー 送りありの場合最後がアルファベット 変換中は不変
+    // 漢字変換のキー 変換中は不変
     private StringBuilder mKanjiKey = new StringBuilder();
-    // 送りがな 「っ」や「ん」が含まれる場合だけ二文字になる
+    // 送りがな
     private String mOkurigana = null;
+    // 送りがなの最初の子音
+    private String mOkuriConsonant = null;
 
     private List<SKKDictionary> mDicts;
     private SKKUserDictionary mUserDict;
@@ -47,11 +51,13 @@ public class SKKEngine {
     private class RegistrationInfo {
         String key;
         String okurigana;
+        String okuriConsonant;
         StringBuilder entry;
 
-        RegistrationInfo(String k, String o) {
+        RegistrationInfo(String k, String o, String oc) {
             key = k;
             okurigana = o;
+            okuriConsonant = oc;
             entry = new StringBuilder();
         }
     }
@@ -68,13 +74,15 @@ public class SKKEngine {
         int index;
         String kanjiKey;
         String okuri;
+        String okuriConconant;
 
-        ConversionInfo(String cand, List<String> clist, int idx, String key, String okuri) {
+        ConversionInfo(String cand, List<String> clist, int idx, String key, String okuri, String okuriConconant) {
             this.candidate = cand;
             this.list = clist;
             this.index = idx;
             this.kanjiKey = key;
             this.okuri = okuri;
+            this.okuriConconant = okuriConconant;
         }
     }
     private SKKEngine.ConversionInfo mLastConversion = null;
@@ -92,12 +100,6 @@ public class SKKEngine {
         mDicts = dics;
         mUserDict = userDic;
         mZenkakuSeparatorMap = new HashMap<>();
-        mZenkakuSeparatorMap.put("-", "ー");
-        mZenkakuSeparatorMap.put("!", "！");
-        mZenkakuSeparatorMap.put("?", "？");
-        mZenkakuSeparatorMap.put("~", "〜");
-        mZenkakuSeparatorMap.put("[", "「");
-        mZenkakuSeparatorMap.put("]", "」");
         setZenkakuPunctuationMarks("en");
         Resources res = engine.getResources();
         mColorComposing = res.getColor(R.color.composing_composing);
@@ -135,22 +137,65 @@ public class SKKEngine {
     public void commitUserDictChanges() { mUserDict. commitChanges(); }
 
     public void processKey(int pcode) {
-        if (pcode == ' ' && !mRegistrationStack.isEmpty()) {
+        if (pcode == ' ' && !mRegistrationStack.isEmpty() && !mState.isTransient()) {
             if (mRegistrationStack.peekFirst().entry.length() == 0) {
                 return;
             }
         }
         mState.processKey(this, pcode);
+        updateComposingText();
     }
 
-    public void processText(String text, boolean isShifted) { mState.processText(this, text, isShifted); }
+    void processRomaji(int pcode) {
+        mConverter.processKey(pcode);
+    }
 
-    public void handleKanaKey() { mState.handleKanaKey(this); }
+    void commitRomajiText(String text, boolean isUpper) {
+        String hchr = mZenkakuSeparatorMap.get(text);
+        if (hchr != null) {
+            mState.processText(this, hchr, isUpper);
+        } else {
+            mState.processText(this, text, isUpper);
+        }
+    }
+
+    void setRomajiComposing(String text) {
+        mComposing.setLength(0);
+        mComposing.append(text);
+        if (mState == SKKOkuriganaState.INSTANCE) {
+            if (mOkuriConsonant == null && mOkurigana == null && text.length() != 0) {
+                mOkuriConsonant = text.substring(0, 1);
+            }
+        }
+    }
+
+    void onFinishRomaji() {
+        mState.onFinishRomaji(this);
+    }
+
+    public void processText(String text, boolean isShifted) {
+        if (text.equals(" ") && !mRegistrationStack.isEmpty() && !mState.isTransient()) {
+            if (mRegistrationStack.peekFirst().entry.length() == 0) {
+                return;
+            }
+        }
+        mConverter.flush();
+        mState.processText(this, text, isShifted);
+        mState.onFinishRomaji(this);
+        updateComposingText();
+    }
+
+    public void handleKanaKey() {
+        mState.handleKanaKey(this);
+        updateComposingText();
+    }
 
     public boolean handleBackKey() {
         boolean shouldReset = false;
         if (!mRegistrationStack.isEmpty()) {
             mRegistrationStack.clear();
+            shouldReset = true;
+        } else if (mComposing.length() != 0) {
             shouldReset = true;
         }
 
@@ -175,10 +220,16 @@ public class SKKEngine {
             }
             changeState(SKKHiraganaState.INSTANCE);
         } else if (mState == SKKKanjiState.INSTANCE || mState == SKKOkuriganaState.INSTANCE) {
+            mConverter.flush();
             commitTextSKK(mKanjiKey, 1);
+            if (mOkurigana != null) {
+                commitTextSKK(mOkurigana, 1);
+            }
             changeState(SKKHiraganaState.INSTANCE);
         } else {
-            if (mComposing.length() == 0) {
+            if (mConverter.flush()) {
+                mComposing.setLength(0);
+            } else {
                 if (!mRegistrationStack.isEmpty()) {
                     if (mRegistrationStack.peekFirst().entry.length() != 0) {
                         registerWord();
@@ -188,17 +239,21 @@ public class SKKEngine {
                 } else {
                     return false;
                 }
-            } else {
-                commitTextSKK(mComposing, 1);
-                mComposing.setLength(0);
             }
         }
 
+        updateComposingText();
         return true;
     }
 
     public boolean handleBackspace(boolean softKeyboard) {
         mState.beforeBackspace(this);
+
+        if (mConverter.handleBackspace()) {
+            mState.afterBackspace(this);
+            updateComposingText();
+            return true;
+        }
 
         int clen = mComposing.length();
         int olen = mOkurigana != null ? mOkurigana.length() : 0;
@@ -210,7 +265,6 @@ public class SKKEngine {
                 StringBuilder regEntry = mRegistrationStack.peekFirst().entry;
                 if (regEntry.length() > 0) {
                     regEntry.deleteCharAt(regEntry.length() - 1);
-                    setComposingTextSKK("", 1);
                 } else if (softKeyboard) {
                     return handleCancel();
                 }
@@ -230,19 +284,33 @@ public class SKKEngine {
         } else if (olen > 0) {
             if (olen == 1) {
                 mOkurigana = null;
+                mOkuriConsonant = null;
             } else {
-                mOkurigana = mOkurigana.substring(0, mOkurigana.length() - 1);
+                mOkurigana = mOkurigana.substring(0, olen - 1);
             }
         } else if (klen > 0) {
             mKanjiKey.deleteCharAt(klen-1);
         }
         mState.afterBackspace(this);
 
+        updateComposingText();
         return true;
     }
 
     public boolean handleCancel() {
-        return mState.handleCancel(this);
+        boolean result = false;
+        if (mComposing.length() != 0) {
+            mConverter.reset();
+            mComposing.setLength(0);
+            result = true;
+        }
+        if (mState.handleCancel(this)) {
+            result = true;
+        }
+        if (result) {
+            updateComposingText();
+        }
+        return result;
     }
 
     /**
@@ -250,13 +318,12 @@ public class SKKEngine {
      * @param text
      * @param newCursorPosition
      */
-    public void commitTextSKK(CharSequence text, int newCursorPosition) {
+    void commitTextSKK(CharSequence text, int newCursorPosition) {
         InputConnection ic = mService.getCurrentInputConnection();
         if (ic == null) { return; }
 
         if (!mRegistrationStack.isEmpty()) {
             mRegistrationStack.peekFirst().entry.append(text);
-            setComposingTextSKK("", newCursorPosition);
         } else {
             ic.commitText(text, newCursorPosition);
         }
@@ -266,6 +333,7 @@ public class SKKEngine {
         mComposing.setLength(0);
         mKanjiKey.setLength(0);
         mOkurigana = null;
+        mOkuriConsonant = null;
         mCandidatesList = null;
         if (mState.isTransient()) {
             changeState(SKKHiraganaState.INSTANCE);
@@ -308,38 +376,40 @@ public class SKKEngine {
         // 最初の候補より戻ると変換に戻る 最後の候補より進むと登録
         if (mCurrentCandidateIndex > mCandidatesList.size() - 1) {
             registerStart(mKanjiKey.toString());
+            updateComposingText();
             return;
         } else if (mCurrentCandidateIndex < 0) {
             if (mComposing.length() == 0) {
                 // KANJIモードに戻る
                 if (mOkurigana != null) {
-                    mKanjiKey.deleteCharAt(mKanjiKey.length() -1);
                     mKanjiKey.append(mOkurigana);
                     mOkurigana = null;
+                    mOkuriConsonant = null;
                 }
                 changeState(SKKKanjiState.INSTANCE);
-                setComposingTextSKK(mKanjiKey, 1);
                 updateSuggestions(mKanjiKey.toString());
             } else {
                 mKanjiKey.setLength(0);
                 changeState(SKKAbbrevState.INSTANCE);
-                setComposingTextSKK(mComposing, 1);
                 updateSuggestions(mComposing.toString());
             }
+            updateComposingText();
 
             mCurrentCandidateIndex = 0;
             return;
         }
 
         mService.requestChooseCandidate(mCurrentCandidateIndex);
-        setCurrentCandidateToComposing();
+        updateComposingText();
     }
 
     public void pickCandidateViewManually(int index) {
         if (mState == SKKChooseState.INSTANCE) {
             pickCandidate(index);
+            updateComposingText();
         } else if (mState == SKKAbbrevState.INSTANCE || mState == SKKKanjiState.INSTANCE) {
             pickSuggestion(index);
+            updateComposingText();
         }
     }
 
@@ -361,35 +431,37 @@ public class SKKEngine {
         return str;
     }
 
-    // 小文字大文字変換，濁音，半濁音に使う
+    // 最後の文字の小文字，濁音，半濁音を順次変換する
     public void changeLastChar(String type) {
         if (mState == SKKKanjiState.INSTANCE && mComposing.length() == 0) {
+            // ▽モード
             String s = mKanjiKey.toString();
             int idx = s.length() - 1;
             String lastchar = s.substring(idx);
-            String new_lastchar = RomajiConverter.INSTANCE.convertLastChar(lastchar, type);
+            String new_lastchar = RomajiConverter.convertLastChar(lastchar, type);
 
             if (new_lastchar != null) {
                 mKanjiKey.deleteCharAt(idx);
                 mKanjiKey.append(new_lastchar);
-                setComposingTextSKK(mKanjiKey, 1);
+                updateComposingText();
                 updateSuggestions(mKanjiKey.toString());
             }
             return;
         }
 
         if (mState == SKKChooseState.INSTANCE) {
+            // 変換中 (送り仮名を変換)
             if (mOkurigana == null) return;
-            String new_okuri = RomajiConverter.INSTANCE.convertLastChar(mOkurigana, type);
+            String new_okuri = RomajiConverter.convertLastChar(mOkurigana, type);
 
             if (new_okuri != null) {
-                String new_okuri_consonant = RomajiConverter.INSTANCE.getConsonant(new_okuri);
+                String new_okuri_consonant = RomajiConverter.getConsonant(new_okuri);
                 if (new_okuri_consonant != null) {
-                    mKanjiKey.deleteCharAt(mKanjiKey.length() - 1);
-                    mKanjiKey.append(new_okuri_consonant);
+                    mOkuriConsonant = new_okuri_consonant;
                 }
                 mOkurigana = new_okuri;
                 conversionStart(mKanjiKey); //変換やりなおし
+                updateComposingText();
             }
             return;
         }
@@ -398,20 +470,21 @@ public class SKKEngine {
             if (!mRegistrationStack.isEmpty()) {
                 RegistrationInfo regInfo = mRegistrationStack.peekFirst();
                 if (regInfo.entry.length() == 0) {
+                    // 単語登録 (送り仮名を変換)
                     if (regInfo.okurigana == null) return;
-                    String new_okuri = RomajiConverter.INSTANCE.convertLastChar(regInfo.okurigana, type);
+                    String new_okuri = RomajiConverter.convertLastChar(regInfo.okurigana, type);
 
                     if (new_okuri != null) {
                         mKanjiKey.setLength(0);
                         mKanjiKey.append(regInfo.key);
-                        String new_okuri_consonant = RomajiConverter.INSTANCE.getConsonant(new_okuri);
+                        String new_okuri_consonant = RomajiConverter.getConsonant(new_okuri);
                         if (new_okuri_consonant != null) {
-                            mKanjiKey.deleteCharAt(mKanjiKey.length() - 1);
-                            mKanjiKey.append(new_okuri_consonant);
+                            mOkuriConsonant = new_okuri_consonant;
                         }
                         mRegistrationStack.removeFirst();
                         mOkurigana = new_okuri;
                         conversionStart(mKanjiKey); //変換やりなおし
+                        updateComposingText();
                     }
                     return;
                 }
@@ -425,14 +498,14 @@ public class SKKEngine {
                 CharSequence cs = ic.getTextBeforeCursor(1, 0);
                 if (cs != null) {
                     lastchar = cs.toString();
-                    new_lastchar = RomajiConverter.INSTANCE.convertLastChar(lastchar, type);
+                    new_lastchar = RomajiConverter.convertLastChar(lastchar, type);
 
                     if (new_lastchar != null) {
                         if (!mRegistrationStack.isEmpty()) {
                             StringBuilder regEntry = mRegistrationStack.peekFirst().entry;
                             regEntry.deleteCharAt(regEntry.length()-1);
                             regEntry.append(new_lastchar);
-                            setComposingTextSKK("", 1);
+                            updateComposingText();
                         } else {
                             ic.deleteSurroundingText(1, 0);
                             ic.commitText(new_lastchar, 1);
@@ -448,33 +521,25 @@ public class SKKEngine {
     StringBuilder getKanjiKey() { return mKanjiKey; }
     String getOkurigana() { return mOkurigana; }
     void setOkurigana(String okr) { mOkurigana = okr; }
-    String getZenkakuSeparator(String key) { return mZenkakuSeparatorMap.get(key); }
+    String getOkuriConsonant() { return mOkuriConsonant; }
+    void setOkuriConsonant(String c) { mOkuriConsonant = c; }
     boolean getToggleKanaKey() { return SKKPrefs.getToggleKanaKey(mService); }
 
-    /**
-     * setComposingTextのラッパー 変換モードマーク等を追加する
-     * @param text
-     * @param newCursorPosition
-     */
-    void setComposingTextSKK(CharSequence text, int newCursorPosition) {
+    private void updateComposingText() {
         InputConnection ic = mService.getCurrentInputConnection();
         if (ic == null) return;
 
         SpannableStringBuilder ct = new SpannableStringBuilder();
-        BackgroundColorSpan bg = null;
-        int bgStart = 0;
 
         if (!mRegistrationStack.isEmpty()) {
             for (Iterator<RegistrationInfo> iterator = mRegistrationStack.descendingIterator(); iterator.hasNext();) {
                 RegistrationInfo regInfo = iterator.next();
-                bgStart = ct.length();
+                int bgStart = ct.length();
                 if (mDisplayState) {
                     ct.append("▼");
                 }
-                if (regInfo.okurigana == null) {
-                    ct.append(regInfo.key);
-                } else {
-                    ct.append(regInfo.key.substring(0, regInfo.key.length() - 1));
+                ct.append(regInfo.key);
+                if (regInfo.okurigana != null) {
                     ct.append("*");
                     ct.append(regInfo.okurigana);
                 }
@@ -483,6 +548,9 @@ public class SKKEngine {
                 ct.append(regInfo.entry);
             }
         }
+
+        BackgroundColorSpan bg = null;
+        int bgStart = 0;
 
         if (mState == SKKAbbrevState.INSTANCE || mState == SKKKanjiState.INSTANCE || mState == SKKOkuriganaState.INSTANCE) {
             bg = new BackgroundColorSpan(mColorComposing);
@@ -497,14 +565,19 @@ public class SKKEngine {
                 ct.append("▼");
             }
         }
-        ct.append(text);
+        CharSequence text = mState.getComposingText(this);
+        if (text != null) {
+            ct.append(text);
+        }
 
         if (bg != null) {
             ct.setSpan(bg, bgStart, ct.length(), Spanned.SPAN_COMPOSING);
         }
-        ct.setSpan(new UnderlineSpan(), 0, ct.length(), Spanned.SPAN_COMPOSING);
+        if (ct.length() != 0) {
+            ct.setSpan(new UnderlineSpan(), 0, ct.length(), Spanned.SPAN_COMPOSING);
+        }
 
-        ic.setComposingText(ct, newCursorPosition);
+        ic.setComposingText(ct, 1);
     }
 
     /***
@@ -520,6 +593,9 @@ public class SKKEngine {
 
     private boolean conversionStartInternal(StringBuilder key, boolean lastCandidate) {
         String str = key.toString();
+        if (mOkuriConsonant != null) {
+            str += mOkuriConsonant;
+        }
 
         List<String> list = findCandidates(str);
         if (list == null) {
@@ -533,7 +609,6 @@ public class SKKEngine {
         if (mCurrentCandidateIndex != 0) {
             mService.requestChooseCandidate(mCurrentCandidateIndex);
         }
-        setCurrentCandidateToComposing();
         return true;
     }
 
@@ -549,10 +624,10 @@ public class SKKEngine {
             mKanjiKey.setLength(0);
             mKanjiKey.append(mLastConversion.kanjiKey);
             mOkurigana = mLastConversion.okuri;
+            mOkuriConsonant = mLastConversion.okuriConconant;
             mCandidatesList = mLastConversion.list;
             mCurrentCandidateIndex = mLastConversion.index;
             mService.setCandidates(mCandidatesList);
-            setCurrentCandidateToComposing();
 
             changeState(SKKChooseState.INSTANCE);
 
@@ -564,6 +639,9 @@ public class SKKEngine {
 
     void updateSuggestions(String str) {
         if (str.length() == 0) { return; }
+        if (mOkuriConsonant != null) {
+            str += mOkuriConsonant;
+        }
 
         List<String> list = new ArrayList<>();
         for (SKKDictionary dic: mDicts) {
@@ -584,7 +662,7 @@ public class SKKEngine {
     }
 
     private void registerStart(String str) {
-        mRegistrationStack.addFirst(new RegistrationInfo(str, mOkurigana));
+        mRegistrationStack.addFirst(new RegistrationInfo(str, mOkurigana, mOkuriConsonant));
         changeState(SKKHiraganaState.INSTANCE);
         //setComposingTextSKK("", 1);
     }
@@ -599,7 +677,11 @@ public class SKKEngine {
                     + regEntryStr.replace(";", "\\073").replace("/", "\\057")
                     +  "\")";
             }
-            mUserDict.addEntry(regInfo.key, regEntryStr, regInfo.okurigana);
+            String regKeyStr = regInfo.key;
+            if (regInfo.okuriConsonant != null) {
+                regKeyStr += regInfo.okuriConsonant;
+            }
+            mUserDict.addEntry(regKeyStr, regEntryStr, regInfo.okurigana);
             mUserDict.commitChanges();
             if (regInfo.okurigana == null || regInfo.okurigana.length() == 0) {
                 commitTextSKK(regInfo.entry, 1);
@@ -608,7 +690,6 @@ public class SKKEngine {
             }
         }
         reset();
-        if (!mRegistrationStack.isEmpty()) { setComposingTextSKK("", 1); }
     }
 
     void cancelRegister() {
@@ -616,18 +697,18 @@ public class SKKEngine {
         mKanjiKey.setLength(0);
         mKanjiKey.append(regInfo.key);
         mOkurigana = regInfo.okurigana;
+        mOkuriConsonant = regInfo.okuriConsonant;
         if (conversionStartInternal(mKanjiKey, true)) {
             return;
         }
 
         if (mOkurigana != null) {
-            mKanjiKey.deleteCharAt(mKanjiKey.length() - 1);
             mKanjiKey.append(mOkurigana);
             mOkurigana = null;
+            mOkuriConsonant = null;
         }
         mComposing.setLength(0);
         changeState(SKKKanjiState.INSTANCE);
-        setComposingTextSKK(mKanjiKey, 1);
         updateSuggestions(mKanjiKey.toString());
     }
 
@@ -676,12 +757,12 @@ public class SKKEngine {
         return list1;
     }
 
-    private void setCurrentCandidateToComposing() {
+    CharSequence getCurrentCandidate() {
         String candidate = SKKUtils.processConcatAndEscape(SKKUtils.removeAnnotation(mCandidatesList.get(mCurrentCandidateIndex)));
         if (mOkurigana != null) {
-            setComposingTextSKK(candidate.concat(mOkurigana), 1);
+            return candidate.concat(mOkurigana);
         } else {
-            setComposingTextSKK(candidate, 1);
+            return candidate;
         }
 
     }
@@ -700,14 +781,18 @@ public class SKKEngine {
 
         commitTextSKK(candidate, 1);
         if (mOkurigana != null) { commitTextSKK(mOkurigana, 1); }
-        mUserDict.addEntry(mKanjiKey.toString(), s, mOkurigana);
+        String key = mKanjiKey.toString();
+        if (mOkuriConsonant != null) {
+            key += mOkuriConsonant;
+        }
+        mUserDict.addEntry(key, s, mOkurigana);
         // ユーザー辞書登録時はエスケープや注釈を消さない
 
         if (mRegistrationStack.isEmpty()) {
             if (mOkurigana != null) {
-                mLastConversion = new SKKEngine.ConversionInfo(candidate + mOkurigana, mCandidatesList, index, mKanjiKey.toString(), mOkurigana);
+                mLastConversion = new SKKEngine.ConversionInfo(candidate + mOkurigana, mCandidatesList, index, mKanjiKey.toString(), mOkurigana, mOkuriConsonant);
             } else {
-                mLastConversion = new SKKEngine.ConversionInfo(candidate, mCandidatesList, index, mKanjiKey.toString(), null);
+                mLastConversion = new SKKEngine.ConversionInfo(candidate, mCandidatesList, index, mKanjiKey.toString(), null, null);
             }
         }
 
@@ -722,12 +807,10 @@ public class SKKEngine {
         String s = mCandidatesList.get(index);
 
         if (mState == SKKAbbrevState.INSTANCE) {
-            setComposingTextSKK(s, 1);
             mComposing.setLength(0);
             mComposing.append(s);
             conversionStart(mComposing);
         } else if (mState == SKKKanjiState.INSTANCE) {
-            setComposingTextSKK(s, 1);
             int li = s.length() - 1;
             int last = s.codePointAt(li);
             if (SKKUtils.isAlphabet(last)) {
@@ -745,9 +828,11 @@ public class SKKEngine {
     }
 
     private void reset() {
+        mConverter.reset();
         mComposing.setLength(0);
         mKanjiKey.setLength(0);
         mOkurigana = null;
+        mOkuriConsonant = null;
         mCandidatesList = null;
 
         //setCandidatesViewShown()ではComposingTextがflushされるので消す
@@ -760,47 +845,14 @@ public class SKKEngine {
 //        if (mStickyMeta) {mMetaKey.clearMetaKeyState();}
     }
 
-    boolean changeInputMode(int pcode, boolean toKatakana) {
-        // 入力モード変更操作．変更したらtrue
-        switch (pcode) {
-            case 'q':
-                if (toKatakana) {
-                    changeState(SKKKatakanaState.INSTANCE);
-                } else {
-                    changeState(SKKHiraganaState.INSTANCE);
-                }
-                return true;
-            case 'l':
-                if (mComposing.length() != 1 || mComposing.charAt(0) != 'z') {
-                    changeState(SKKASCIIState.INSTANCE);
-                    return true;
-                } // 「→」を入力するための例外
-                break;
-            case 'L':
-                changeState(SKKZenkakuState.INSTANCE);
-                return true;
-            case '/':
-                if (mComposing.length() == 0) {
-                    changeState(SKKAbbrevState.INSTANCE);
-                    return true;
-                }
-                break;
-        }
-
-        return false;
-    }
-
     void changeState(SKKState state) {
         mState = state;
 
         if (!state.isTransient()) {
             reset();
             mService.changeSoftKeyboard(state);
-            if (!mRegistrationStack.isEmpty()) { setComposingTextSKK("", 1); }
-            // ComposingTextのflush回避のためreset()で一旦消してるので，登録中はここまで来てからComposingText復活
         }
         if (state == SKKAbbrevState.INSTANCE) {
-            setComposingTextSKK("", 1);
             mService.changeSoftKeyboard(state);
         }
 

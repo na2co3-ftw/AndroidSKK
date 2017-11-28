@@ -3,15 +3,11 @@ package jp.gr.java_conf.na2co3.skk.engine;
 import java.util.HashMap;
 import java.util.Map;
 
-import jp.gr.java_conf.na2co3.skk.SKKUtils;
-
-public enum RomajiConverter {
-    INSTANCE;
-
+public class RomajiConverter {
     // ローマ字辞書
-    private Map<String, String> mRomajiMap = new HashMap<>();
-    {
-        Map<String, String> m = mRomajiMap;
+    private static RomajiMap mRomajiMap = new RomajiMap();
+    static {
+        RomajiMap m = mRomajiMap;
         m.put("a", "あ");m.put("i", "い");m.put("u", "う");m.put("e", "え");m.put("o", "お");
         m.put("ka", "か");m.put("ki", "き");m.put("ku", "く");m.put("ke", "け");m.put("ko", "こ");
         m.put("sa", "さ");m.put("si", "し");m.put("su", "す");m.put("se", "せ");m.put("so", "そ");
@@ -52,11 +48,24 @@ public enum RomajiConverter {
         m.put("mya", "みゃ");               m.put("myu", "みゅ");               m.put("myo", "みょ");
         m.put("rya", "りゃ");               m.put("ryu", "りゅ");m.put("rye", "りぇ");m.put("ryo", "りょ");
         m.put("z,", "‥");m.put("z-", "〜");m.put("z.", "…");m.put("z/", "・");m.put("z[", "『");m.put("z]", "』");m.put("zh", "←");m.put("zj", "↓");m.put("zk", "↑");m.put("zl", "→");
+
+        m.put("kk", "っ", "k");m.put("ss", "っ", "s");m.put("tt", "っ", "t");
+        m.put("hh", "っ", "h");m.put("mm", "っ", "m");m.put("yy", "っ", "y");
+        m.put("rr", "っ", "r");m.put("ww", "っ", "w");m.put("gg", "っ", "g");
+        m.put("zz", "っ", "z");m.put("dd", "っ", "d");m.put("bb", "っ", "b");
+        m.put("pp", "っ", "p");m.put("bb", "っ", "b");m.put("vv", "っ", "v");
+        m.put("xx", "っ", "x");m.put("ff", "っ", "f");m.put("jj", "っ", "j");
+
+        m.put("n", "ん");m.put("nn", "ん");
+
+        m.put("-", "ー");m.put("~", "〜");
+        m.put("!", "！");m.put("?", "？");
+        m.put("[", "「");m.put("]", "」");
     }
 
     // フリック入力用
-    private Map<String, String> mConsonantMap = new HashMap<>();
-    {
+    private static Map<String, String> mConsonantMap = new HashMap<>();
+    static {
         Map<String, String> m = mConsonantMap;
         m.put("あ", "a");m.put("い", "i");m.put("う", "u");m.put("え", "e");m.put("お", "o");
         m.put("ぁ", "x");m.put("ぃ", "x");m.put("ぅ", "x");m.put("ぇ", "x");m.put("ぉ", "x");
@@ -78,8 +87,8 @@ public enum RomajiConverter {
     }
 
     // かな小文字変換用
-    private Map<String, String> mSmallKanaMap = new HashMap<>();
-    {
+    private static Map<String, String> mSmallKanaMap = new HashMap<>();
+    static {
         Map<String, String> m = mSmallKanaMap;
         m.put("あ", "ぁ");m.put("い", "ぃ");m.put("う", "ぅ");m.put("え", "ぇ");m.put("お", "ぉ");
         m.put("ぁ", "あ");m.put("ぃ", "い");m.put("ぅ", "う");m.put("ぇ", "え");m.put("ぉ", "お");
@@ -91,8 +100,8 @@ public enum RomajiConverter {
         m.put("ャ", "ヤ");m.put("ュ", "ユ");m.put("ョ", "ヨ");m.put("ッ", "ツ");
     }
     // 濁音変換用
-    private Map<String, String> mDakutenMap = new HashMap<>();
-    {
+    private static Map<String, String> mDakutenMap = new HashMap<>();
+    static {
         Map<String, String> m = mDakutenMap;
         m.put("か", "が");m.put("き", "ぎ");m.put("く", "ぐ");m.put("け", "げ");m.put("こ", "ご");
         m.put("が", "か");m.put("ぎ", "き");m.put("ぐ", "く");m.put("げ", "け");m.put("ご", "こ");
@@ -113,8 +122,8 @@ public enum RomajiConverter {
         m.put("ウ", "ヴ");m.put("ヴ", "ウ");
     }
     // 濁音変換用
-    private Map<String, String> mHanDakutenMap = new HashMap<>();
-    {
+    private static Map<String, String> mHanDakutenMap = new HashMap<>();
+    static {
         Map<String, String> m = mHanDakutenMap;
         m.put("は", "ぱ");m.put("ひ", "ぴ");m.put("ふ", "ぷ");m.put("へ", "ぺ");m.put("ほ", "ぽ");
         m.put("ぱ", "は");m.put("ぴ", "ひ");m.put("ぷ", "ふ");m.put("ぺ", "へ");m.put("ぽ", "ほ");
@@ -122,8 +131,8 @@ public enum RomajiConverter {
         m.put("パ", "ハ");m.put("ピ", "ヒ");m.put("プ", "フ");m.put("ペ", "ヘ");m.put("ポ", "ホ");
     }
     // かな小文字・濁点順次変換用
-    private Map<String, String> mRotateKanaMap = new HashMap<>();
-    {
+    private static Map<String, String> mRotateKanaMap = new HashMap<>();
+    static {
         Map<String, String> m = mRotateKanaMap;
         m.put("あ", "ぁ");m.put("い", "ぃ");m.put("う", "ぅ");m.put("え", "ぇ");m.put("お", "ぉ");
         m.put("ぁ", "あ");m.put("ぃ", "い");m.put("ぅ", "う");m.put("ぇ", "え");m.put("ぉ", "お");
@@ -156,15 +165,11 @@ public enum RomajiConverter {
         m.put("ャ", "ヤ");m.put("ュ", "ユ");m.put("ョ", "ヨ");
     }
 
-    String convert(String romaji) {
-        return mRomajiMap.get(romaji);
-    }
-
-    String getConsonant(String kana) {
+    static String getConsonant(String kana) {
         return mConsonantMap.get(kana);
     }
 
-    public String convertLastChar(String kana, String type) {
+    static public String convertLastChar(String kana, String type) {
         switch (type) {
             case SKKEngine.LAST_CONVERTION_SMALL:
                 return mSmallKanaMap.get(kana);
@@ -178,17 +183,128 @@ public enum RomajiConverter {
         return null;
     }
 
-    // 1文字目と2文字目を合わせて"ん"・"っ"になるか判定
-    // ならなかったらnull
-    String checkSpecialConsonants(char first, int second) {
-        if (first == 'n') {
-            if (!SKKUtils.isVowel(second) && second != 'n' && second != 'y') {
-                return "ん";
-            }
-        } else if (first == second) {
-            return "っ";
+    private StringBuilder mComposing = new StringBuilder();
+    private SKKEngine mEngine;
+    private boolean mShiftSent = false;
+
+    RomajiConverter(SKKEngine engine) {
+        mEngine = engine;
+    }
+
+    void processKey(int pcode) {
+        // シフトキーの状態をチェック
+        boolean isUpper = Character.isUpperCase(pcode);
+        if (isUpper) { // ローマ字変換のために小文字に戻す
+            pcode = Character.toLowerCase(pcode);
         }
 
-        return null;
+        mComposing.append((char) pcode);
+
+        while (true) {
+            RomajiMap.Node node = mRomajiMap.prefixSearch(mComposing.toString());
+            if (node == null) {
+                // ローマ字表にない場合はそのまま確定
+                mEngine.commitRomajiText(mComposing.toString(), isUpper);
+                mShiftSent = false;
+                mComposing.setLength(0);
+                mEngine.onFinishRomaji();
+                break;
+            }
+            if (node.getKey().length() == mComposing.length()) {
+                if (node.isLeaf()) {
+                    // ローマ字表にあれば確定
+                    if (mShiftSent) {
+                        isUpper = false;
+                        mShiftSent = false;
+                    }
+                    mEngine.commitRomajiText(node.getValue(), isUpper);
+
+                    mComposing.setLength(0);
+                    if (node.getNext() != null) {
+                        mComposing.append(node.getNext());
+                    } else {
+                        mEngine.onFinishRomaji();
+                    }
+                } else {
+                    // まだ確定できるものがない場合はComposingに積むだけ
+                    if (mShiftSent) {
+                        isUpper = false;
+                    } else if (isUpper) {
+                        mShiftSent = true;
+                    }
+                    mEngine.commitRomajiText(null, isUpper);
+                }
+                break;
+            } else {
+                if (node.getValue() != null) {
+                    // 先頭一致で確定できるものがあれば確定
+                    mEngine.commitRomajiText(node.getValue(), false);
+                    mShiftSent = false;
+
+                    mComposing.delete(0, node.getKey().length());
+                    if (node.getNext() != null) {
+                        mComposing.insert(0, node.getNext());
+                    }
+                } else {
+                    // ローマ字表にない場合はそのまま確定
+                    mEngine.commitRomajiText(node.getKey(), false);
+                    mShiftSent = false;
+                    mComposing.delete(0, node.getKey().length());
+                }
+            }
+        }
+
+        mEngine.setRomajiComposing(mComposing.toString());
+    }
+
+    // composingに残っているものを出力する
+    boolean flush() {
+        if (mComposing.length() == 0) {
+            reset();
+            return false;
+        }
+
+        while (true) {
+            RomajiMap.Node node = mRomajiMap.prefixSearch(mComposing.toString());
+            if (node == null) {
+                break;
+            }
+            if (node.getValue() != null) {
+                // 先頭一致で確定できるものがあれば確定
+                mEngine.commitRomajiText(node.getValue(), false);
+                mComposing.delete(0, node.getKey().length());
+                if (node.getNext() != null) {
+                    mComposing.append(node.getNext());
+                }
+            } else {
+                // ローマ字表にない場合はそのまま確定
+                mEngine.commitRomajiText(node.getKey(), false);
+                mComposing.delete(0, node.getKey().length());
+            }
+        }
+        if (mComposing.length() != 0) {
+            // ローマ字表にない場合はそのまま確定
+            mEngine.commitRomajiText(mComposing.toString(), false);
+        }
+
+        reset();
+        return true;
+    }
+
+    void reset() {
+        mComposing.setLength(0);
+        mShiftSent = false;
+    }
+
+    boolean handleBackspace() {
+        if (mComposing.length() > 0) {
+            mComposing.deleteCharAt(mComposing.length() - 1);
+            mEngine.setRomajiComposing(mComposing.toString());
+            if (mComposing.length() == 0) {
+                mShiftSent = false;
+            }
+            return true;
+        }
+        return false;
     }
 }

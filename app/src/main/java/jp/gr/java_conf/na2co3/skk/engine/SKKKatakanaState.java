@@ -4,29 +4,49 @@ import jp.gr.java_conf.na2co3.skk.R;
 import jp.gr.java_conf.na2co3.skk.SKKUtils;
 
 // カタカナモード
-public enum SKKKatakanaState implements SKKState, CommitKana {
+public enum SKKKatakanaState implements SKKState {
     INSTANCE;
 
     public void handleKanaKey(SKKEngine context) {
         context.changeState(SKKHiraganaState.INSTANCE);
     }
 
-    public void commit(SKKEngine context, String hchr) {
-        hchr = SKKUtils.hirakana2katakana(hchr);
-        context.commitTextSKK(hchr, 1);
-        context.getComposing().setLength(0);
-    }
-
     public void processKey(SKKEngine context, int pcode) {
-        if (context.changeInputMode(pcode, false)) { return; }
-
-        SKKHiraganaState.INSTANCE.processKana(context, pcode, this);
+        SKKHiraganaState.INSTANCE.processKey(context, pcode);
     }
 
     public void processText(SKKEngine context, String text, boolean isShifted) {
-        SKKHiraganaState.INSTANCE.processKanaText(context, text, isShifted, this);
+        if (text != null) {
+            switch (text) {
+                case "q":
+                    context.changeState(SKKHiraganaState.INSTANCE);
+                    return;
+                case "l":
+                    if (isShifted) {
+                        context.changeState(SKKZenkakuState.INSTANCE);
+                    } else {
+                        context.changeState(SKKASCIIState.INSTANCE);
+                    }
+                    return;
+                case "/":
+                    context.changeState(SKKAbbrevState.INSTANCE);
+                    return;
+            }
+        }
+
+        if (isShifted) {
+            context.changeState(SKKKanjiState.INSTANCE);
+            if (text != null) {
+                SKKKanjiState.INSTANCE.processText(context, text, false);
+            }
+        } else {
+            if (text != null) {
+                context.commitTextSKK(SKKUtils.hirakana2katakana(text), 1);
+            }
+        }
     }
 
+    public void onFinishRomaji(SKKEngine context) {}
     public void beforeBackspace(SKKEngine context) {}
 
     public void afterBackspace(SKKEngine context) {
@@ -35,6 +55,10 @@ public enum SKKKatakanaState implements SKKState, CommitKana {
 
     public boolean handleCancel(SKKEngine context) {
         return SKKHiraganaState.INSTANCE.handleCancel(context);
+    }
+
+    public CharSequence getComposingText(SKKEngine context) {
+        return context.getComposing();
     }
 
     public boolean isTransient() { return false; }

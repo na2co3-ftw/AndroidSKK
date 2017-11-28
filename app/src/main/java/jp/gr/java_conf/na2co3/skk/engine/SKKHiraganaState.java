@@ -1,14 +1,9 @@
 package jp.gr.java_conf.na2co3.skk.engine;
 
 import jp.gr.java_conf.na2co3.skk.R;
-import jp.gr.java_conf.na2co3.skk.SKKUtils;
-
-interface CommitKana {
-    void commit(SKKEngine context, String hchr);
-}
 
 // ひらがなモード
-public enum SKKHiraganaState implements SKKState, CommitKana {
+public enum SKKHiraganaState implements SKKState {
     INSTANCE;
 
     public void handleKanaKey(SKKEngine context) {
@@ -17,86 +12,44 @@ public enum SKKHiraganaState implements SKKState, CommitKana {
         }
     }
 
-    public void commit(SKKEngine context, String hchr) {
-        context.commitTextSKK(hchr, 1);
-        context.getComposing().setLength(0);
-    }
-
-    void processKana(SKKEngine context, int pcode, CommitKana callback) {
-        StringBuilder composing = context.getComposing();
-
-        String hchr; // かな1単位ぶん
-
-        // シフトキーの状態をチェック
-        boolean isUpper = Character.isUpperCase(pcode);
-        if (isUpper) { // ローマ字変換のために小文字に戻す
-            pcode = Character.toLowerCase(pcode);
-        }
-
-        if (composing.length() == 1) {
-            hchr = RomajiConverter.INSTANCE.checkSpecialConsonants(composing.charAt(0), pcode);
-            if (hchr != null) {
-                callback.commit(context, hchr);
-            }
-        }
-        if (isUpper) {
-            // 漢字変換候補入力の開始。KanjiModeへの移行
-            if (composing.length() > 0) {
-                context.commitTextSKK(composing, 1);
-                composing.setLength(0);
-            }
-            context.changeState(SKKKanjiState.INSTANCE);
-            SKKKanjiState.INSTANCE.processKey(context, pcode);
-        } else {
-            composing.append((char) pcode);
-            // 全角にする記号ならば全角，そうでなければローマ字変換
-            hchr = context.getZenkakuSeparator(composing.toString());
-            if (hchr == null) {
-                hchr = RomajiConverter.INSTANCE.convert(composing.toString());
-            }
-
-            if (hchr != null) { // 確定できるものがあれば確定
-                callback.commit(context, hchr);
-            } else { // アルファベットならComposingに積む
-                if (SKKUtils.isAlphabet(pcode)) {
-                    context.setComposingTextSKK(composing, 1);
-                } else {
-                    context.commitTextSKK(composing, 1);
-                    composing.setLength(0);
-                }
-            }
-        }
-    }
-
-    void processKanaText(SKKEngine context, String text, boolean isShifted, CommitKana callback) {
-        StringBuilder composing = context.getComposing();
-
-        if (composing.length() == 1 && composing.charAt(0) == 'n') {
-            callback.commit(context, "ん");
-            composing.setLength(0);
-        }
-        if (isShifted) {
-            context.changeState(SKKKanjiState.INSTANCE);
-            SKKKanjiState.INSTANCE.processText(context, text, false);
-        } else {
-            callback.commit(context, text);
-        }
-    }
-
     public void processKey(SKKEngine context, int pcode) {
-        if (context.changeInputMode(pcode, true)) { return; }
-        processKana(context, pcode, this);
+       context.processRomaji(pcode);
     }
 
     public void processText(SKKEngine context, String text, boolean isShifted) {
-        processKanaText(context, text, isShifted, this);
+        if (text != null) {
+            switch (text) {
+                case "q":
+                    context.changeState(SKKKatakanaState.INSTANCE);
+                    return;
+                case "l":
+                    if (isShifted) {
+                        context.changeState(SKKZenkakuState.INSTANCE);
+                    } else {
+                        context.changeState(SKKASCIIState.INSTANCE);
+                    }
+                    return;
+                case "/":
+                    context.changeState(SKKAbbrevState.INSTANCE);
+                    return;
+            }
+        }
+
+        if (isShifted) {
+            context.changeState(SKKKanjiState.INSTANCE);
+            if (text != null) {
+                SKKKanjiState.INSTANCE.processText(context, text, false);
+            }
+        } else {
+            if (text != null) {
+                context.commitTextSKK(text, 1);
+            }
+        }
     }
 
+    public void onFinishRomaji(SKKEngine context) {}
     public void beforeBackspace(SKKEngine context) {}
-
-    public void afterBackspace(SKKEngine context) {
-        context.setComposingTextSKK(context.getComposing(), 1);
-    }
+    public void afterBackspace(SKKEngine context) {}
 
     public boolean handleCancel(SKKEngine context) {
         if (context.isRegistering()) {
@@ -105,6 +58,10 @@ public enum SKKHiraganaState implements SKKState, CommitKana {
         } else {
             return context.reConversion();
         }
+    }
+
+    public CharSequence getComposingText(SKKEngine context) {
+        return context.getComposing();
     }
 
     public boolean isTransient() { return false; }

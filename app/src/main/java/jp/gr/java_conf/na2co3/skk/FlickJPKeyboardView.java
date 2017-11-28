@@ -643,11 +643,11 @@ public class FlickJPKeyboardView extends SKKKeyboardView {
     private String getModifiedKana(String kana, String mod) {
         switch (mod) {
             case MOD_DAKUTEN:
-                return RomajiConverter.INSTANCE.convertLastChar(kana, SKKEngine.LAST_CONVERTION_DAKUTEN);
+                return RomajiConverter.convertLastChar(kana, SKKEngine.LAST_CONVERTION_DAKUTEN);
             case MOD_HANDAKUTEN:
-                return RomajiConverter.INSTANCE.convertLastChar(kana, SKKEngine.LAST_CONVERTION_HANDAKUTEN);
+                return RomajiConverter.convertLastChar(kana, SKKEngine.LAST_CONVERTION_HANDAKUTEN);
             case MOD_SMALL:
-                return RomajiConverter.INSTANCE.convertLastChar(kana, SKKEngine.LAST_CONVERTION_SMALL);
+                return RomajiConverter.convertLastChar(kana, SKKEngine.LAST_CONVERTION_SMALL);
         }
         return null;
     }

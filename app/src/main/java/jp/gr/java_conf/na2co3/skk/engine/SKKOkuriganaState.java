@@ -9,94 +9,36 @@ public enum SKKOkuriganaState implements SKKState {
     public void handleKanaKey(SKKEngine context) {}
 
     public void processKey(SKKEngine context, int pcode) {
-        // シフトキーの状態をチェック
-        boolean isUpper = Character.isUpperCase(pcode);
-        if (isUpper) { // ローマ字変換のために小文字に戻す
-            pcode = Character.toLowerCase(pcode);
-        }
+        context.processRomaji(pcode);
+    }
 
-        StringBuilder composing = context.getComposing();
-        StringBuilder kanjiKey = context.getKanjiKey();
-        String hchr; // かな1単位ぶん
-        String okurigana = context.getOkurigana();
-
-        if (composing.length() == 1 || okurigana == null) {
-            // 「ん」か「っ」を処理したらここで終わり
-            hchr = RomajiConverter.INSTANCE.checkSpecialConsonants(composing.charAt(0), pcode);
-            if (hchr != null) {
-                context.setOkurigana(hchr);
-                context.setComposingTextSKK(SKKUtils.createTrimmedBuilder(kanjiKey).append('*').append(hchr).append((char) pcode), 1);
-                composing.setLength(0);
-                composing.append((char) pcode);
-                return;
-            }
-        }
-        // 送りがなが確定すれば変換，そうでなければComposingに積む
-        composing.append((char) pcode);
-        hchr = RomajiConverter.INSTANCE.convert(composing.toString());
-        if (okurigana != null) { //「ん」か「っ」がある場合
-            if (hchr != null) {
-                composing.setLength(0);
-                context.setOkurigana(okurigana + hchr);
-                context.conversionStart(kanjiKey);
+    public void processText(SKKEngine context, String text, boolean isShifted) {
+        if (text != null) {
+            String okurigana = context.getOkurigana();
+            if (okurigana == null) {
+                context.setOkurigana(text);
             } else {
-                context.setComposingTextSKK(SKKUtils.createTrimmedBuilder(kanjiKey).append('*').append(okurigana).append(composing), 1);
-            }
-        } else {
-            if (hchr != null) {
-                composing.setLength(0);
-                context.setOkurigana(hchr);
-                context.conversionStart(kanjiKey);
-            } else {
-                context.setComposingTextSKK(SKKUtils.createTrimmedBuilder(kanjiKey).append('*').append(composing), 1);
+                context.setOkurigana(okurigana + text);
             }
         }
     }
 
-    public void processText(SKKEngine context, String text, boolean isShifted) {
-        StringBuilder composing = context.getComposing();
-        StringBuilder kanjiKey = context.getKanjiKey();
+    public void onFinishRomaji(SKKEngine context) {
         String okurigana = context.getOkurigana();
-
-        if (composing.length() == 1 && composing.charAt(0) == 'n') {
-            context.setOkurigana("ん");
-            context.setComposingTextSKK(SKKUtils.createTrimmedBuilder(kanjiKey).append('*').append("ん").append(text), 1);
-            composing.setLength(0);
-            composing.append(text);
-            return;
+        if (context.getOkuriConsonant() == null && okurigana != null) {
+            String okuriConsonant = RomajiConverter.getConsonant(okurigana.substring(0, 1));
+            if (okuriConsonant != null) {
+                context.setOkuriConsonant(okuriConsonant);
+            }
         }
-        if (okurigana != null) { //「ん」か「っ」がある場合
-            composing.setLength(0);
-            context.setOkurigana(okurigana + text);
-            context.conversionStart(kanjiKey);
-        } else {
-            composing.setLength(0);
-            context.setOkurigana(text);
-            context.conversionStart(kanjiKey);
-        }
+        context.conversionStart(context.getKanjiKey());
     }
 
     public void beforeBackspace(SKKEngine context) {}
 
     public void afterBackspace(SKKEngine context) {
-        if (context.getComposing().length() == 0) {
-            if (context.getOkurigana() == null) {
-                StringBuilder kanjiKey = context.getKanjiKey();
-                kanjiKey.deleteCharAt(kanjiKey.length() - 1);
-                context.setComposingTextSKK(context.getKanjiKey(), 1);
-                context.changeState(SKKKanjiState.INSTANCE);
-                return;
-            }
-        }
-        if (context.getOkurigana() != null) {
-            context.setComposingTextSKK(SKKUtils.createTrimmedBuilder(context.getKanjiKey())
-                    .append('*')
-                    .append(context.getOkurigana())
-                    .append(context.getComposing()), 1);
-        } else {
-            context.setComposingTextSKK(SKKUtils.createTrimmedBuilder(context.getKanjiKey())
-                    .append('*')
-                    .append(context.getComposing()), 1);
+        if (context.getComposing().length() == 0 && context.getOkurigana() == null) {
+            context.changeState(SKKKanjiState.INSTANCE);
         }
     }
 
@@ -104,11 +46,21 @@ public enum SKKOkuriganaState implements SKKState {
         StringBuilder kanjiKey = context.getKanjiKey();
         context.getComposing().setLength(0);
         context.setOkurigana(null);
+        context.setOkuriConsonant(null);
         kanjiKey.deleteCharAt(kanjiKey.length()-1);
         context.changeState(SKKKanjiState.INSTANCE);
-        context.setComposingTextSKK(kanjiKey, 1);
 
         return true;
+    }
+
+    public CharSequence getComposingText(SKKEngine context) {
+        String okurigana = context.getOkurigana();
+        StringBuilder sb = new StringBuilder(context.getKanjiKey()).append("*");
+        if (okurigana != null) {
+            sb.append(okurigana);
+        }
+        sb.append(context.getComposing());
+        return sb;
     }
 
     public boolean isTransient() { return true; }

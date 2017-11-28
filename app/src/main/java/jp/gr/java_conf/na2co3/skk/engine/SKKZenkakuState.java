@@ -20,6 +20,7 @@ public enum SKKZenkakuState implements SKKState {
         context.commitTextSKK(text, 1);
     }
 
+    public void onFinishRomaji(SKKEngine context) {}
     public void beforeBackspace(SKKEngine context) {}
     public void afterBackspace(SKKEngine context) {}
 
@@ -27,6 +28,7 @@ public enum SKKZenkakuState implements SKKState {
         return SKKHiraganaState.INSTANCE.handleCancel(context);
     }
 
+    public CharSequence getComposingText(SKKEngine context) { return null; }
     public boolean isTransient() { return false; }
 
     public int getIcon() { return R.drawable.immodeic_full_alphabet; }

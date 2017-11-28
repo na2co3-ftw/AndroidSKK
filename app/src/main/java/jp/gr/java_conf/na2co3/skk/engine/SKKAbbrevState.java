@@ -35,7 +35,6 @@ public enum SKKAbbrevState implements SKKState {
             context.changeState(SKKHiraganaState.INSTANCE);
         } else {
             composing.append((char) pcode);
-            context.setComposingTextSKK(composing, 1);
             context.updateSuggestions(composing.toString());
         }
     }
@@ -43,10 +42,10 @@ public enum SKKAbbrevState implements SKKState {
     public void processText(SKKEngine context, String text, boolean isShifted) {
         StringBuilder composing = context.getComposing();
         composing.append(text);
-        context.setComposingTextSKK(composing, 1);
         context.updateSuggestions(composing.toString());
     }
 
+    public void onFinishRomaji(SKKEngine context) {}
     public void beforeBackspace(SKKEngine context) {}
 
     public void afterBackspace(SKKEngine context) {
@@ -55,7 +54,6 @@ public enum SKKAbbrevState implements SKKState {
         if (composing.length() == 0) {
             context.changeState(SKKHiraganaState.INSTANCE);
         } else {
-            context.setComposingTextSKK(composing, 1);
             context.updateSuggestions(composing.toString());
         }
     }
@@ -63,6 +61,10 @@ public enum SKKAbbrevState implements SKKState {
     public boolean handleCancel(SKKEngine context) {
         context.changeState(SKKHiraganaState.INSTANCE);
         return true;
+    }
+
+    public CharSequence getComposingText(SKKEngine context) {
+        return context.getComposing();
     }
 
     public boolean isTransient() { return true; }

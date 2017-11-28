@@ -602,10 +602,6 @@ public class SKKService extends InputMethodService {
         }
     }
 
-    public void commitTextSKK(CharSequence text, int newCursorPosition) {
-        mEngine.commitTextSKK(text, newCursorPosition);
-    }
-
     void sendToMushroom() {
         String clip;
         ClipboardManager cm = (ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
@@ -658,7 +654,9 @@ public class SKKService extends InputMethodService {
         dialog.show(mCurrentInputView);
     }
 
-    void changeLastChar(String type) { mEngine.changeLastChar(type); }
+    void changeLastChar(String type) {
+        mEngine.changeLastChar(type);
+    }
 
     public void setCandidates(List<String> list) {
         if (!isCandidatesViewShown) {

@@ -49,19 +49,6 @@ public class SKKUtils {
         return ((code >= 0x41 && code <= 0x5A) || (code >= 0x61 && code <= 0x7A));
     }
 
-    public static boolean isVowel(int code) {
-        switch (code) {
-        case 'a':
-        case 'i':
-        case 'u':
-        case 'e':
-        case 'o':
-            return true;
-        default:
-            return false;
-        }
-    }
-
     public static String removeAnnotation(String text) {
         int i = text.lastIndexOf(';'); // セミコロンで解説が始まる
         return ((i == -1) ? text : text.substring(0, i));
@@ -88,12 +75,6 @@ public class SKKUtils {
         m.appendTail(buf2);
 
         return buf2.toString();
-    }
-
-    public static StringBuilder createTrimmedBuilder(StringBuilder orig) {
-        StringBuilder ret = new StringBuilder(orig);
-        ret.deleteCharAt(ret.length()-1);
-        return ret;
     }
 
     // debug log

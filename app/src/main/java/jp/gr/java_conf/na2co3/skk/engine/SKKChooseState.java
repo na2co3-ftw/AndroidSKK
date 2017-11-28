@@ -25,7 +25,6 @@ public enum SKKChooseState implements SKKState {
                 context.pickCurrentCandidate();
                 context.changeState(SKKKanjiState.INSTANCE);
                 kanjiKey.append('>');
-                context.setComposingTextSKK(kanjiKey, 1);
                 break;
             case 'x':
                 context.chooseAdjacentCandidate(false);
@@ -48,12 +47,13 @@ public enum SKKChooseState implements SKKState {
         SKKHiraganaState.INSTANCE.processText(context, text, isShifted);
     }
 
+    public void onFinishRomaji(SKKEngine context) {}
+
     public void beforeBackspace(SKKEngine context) {
         if (context.getOkurigana() != null) {
-            StringBuilder kanjiKey = context.getKanjiKey();
-            kanjiKey.deleteCharAt(kanjiKey.length() - 1);
-            kanjiKey.append(context.getOkurigana());
+            context.getKanjiKey().append(context.getOkurigana());
             context.setOkurigana(null);
+            context.setOkuriConsonant(null);
         }
     }
 
@@ -63,12 +63,9 @@ public enum SKKChooseState implements SKKState {
         } else {
             if (context.getComposing().length() > 0) { // Abbrevモード
                 context.changeState(SKKAbbrevState.INSTANCE);
-                context.setComposingTextSKK(context.getComposing(), 1);
                 context.updateSuggestions(context.getComposing().toString());
             } else { // 漢字変換中
-                context.setOkurigana(null);
                 context.changeState(SKKKanjiState.INSTANCE);
-                context.setComposingTextSKK(context.getKanjiKey(), 1);
                 context.updateSuggestions(context.getKanjiKey().toString());
             }
         }
@@ -78,6 +75,10 @@ public enum SKKChooseState implements SKKState {
         beforeBackspace(context);
         afterBackspace(context);
         return true;
+    }
+
+    public CharSequence getComposingText(SKKEngine context) {
+        return context.getCurrentCandidate();
     }
 
     public boolean isTransient() { return true; }
