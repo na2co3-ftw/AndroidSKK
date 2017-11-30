@@ -531,6 +531,9 @@ public class SKKService extends InputMethodService {
     void processText(String text, boolean isShifted) { mEngine.processText(text, isShifted); }
     void handleKanaKey() { mEngine.handleKanaKey(); }
     boolean handleCancel() { return mEngine.handleCancel(); }
+    void toASCIIState() { mEngine.toASCIIState(); }
+    void toAbbrevState() { mEngine.toAbbrevState(); }
+    void toggleKana() { mEngine.toggleKana(); }
 
     boolean handleBackspace(boolean softKeyboad) {
         if (mStickyMeta) {mMetaKey.useMetaState();}

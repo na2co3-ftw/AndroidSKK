@@ -60,6 +60,10 @@ public enum SKKHiraganaState implements SKKState {
         }
     }
 
+    public boolean finish(SKKEngine context) { return false; }
+
+    public boolean toggleKana(SKKEngine context) { return false; }
+
     public CharSequence getComposingText(SKKEngine context) {
         return context.getComposing();
     }

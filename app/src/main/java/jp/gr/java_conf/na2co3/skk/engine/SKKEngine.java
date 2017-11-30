@@ -313,6 +313,30 @@ public class SKKEngine {
         return result;
     }
 
+    public void toASCIIState() {
+        mConverter.flush();
+        changeState(SKKASCIIState.INSTANCE, true);
+        updateComposingText();
+    }
+
+    public void toAbbrevState() {
+        mConverter.flush();
+        changeState(SKKAbbrevState.INSTANCE, true);
+        updateComposingText();
+    }
+
+    public void toggleKana() {
+        mConverter.flush();
+        if (!mState.toggleKana(this)) {
+            if (mState == SKKKatakanaState.INSTANCE) {
+                changeState(SKKHiraganaState.INSTANCE, true);
+            } else {
+                changeState(SKKKatakanaState.INSTANCE, true);
+            }
+        }
+        updateComposingText();
+    }
+
     /**
      * commitTextのラッパー 登録作業中なら登録内容に追加し，表示を更新
      * @param text
@@ -843,6 +867,13 @@ public class SKKEngine {
         mService.setCandidatesViewShown(false);
 //        mMetaKey.clearMetaKeyState();
 //        if (mStickyMeta) {mMetaKey.clearMetaKeyState();}
+    }
+
+    void changeState(SKKState state, boolean finish) {
+        if (finish) {
+            mState.finish(this);
+        }
+        changeState(state);
     }
 
     void changeState(SKKState state) {

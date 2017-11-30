@@ -29,10 +29,6 @@ public enum SKKChooseState implements SKKState {
             case 'x':
                 context.chooseAdjacentCandidate(false);
                 break;
-            case 'l':
-                // 暗黙の確定
-                context.pickCurrentCandidate();
-                context.changeState(SKKASCIIState.INSTANCE);
             default:
                 // 暗黙の確定
                 context.pickCurrentCandidate();
@@ -76,6 +72,13 @@ public enum SKKChooseState implements SKKState {
         afterBackspace(context);
         return true;
     }
+
+    public boolean finish(SKKEngine context) {
+        context.pickCurrentCandidate();
+        return true;
+    }
+
+    public boolean toggleKana(SKKEngine context) { return false; }
 
     public CharSequence getComposingText(SKKEngine context) {
         return context.getCurrentCandidate();

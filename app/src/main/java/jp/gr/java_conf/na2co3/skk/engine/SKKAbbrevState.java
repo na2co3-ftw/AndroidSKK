@@ -63,6 +63,17 @@ public enum SKKAbbrevState implements SKKState {
         return true;
     }
 
+    public boolean finish(SKKEngine context) {
+        StringBuilder composing = context.getComposing();
+        if (composing.length() > 0) {
+            context.commitTextSKK(composing, 1);
+            composing.setLength(0);
+        }
+        return true;
+    }
+
+    public boolean toggleKana(SKKEngine context) { return false; }
+
     public CharSequence getComposingText(SKKEngine context) {
         return context.getComposing();
     }

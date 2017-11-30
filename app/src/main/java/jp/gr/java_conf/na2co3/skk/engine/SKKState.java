@@ -8,6 +8,8 @@ public interface SKKState {
     void beforeBackspace(SKKEngine context);
     void afterBackspace(SKKEngine context);
     boolean handleCancel(SKKEngine context);
+    boolean finish(SKKEngine context);
+    boolean toggleKana(SKKEngine context);
     CharSequence getComposingText(SKKEngine context);
     boolean isTransient();
     int getIcon();

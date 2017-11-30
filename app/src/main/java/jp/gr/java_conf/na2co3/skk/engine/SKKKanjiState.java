@@ -17,12 +17,17 @@ public enum SKKKanjiState implements SKKState {
         if (text != null) {
             switch (text) {
                 case "q":
-                    // カタカナ変換
-                    if (kanjiKey.length() > 0) {
-                        String str = SKKUtils.hirakana2katakana(kanjiKey.toString());
-                        context.commitTextSKK(str, 1);
+                    toggleKana(context);
+                    return;
+                case "l":
+                    if (isShifted) {
+                        context.changeState(SKKZenkakuState.INSTANCE, true);
+                    } else {
+                        context.changeState(SKKASCIIState.INSTANCE, true);
                     }
-                    context.changeState(SKKHiraganaState.INSTANCE);
+                    return;
+                case "/":
+                    context.changeState(SKKAbbrevState.INSTANCE, true);
                     return;
                 case ">":
                     if (text.equals(">")) {
@@ -76,6 +81,22 @@ public enum SKKKanjiState implements SKKState {
         context.changeState(SKKHiraganaState.INSTANCE);
         return true;
     }
+
+    public boolean finish(SKKEngine context) {
+        context.commitTextSKK(context.getKanjiKey(), 1);
+        return true;
+    }
+
+    public boolean toggleKana(SKKEngine context) {
+        StringBuilder kanjiKey = context.getKanjiKey();
+        if (kanjiKey.length() > 0) {
+            String str = SKKUtils.hirakana2katakana(kanjiKey.toString());
+            context.commitTextSKK(str, 1);
+        }
+        context.changeState(SKKHiraganaState.INSTANCE);
+        return true;
+    }
+
 
     public CharSequence getComposingText(SKKEngine context) {
         return new StringBuilder(context.getKanjiKey()).append(context.getComposing());

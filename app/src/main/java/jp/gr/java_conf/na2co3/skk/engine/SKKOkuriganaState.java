@@ -14,6 +14,21 @@ public enum SKKOkuriganaState implements SKKState {
 
     public void processText(SKKEngine context, String text, boolean isShifted) {
         if (text != null) {
+            switch (text) {
+                case "q":
+                    toggleKana(context);
+                    return;
+                case "l":
+                    if (isShifted) {
+                        context.changeState(SKKZenkakuState.INSTANCE, true);
+                    } else {
+                        context.changeState(SKKASCIIState.INSTANCE, true);
+                    }
+                    return;
+                case "/":
+                    context.changeState(SKKAbbrevState.INSTANCE, true);
+                    return;
+            }
             String okurigana = context.getOkurigana();
             if (okurigana == null) {
                 context.setOkurigana(text);
@@ -50,6 +65,27 @@ public enum SKKOkuriganaState implements SKKState {
         kanjiKey.deleteCharAt(kanjiKey.length()-1);
         context.changeState(SKKKanjiState.INSTANCE);
 
+        return true;
+    }
+
+    public boolean finish(SKKEngine context) {
+        context.commitTextSKK(context.getKanjiKey(), 1);
+        if (context.getOkurigana() != null) {
+            context.commitTextSKK(context.getOkurigana(), 1);
+        }
+        return true;
+    }
+
+    public boolean toggleKana(SKKEngine context) {
+        StringBuilder text = new StringBuilder(context.getKanjiKey());
+        if (context.getOkurigana() != null) {
+            text.append(context.getOkurigana());
+        }
+        if (text.length() > 0) {
+            String str = SKKUtils.hirakana2katakana(text.toString());
+            context.commitTextSKK(str, 1);
+        }
+        context.changeState(SKKHiraganaState.INSTANCE);
         return true;
     }
 

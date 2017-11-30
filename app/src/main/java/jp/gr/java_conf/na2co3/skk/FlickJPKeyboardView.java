@@ -774,7 +774,7 @@ public class FlickJPKeyboardView extends SKKKeyboardView {
             break;
         case KEYCODE_FLICK_JP_MOJI:
             if (mFlickState == FLICK_STATE_NONE) {
-                mService.processKey('q');
+                mService.toggleKana();
             } else if (mFlickState == FLICK_STATE_UP && getKeyboard() == mJPKeyboard) {
                 setKeyboard(mNumKeyboard);
             }
@@ -789,9 +789,9 @@ public class FlickJPKeyboardView extends SKKKeyboardView {
                 isToQwertyLongPressed = false;
             } else {
                 if (isShifted()) {
-                    mService.processKey('/');
+                    mService.toAbbrevState();
                 } else {
-                    mService.processKey('l');
+                    mService.toASCIIState();
                 }
             }
             break;

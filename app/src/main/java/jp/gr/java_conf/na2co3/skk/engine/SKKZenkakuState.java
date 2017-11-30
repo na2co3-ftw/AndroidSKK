@@ -28,6 +28,8 @@ public enum SKKZenkakuState implements SKKState {
         return SKKHiraganaState.INSTANCE.handleCancel(context);
     }
 
+    public boolean finish(SKKEngine context) { return false; }
+    public boolean toggleKana(SKKEngine context) { return false; }
     public CharSequence getComposingText(SKKEngine context) { return null; }
     public boolean isTransient() { return false; }
 
