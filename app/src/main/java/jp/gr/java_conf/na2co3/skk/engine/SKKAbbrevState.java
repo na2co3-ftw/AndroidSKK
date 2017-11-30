@@ -7,10 +7,6 @@ import jp.gr.java_conf.na2co3.skk.SKKUtils;
 public enum SKKAbbrevState implements SKKState {
     INSTANCE;
 
-    public void handleKanaKey(SKKEngine context) {
-        context.changeState(SKKHiraganaState.INSTANCE);
-    }
-
     public void processKey(SKKEngine context, int pcode) {
         StringBuilder composing = context.getComposing();
         StringBuilder kanjiKey = context.getKanjiKey();

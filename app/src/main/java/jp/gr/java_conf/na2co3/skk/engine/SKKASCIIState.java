@@ -4,10 +4,6 @@ package jp.gr.java_conf.na2co3.skk.engine;
 public enum SKKASCIIState implements SKKState {
     INSTANCE;
 
-    public void handleKanaKey(SKKEngine context) {
-        context.changeState(SKKHiraganaState.INSTANCE);
-    }
-
     public void processKey(SKKEngine context, int pcode) {
         context.commitTextSKK(String.valueOf((char) pcode), 1);
     }

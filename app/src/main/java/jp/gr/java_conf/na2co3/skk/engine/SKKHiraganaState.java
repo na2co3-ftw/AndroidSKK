@@ -6,12 +6,6 @@ import jp.gr.java_conf.na2co3.skk.R;
 public enum SKKHiraganaState implements SKKState {
     INSTANCE;
 
-    public void handleKanaKey(SKKEngine context) {
-        if (context.getToggleKanaKey()) {
-            context.changeState(SKKASCIIState.INSTANCE);
-        }
-    }
-
     public void processKey(SKKEngine context, int pcode) {
        context.processRomaji(pcode);
     }

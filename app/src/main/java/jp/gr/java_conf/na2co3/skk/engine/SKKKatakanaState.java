@@ -7,10 +7,6 @@ import jp.gr.java_conf.na2co3.skk.SKKUtils;
 public enum SKKKatakanaState implements SKKState {
     INSTANCE;
 
-    public void handleKanaKey(SKKEngine context) {
-        context.changeState(SKKHiraganaState.INSTANCE);
-    }
-
     public void processKey(SKKEngine context, int pcode) {
         SKKHiraganaState.INSTANCE.processKey(context, pcode);
     }

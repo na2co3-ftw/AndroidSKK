@@ -6,8 +6,6 @@ import jp.gr.java_conf.na2co3.skk.SKKUtils;
 public enum SKKOkuriganaState implements SKKState {
     INSTANCE;
 
-    public void handleKanaKey(SKKEngine context) {}
-
     public void processKey(SKKEngine context, int pcode) {
         context.processRomaji(pcode);
     }

@@ -4,15 +4,6 @@ package jp.gr.java_conf.na2co3.skk.engine;
 public enum SKKChooseState implements SKKState {
     INSTANCE;
 
-    public void handleKanaKey(SKKEngine context) {
-        context.pickCurrentCandidate();
-        if (context.getToggleKanaKey()) {
-            context.changeState(SKKASCIIState.INSTANCE);
-        } else {
-            context.changeState(SKKHiraganaState.INSTANCE);
-        }
-    }
-
     public void processKey(SKKEngine context, int pcode) {
         StringBuilder kanjiKey = context.getKanjiKey();
 

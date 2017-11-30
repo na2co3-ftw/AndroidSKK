@@ -186,7 +186,16 @@ public class SKKEngine {
     }
 
     public void handleKanaKey() {
-        mState.handleKanaKey(this);
+        mConverter.flush();
+        mComposing.setLength(0);
+        mState.finish(this);
+        if (mState == SKKHiraganaState.INSTANCE) {
+            if (SKKPrefs.getToggleKanaKey(mService)) {
+                changeState(SKKASCIIState.INSTANCE);
+            }
+        } else {
+            changeState(SKKHiraganaState.INSTANCE);
+        }
         updateComposingText();
     }
 
@@ -211,34 +220,24 @@ public class SKKEngine {
     }
 
     public boolean handleEnter() {
-        if (mState == SKKChooseState.INSTANCE) {
-            pickCandidate(mCurrentCandidateIndex);
-        } else if (mState == SKKAbbrevState.INSTANCE) {
-            if (mComposing.length() > 0) {
-                commitTextSKK(mComposing, 1);
-                mComposing.setLength(0);
-            }
+        boolean result = false;
+        if (mConverter.flush()) {
+            mComposing.setLength(0);
+            result = true;
+        }
+        if (mState.finish(this)) {
             changeState(SKKHiraganaState.INSTANCE);
-        } else if (mState == SKKKanjiState.INSTANCE || mState == SKKOkuriganaState.INSTANCE) {
-            mConverter.flush();
-            commitTextSKK(mKanjiKey, 1);
-            if (mOkurigana != null) {
-                commitTextSKK(mOkurigana, 1);
-            }
-            changeState(SKKHiraganaState.INSTANCE);
-        } else {
-            if (mConverter.flush()) {
-                mComposing.setLength(0);
-            } else {
-                if (!mRegistrationStack.isEmpty()) {
-                    if (mRegistrationStack.peekFirst().entry.length() != 0) {
-                        registerWord();
-                    } else {
-                        cancelRegister();
-                    }
+            result = true;
+        }
+        if (!result) {
+            if (!mRegistrationStack.isEmpty()) {
+                if (mRegistrationStack.peekFirst().entry.length() != 0) {
+                    registerWord();
                 } else {
-                    return false;
+                    cancelRegister();
                 }
+            } else {
+                return false;
             }
         }
 
@@ -547,7 +546,6 @@ public class SKKEngine {
     void setOkurigana(String okr) { mOkurigana = okr; }
     String getOkuriConsonant() { return mOkuriConsonant; }
     void setOkuriConsonant(String c) { mOkuriConsonant = c; }
-    boolean getToggleKanaKey() { return SKKPrefs.getToggleKanaKey(mService); }
 
     private void updateComposingText() {
         InputConnection ic = mService.getCurrentInputConnection();
