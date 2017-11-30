@@ -1,5 +1,6 @@
 package jp.gr.java_conf.na2co3.skk;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -207,6 +208,7 @@ public class SKKService extends InputMethodService {
     }
 
     @Override
+    @SuppressLint("MissingSuperCall")
     public boolean onEvaluateInputViewShown() {
         return mUseSoftKeyboard;
     }
