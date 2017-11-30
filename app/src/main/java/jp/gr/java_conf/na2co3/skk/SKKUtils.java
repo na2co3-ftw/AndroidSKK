@@ -11,10 +11,19 @@ public class SKKUtils {
 
     // 半角から全角 (UNICODE)
     public static int hankaku2zenkaku(int pcode) {
-        if (pcode == 0x20) { // スペースだけ、特別
+        if (pcode == 0x20) { // スペース
             return 0x3000;
         }
-        return pcode - 0x20 + 0xFF00;
+        if (pcode == '¥') {
+            return '￥';
+        }
+        if (pcode == '•') {
+            return '・';
+        }
+        if (0x21 <= pcode && pcode <= 0x7E) {
+            return pcode - 0x20 + 0xFF00;
+        }
+        return pcode;
     }
 
     /**
