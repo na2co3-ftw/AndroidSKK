@@ -286,9 +286,7 @@ public class SKKEngine {
             } else if (softKeyboard) {
                 return handleCancel();
             }
-        } else if (mState.isTransient()) {
-            return true;
-        } else {
+        } else if (!mState.isTransient()) {
             return false;
         }
         mState.afterBackspace(this);
