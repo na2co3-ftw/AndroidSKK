@@ -291,9 +291,13 @@ public class RomajiConverter {
         return true;
     }
 
-    void reset() {
-        mComposing.setLength(0);
+    boolean reset() {
         mShiftSent = false;
+        if (mComposing.length() == 0) {
+            return false;
+        }
+        mComposing.setLength(0);
+        return true;
     }
 
     boolean handleBackspace() {

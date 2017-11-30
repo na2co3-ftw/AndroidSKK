@@ -53,6 +53,7 @@ public class SKKEngine {
         String okurigana;
         String okuriConsonant;
         StringBuilder entry;
+        boolean abbrev = false;
 
         RegistrationInfo(String k, String o, String oc) {
             key = k;
@@ -298,8 +299,7 @@ public class SKKEngine {
 
     public boolean handleCancel() {
         boolean result = false;
-        if (mComposing.length() != 0) {
-            mConverter.reset();
+        if (mConverter.reset()) {
             mComposing.setLength(0);
             result = true;
         }
@@ -689,7 +689,11 @@ public class SKKEngine {
     }
 
     private void registerStart(String str) {
-        mRegistrationStack.addFirst(new RegistrationInfo(str, mOkurigana, mOkuriConsonant));
+        RegistrationInfo regInfo = new RegistrationInfo(str, mOkurigana, mOkuriConsonant);
+        if (mComposing.length() > 0) {
+            regInfo.abbrev = true;
+        }
+        mRegistrationStack.addFirst(regInfo);
         changeState(SKKHiraganaState.INSTANCE);
         //setComposingTextSKK("", 1);
     }
@@ -723,6 +727,10 @@ public class SKKEngine {
         RegistrationInfo regInfo = mRegistrationStack.removeFirst();
         mKanjiKey.setLength(0);
         mKanjiKey.append(regInfo.key);
+        mComposing.setLength(0);
+        if (regInfo.abbrev) {
+            mComposing.append(regInfo.key);
+        }
         mOkurigana = regInfo.okurigana;
         mOkuriConsonant = regInfo.okuriConsonant;
         if (conversionStartInternal(mKanjiKey, true)) {
@@ -734,8 +742,11 @@ public class SKKEngine {
             mOkurigana = null;
             mOkuriConsonant = null;
         }
-        mComposing.setLength(0);
-        changeState(SKKKanjiState.INSTANCE);
+        if (regInfo.abbrev) {
+            changeState(SKKAbbrevState.INSTANCE);
+        } else {
+            changeState(SKKKanjiState.INSTANCE);
+        }
         updateSuggestions(mKanjiKey.toString());
     }
 
