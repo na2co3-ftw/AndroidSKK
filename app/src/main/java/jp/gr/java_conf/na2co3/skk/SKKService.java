@@ -694,7 +694,7 @@ public class SKKService extends InputMethodService {
 
     public void changeSoftKeyboard(SKKState state) {
         if (mUseSoftKeyboard) {
-            if (state == SKKASCIIState.INSTANCE) {
+            if (state == SKKASCIIState.INSTANCE || state == SKKZenkakuState.INSTANCE) {
                 if (mQwertyInputView != null && mCurrentInputView != mQwertyInputView) {
                     setInputView(mQwertyInputView);
                     mCurrentInputView = mQwertyInputView;
