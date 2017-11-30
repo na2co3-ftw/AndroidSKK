@@ -20,13 +20,11 @@ public enum SKKZenkakuState implements SKKState {
     public void beforeBackspace(SKKEngine context) {}
     public void afterBackspace(SKKEngine context) {}
 
-    public boolean handleCancel(SKKEngine context) {
-        return SKKHiraganaState.INSTANCE.handleCancel(context);
-    }
-
+    public boolean handleCancel(SKKEngine context) { return false; }
     public boolean finish(SKKEngine context) { return false; }
     public boolean toggleKana(SKKEngine context) { return false; }
     public CharSequence getComposingText(SKKEngine context) { return null; }
+    public int getKeyboardType(SKKEngine context) { return SKKEngine.KEYBOARD_QWERTY; }
     public boolean isTransient() { return false; }
 
     public int getIcon() { return R.drawable.immodeic_full_alphabet; }

@@ -75,6 +75,14 @@ public enum SKKChooseState implements SKKState {
         return context.getCurrentCandidate();
     }
 
+    public int getKeyboardType(SKKEngine context) {
+        if (context.getComposing().length() > 0) {
+            return SKKEngine.KEYBOARD_ABBREV;
+        } else {
+            return SKKEngine.KEYBOARD_HIRAGANA;
+        }
+    }
+
     public boolean isTransient() { return true; }
 
     public int getIcon() { return 0; }

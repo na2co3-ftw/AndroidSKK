@@ -49,9 +49,7 @@ public enum SKKKatakanaState implements SKKState {
         SKKHiraganaState.INSTANCE.afterBackspace(context);
     }
 
-    public boolean handleCancel(SKKEngine context) {
-        return SKKHiraganaState.INSTANCE.handleCancel(context);
-    }
+    public boolean handleCancel(SKKEngine context) { return false; }
 
     public boolean finish(SKKEngine context) { return false; }
 
@@ -60,6 +58,8 @@ public enum SKKKatakanaState implements SKKState {
     public CharSequence getComposingText(SKKEngine context) {
         return context.getComposing();
     }
+
+    public int getKeyboardType(SKKEngine context) { return SKKEngine.KEYBOARD_KATAKANA; }
 
     public boolean isTransient() { return false; }
 

@@ -10,6 +10,7 @@ public interface SKKState {
     boolean finish(SKKEngine context);
     boolean toggleKana(SKKEngine context);
     CharSequence getComposingText(SKKEngine context);
+    int getKeyboardType(SKKEngine context);
     boolean isTransient();
     int getIcon();
 }

@@ -694,34 +694,28 @@ public class SKKService extends InputMethodService {
         return false;
     }
 
-    public void changeSoftKeyboard(SKKState state) {
+    public void changeSoftKeyboard(int keyboardType) {
         if (mUseSoftKeyboard) {
-            if (state == SKKASCIIState.INSTANCE || state == SKKZenkakuState.INSTANCE) {
-                if (mQwertyInputView != null && mCurrentInputView != mQwertyInputView) {
-                    setInputView(mQwertyInputView);
-                    mCurrentInputView = mQwertyInputView;
+            SKKKeyboardView inputView = null;
+            if (keyboardType == SKKEngine.KEYBOARD_HIRAGANA) {
+                mFlickJPInputView.setHiraganaMode();
+                inputView = mFlickJPInputView;
+            } else if (keyboardType == SKKEngine.KEYBOARD_KATAKANA) {
+                mFlickJPInputView.setKatakanaMode();
+                inputView = mFlickJPInputView;
+            } else if (keyboardType == SKKEngine.KEYBOARD_QWERTY){
+                inputView = mQwertyInputView;
+            } else if (keyboardType == SKKEngine.KEYBOARD_ABBREV) {
+                inputView = mAbbrevKeyboardView;
+            }
+
+            if (inputView != null && mCurrentInputView != inputView) {
+                InputConnection ic = getCurrentInputConnection();
+                if (ic != null) {
+                    ic.setComposingText("", 1);
                 }
-            } else if (state == SKKHiraganaState.INSTANCE) {
-                if (mFlickJPInputView != null) {
-                    mFlickJPInputView.setHiraganaMode();
-                    if (mCurrentInputView != mFlickJPInputView) {
-                        setInputView(mFlickJPInputView);
-                        mCurrentInputView = mFlickJPInputView;
-                    }
-                }
-            } else if (state == SKKKatakanaState.INSTANCE) {
-                if (mFlickJPInputView != null) {
-                    mFlickJPInputView.setKatakanaMode();
-                    if (mFlickJPInputView != null && mCurrentInputView != mFlickJPInputView) {
-                        setInputView(mFlickJPInputView);
-                        mCurrentInputView = mFlickJPInputView;
-                    }
-                }
-            } else if (state == SKKAbbrevState.INSTANCE) {
-                if (mAbbrevKeyboardView != null && mCurrentInputView != mAbbrevKeyboardView) {
-                    setInputView(mAbbrevKeyboardView);
-                    mCurrentInputView = mAbbrevKeyboardView;
-                }
+                setInputView(inputView);
+                mCurrentInputView = inputView;
             }
         }
     }

@@ -95,6 +95,11 @@ public class SKKEngine {
     public static final String LAST_CONVERTION_HANDAKUTEN = "handaku";
     public static final String LAST_CONVERTION_ROTATE = "rotate";
 
+    public static final int KEYBOARD_HIRAGANA = 0;
+    public static final int KEYBOARD_KATAKANA = 1;
+    public static final int KEYBOARD_QWERTY = 2;
+    public static final int KEYBOARD_ABBREV = 3;
+
     public SKKEngine(SKKService engine, List<SKKDictionary> dics, SKKUserDictionary userDic) {
         mService = engine;
         mDicts = dics;
@@ -258,22 +263,6 @@ public class SKKEngine {
         int olen = mOkurigana != null ? mOkurigana.length() : 0;
         int klen = mKanjiKey.length();
 
-        // 変換中のものがない場合
-        if (clen == 0 && olen == 0 && klen == 0) {
-            if (!mRegistrationStack.isEmpty()) {
-                StringBuilder regEntry = mRegistrationStack.peekFirst().entry;
-                if (regEntry.length() > 0) {
-                    regEntry.deleteCharAt(regEntry.length() - 1);
-                } else if (softKeyboard) {
-                    return handleCancel();
-                }
-            } else if (mState.isTransient()) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-
         if (softKeyboard && mState == SKKChooseState.INSTANCE) {
             return handleCancel();
         }
@@ -289,6 +278,17 @@ public class SKKEngine {
             }
         } else if (klen > 0) {
             mKanjiKey.deleteCharAt(klen-1);
+        } else if (!mRegistrationStack.isEmpty()) {
+            StringBuilder regEntry = mRegistrationStack.peekFirst().entry;
+            if (regEntry.length() > 0) {
+                regEntry.deleteCharAt(regEntry.length() - 1);
+            } else if (softKeyboard) {
+                return handleCancel();
+            }
+        } else if (mState.isTransient()) {
+            return true;
+        } else {
+            return false;
         }
         mState.afterBackspace(this);
 
@@ -304,6 +304,11 @@ public class SKKEngine {
             result = true;
         }
         if (mState.handleCancel(this)) {
+            result = true;
+        } else if (!mRegistrationStack.isEmpty()) {
+            cancelRegister();
+            result = true;
+        } else if (reConversion()) {
             result = true;
         }
         if (result) {
@@ -634,7 +639,7 @@ public class SKKEngine {
         return true;
     }
 
-    boolean reConversion() {
+    private boolean reConversion() {
         if (mLastConversion == null) { return false; }
 
         String s = mLastConversion.candidate;
@@ -714,7 +719,7 @@ public class SKKEngine {
         reset();
     }
 
-    void cancelRegister() {
+    private void cancelRegister() {
         RegistrationInfo regInfo = mRegistrationStack.removeFirst();
         mKanjiKey.setLength(0);
         mKanjiKey.append(regInfo.key);
@@ -879,11 +884,8 @@ public class SKKEngine {
 
         if (!state.isTransient()) {
             reset();
-            mService.changeSoftKeyboard(state);
         }
-        if (state == SKKAbbrevState.INSTANCE) {
-            mService.changeSoftKeyboard(state);
-        }
+        mService.changeSoftKeyboard(mState.getKeyboardType(this));
 
         if (state == SKKASCIIState.INSTANCE) {
             mService.hideStatusIcon();

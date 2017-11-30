@@ -97,6 +97,8 @@ public enum SKKOkuriganaState implements SKKState {
         return sb;
     }
 
+    public int getKeyboardType(SKKEngine context) { return SKKEngine.KEYBOARD_HIRAGANA; }
+
     public boolean isTransient() { return true; }
 
     public int getIcon() { return 0; }

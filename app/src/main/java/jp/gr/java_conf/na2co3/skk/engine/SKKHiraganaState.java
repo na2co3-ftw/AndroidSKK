@@ -45,14 +45,7 @@ public enum SKKHiraganaState implements SKKState {
     public void beforeBackspace(SKKEngine context) {}
     public void afterBackspace(SKKEngine context) {}
 
-    public boolean handleCancel(SKKEngine context) {
-        if (context.isRegistering()) {
-            context.cancelRegister();
-            return true;
-        } else {
-            return context.reConversion();
-        }
-    }
+    public boolean handleCancel(SKKEngine context) { return false; }
 
     public boolean finish(SKKEngine context) { return false; }
 
@@ -61,6 +54,8 @@ public enum SKKHiraganaState implements SKKState {
     public CharSequence getComposingText(SKKEngine context) {
         return context.getComposing();
     }
+
+    public int getKeyboardType(SKKEngine context) { return SKKEngine.KEYBOARD_HIRAGANA; }
 
     public boolean isTransient() { return false; }
 

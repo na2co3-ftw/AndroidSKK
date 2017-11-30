@@ -100,6 +100,8 @@ public enum SKKKanjiState implements SKKState {
         return new StringBuilder(context.getKanjiKey()).append(context.getComposing());
     }
 
+    public int getKeyboardType(SKKEngine context) { return SKKEngine.KEYBOARD_HIRAGANA; }
+
     public boolean isTransient() { return true; }
 
     public int getIcon() { return 0; }

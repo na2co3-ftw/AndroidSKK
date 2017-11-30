@@ -74,6 +74,8 @@ public enum SKKAbbrevState implements SKKState {
         return context.getComposing();
     }
 
+    public int getKeyboardType(SKKEngine context) { return SKKEngine.KEYBOARD_ABBREV; }
+
     public boolean isTransient() { return true; }
 
     public int getIcon() { return R.drawable.immodeic_eng2jp; }
