@@ -26,7 +26,8 @@ import jp.gr.java_conf.na2co3.skk.R;
 public class SKKEngine {
     private SKKService mService;
 
-    private SKKState mState = SKKHiraganaState.INSTANCE;
+    private SKKMode mMode = SKKHiraganaMode.INSTANCE;
+    private SKKState mState = SKKNormalState.INSTANCE;
 
     private RomajiConverter mConverter = new RomajiConverter(this);
 
@@ -52,13 +53,17 @@ public class SKKEngine {
         String key;
         String okurigana;
         String okuriConsonant;
+        String displayKey;
         StringBuilder entry;
         boolean abbrev = false;
+        SKKMode mode;
 
-        RegistrationInfo(String k, String o, String oc) {
+        RegistrationInfo(String k, String o, String oc, String dk, SKKMode m) {
             key = k;
             okurigana = o;
             okuriConsonant = oc;
+            displayKey = dk;
+            mode = m;
             entry = new StringBuilder();
         }
     }
@@ -137,6 +142,7 @@ public class SKKEngine {
         mDisplayState = displayState;
     }
 
+    public SKKMode getMode() { return mMode; }
     public SKKState getState() { return mState; }
     public boolean isRegistering() { return !mRegistrationStack.isEmpty(); }
     public boolean canMoveCursor() { return (!mRegistrationStack.isEmpty() || mComposing.length() != 0 || mKanjiKey.length() != 0); }
@@ -148,7 +154,9 @@ public class SKKEngine {
                 return;
             }
         }
-        mState.processKey(this, pcode);
+        if (!mState.processKey(this, pcode)) {
+            mMode.processKey(this, pcode);
+        }
         updateComposingText();
     }
 
@@ -157,6 +165,25 @@ public class SKKEngine {
     }
 
     void commitRomajiText(String text, boolean isUpper) {
+        if (text != null) {
+            if (mState.processRomajiExtension(this, text, isUpper)) {
+                return;
+            } else if (text.equals("q")) {
+                mState.toggleKana(this);
+                return;
+            } else if (text.equals("l")) {
+                if (isUpper) {
+                    changeMode(SKKZenkakuMode.INSTANCE, true);
+                } else {
+                    changeMode(SKKASCIIMode.INSTANCE, true);
+                }
+                return;
+            } else if (text.equals("/")) {
+                changeState(SKKAbbrevState.INSTANCE, true);
+                return;
+            }
+        }
+
         String hchr = mZenkakuSeparatorMap.get(text);
         if (hchr != null) {
             mState.processText(this, hchr, isUpper);
@@ -195,12 +222,12 @@ public class SKKEngine {
         mConverter.flush();
         mComposing.setLength(0);
         mState.finish(this);
-        if (mState == SKKHiraganaState.INSTANCE) {
+        if (mState == SKKNormalState.INSTANCE && mMode == SKKHiraganaMode.INSTANCE) {
             if (SKKPrefs.getToggleKanaKey(mService)) {
-                changeState(SKKASCIIState.INSTANCE);
+                changeMode(SKKASCIIMode.INSTANCE, false);
             }
         } else {
-            changeState(SKKHiraganaState.INSTANCE);
+            changeMode(SKKHiraganaMode.INSTANCE, false);
         }
         updateComposingText();
     }
@@ -215,7 +242,7 @@ public class SKKEngine {
         }
 
         if (mState.isTransient()) {
-            changeState(SKKHiraganaState.INSTANCE);
+            changeState(SKKNormalState.INSTANCE);
             return true;
         } else if (shouldReset) {
             reset();
@@ -232,7 +259,7 @@ public class SKKEngine {
             result = true;
         }
         if (mState.finish(this)) {
-            changeState(SKKHiraganaState.INSTANCE);
+            changeState(SKKNormalState.INSTANCE);
             result = true;
         }
         if (!result) {
@@ -315,28 +342,33 @@ public class SKKEngine {
         return result;
     }
 
-    public void toASCIIState() {
+    public void toASCIIMode() {
         mConverter.flush();
-        changeState(SKKASCIIState.INSTANCE, true);
+        mComposing.setLength(0);
+        changeMode(SKKASCIIMode.INSTANCE, true);
         updateComposingText();
     }
 
     public void toAbbrevState() {
         mConverter.flush();
+        mComposing.setLength(0);
         changeState(SKKAbbrevState.INSTANCE, true);
         updateComposingText();
     }
 
     public void toggleKana() {
         mConverter.flush();
-        if (!mState.toggleKana(this)) {
-            if (mState == SKKKatakanaState.INSTANCE) {
-                changeState(SKKHiraganaState.INSTANCE, true);
-            } else {
-                changeState(SKKKatakanaState.INSTANCE, true);
-            }
-        }
+        mComposing.setLength(0);
+        mState.toggleKana(this);
         updateComposingText();
+    }
+
+    SKKMode getToggledKanaMode() {
+        return mMode.getToggledKanaMode();
+    }
+
+    CharSequence convertText(CharSequence text) {
+        return mMode.convertText(text);
     }
 
     /**
@@ -362,12 +394,13 @@ public class SKKEngine {
         mOkuriConsonant = null;
         mCandidatesList = null;
         if (mState.isTransient()) {
-            changeState(SKKHiraganaState.INSTANCE);
-            mService.showStatusIcon(mState.getIcon());
-        } else if (mState == SKKASCIIState.INSTANCE) {
-            mService.hideStatusIcon();
+            changeState(SKKNormalState.INSTANCE);
+        }
+        int icon = getCurrentIcon();
+        if (icon != 0) {
+            mService.showStatusIcon(icon);
         } else {
-            mService.showStatusIcon(mState.getIcon());
+            mService.hideStatusIcon();
         }
 
         // onStartInput()では，WebViewのときsetComposingText("", 1)すると落ちるようなのでやめる
@@ -448,7 +481,7 @@ public class SKKEngine {
         }
 
         if (mState.isTransient()) {
-            changeState(SKKHiraganaState.INSTANCE);
+            changeState(SKKNormalState.INSTANCE);
         } else {
             reset();
             mRegistrationStack.clear();
@@ -563,11 +596,7 @@ public class SKKEngine {
                 if (mDisplayState) {
                     ct.append("▼");
                 }
-                ct.append(regInfo.key);
-                if (regInfo.okurigana != null) {
-                    ct.append("*");
-                    ct.append(regInfo.okurigana);
-                }
+                ct.append(regInfo.displayKey);
                 ct.append("：");
                 ct.setSpan(new BackgroundColorSpan(mColorConverting), bgStart, ct.length(), Spanned.SPAN_COMPOSING);
                 ct.append(regInfo.entry);
@@ -687,12 +716,25 @@ public class SKKEngine {
     }
 
     private void registerStart(String str) {
-        RegistrationInfo regInfo = new RegistrationInfo(str, mOkurigana, mOkuriConsonant);
+        StringBuilder displayKey = new StringBuilder();
+        displayKey.append(mMode.convertText(str));
+        if (mOkurigana != null) {
+            displayKey.append("*");
+            displayKey.append(mMode.convertText(mOkurigana));
+        }
+
+        RegistrationInfo regInfo = new RegistrationInfo(
+                str,
+                mOkurigana,
+                mOkuriConsonant,
+                displayKey.toString(),
+                mMode
+        );
         if (mComposing.length() > 0) {
             regInfo.abbrev = true;
         }
         mRegistrationStack.addFirst(regInfo);
-        changeState(SKKHiraganaState.INSTANCE);
+        changeState(SKKNormalState.INSTANCE);
         //setComposingTextSKK("", 1);
     }
 
@@ -712,11 +754,13 @@ public class SKKEngine {
             }
             mUserDict.addEntry(regKeyStr, regEntryStr, regInfo.okurigana);
             mUserDict.commitChanges();
+            mMode = regInfo.mode;
             if (regInfo.okurigana == null || regInfo.okurigana.length() == 0) {
-                commitTextSKK(regInfo.entry, 1);
+                commitTextSKK(mMode.convertText(regInfo.entry), 1);
             } else {
-                commitTextSKK(regInfo.entry.append(regInfo.okurigana), 1);
+                commitTextSKK(mMode.convertText(regInfo.entry.append(regInfo.okurigana)), 1);
             }
+            mService.changeSoftKeyboard(getCurrentKeyboardType());
         }
         reset();
     }
@@ -731,6 +775,7 @@ public class SKKEngine {
         }
         mOkurigana = regInfo.okurigana;
         mOkuriConsonant = regInfo.okuriConsonant;
+        mMode = regInfo.mode;
         if (conversionStartInternal(mKanjiKey, true)) {
             return;
         }
@@ -793,7 +838,7 @@ public class SKKEngine {
         return list1;
     }
 
-    CharSequence getCurrentCandidate() {
+    String getCurrentCandidate() {
         String candidate = SKKUtils.processConcatAndEscape(SKKUtils.removeAnnotation(mCandidatesList.get(mCurrentCandidateIndex)));
         if (mOkurigana != null) {
             return candidate.concat(mOkurigana);
@@ -815,8 +860,8 @@ public class SKKEngine {
         String s = mCandidatesList.get(index);
         String candidate = SKKUtils.processConcatAndEscape(SKKUtils.removeAnnotation(s));
 
-        commitTextSKK(candidate, 1);
-        if (mOkurigana != null) { commitTextSKK(mOkurigana, 1); }
+        commitTextSKK(mMode.convertText(candidate), 1);
+        if (mOkurigana != null) { commitTextSKK(mMode.convertText(mOkurigana), 1); }
         String key = mKanjiKey.toString();
         if (mOkuriConsonant != null) {
             key += mOkuriConsonant;
@@ -832,7 +877,7 @@ public class SKKEngine {
             }
         }
 
-        changeState(SKKHiraganaState.INSTANCE);
+        changeState(SKKNormalState.INSTANCE);
     }
 
     void pickCurrentSuggestion() {
@@ -881,6 +926,14 @@ public class SKKEngine {
 //        if (mStickyMeta) {mMetaKey.clearMetaKeyState();}
     }
 
+    void changeMode(SKKMode mode, boolean finish) {
+        if (finish) {
+            mState.finish(this);
+        }
+        mMode = mode;
+        changeState(SKKNormalState.INSTANCE);
+    }
+
     void changeState(SKKState state, boolean finish) {
         if (finish) {
             mState.finish(this);
@@ -894,12 +947,29 @@ public class SKKEngine {
         if (!state.isTransient()) {
             reset();
         }
-        mService.changeSoftKeyboard(mState.getKeyboardType(this));
+        mService.changeSoftKeyboard(getCurrentKeyboardType());
 
-        if (state == SKKASCIIState.INSTANCE) {
-            mService.hideStatusIcon();
+        int icon = getCurrentIcon();
+        if (icon != 0) {
+            mService.showStatusIcon(icon);
         } else {
-            mService.showStatusIcon(state.getIcon());
+            mService.hideStatusIcon();
         }
+    }
+
+    public int getCurrentKeyboardType() {
+        int keyboardType = mState.getKeyboardType(this);
+        if (keyboardType < 0) {
+            keyboardType = mMode.getKeyboardType();
+        }
+        return keyboardType;
+    }
+
+    private int getCurrentIcon() {
+        int icon = mState.getIcon();
+        if (icon == 0) {
+            icon = mMode.getIcon();
+        }
+        return icon;
     }
 }

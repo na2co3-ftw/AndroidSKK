@@ -1,32 +1,19 @@
 package jp.gr.java_conf.na2co3.skk.engine;
 
-import jp.gr.java_conf.na2co3.skk.SKKUtils;
-
 // 送り仮名入力中(▽モード，*つき)
 public enum SKKOkuriganaState implements SKKState {
     INSTANCE;
 
-    public void processKey(SKKEngine context, int pcode) {
-        context.processRomaji(pcode);
+    public boolean processKey(SKKEngine context, int pcode) {
+        return false;
+    }
+
+    public boolean processRomajiExtension(SKKEngine context, String text, boolean isShifted) {
+        return false;
     }
 
     public void processText(SKKEngine context, String text, boolean isShifted) {
         if (text != null) {
-            switch (text) {
-                case "q":
-                    toggleKana(context);
-                    return;
-                case "l":
-                    if (isShifted) {
-                        context.changeState(SKKZenkakuState.INSTANCE, true);
-                    } else {
-                        context.changeState(SKKASCIIState.INSTANCE, true);
-                    }
-                    return;
-                case "/":
-                    context.changeState(SKKAbbrevState.INSTANCE, true);
-                    return;
-            }
             String okurigana = context.getOkurigana();
             if (okurigana == null) {
                 context.setOkurigana(text);
@@ -67,37 +54,37 @@ public enum SKKOkuriganaState implements SKKState {
     }
 
     public boolean finish(SKKEngine context) {
-        context.commitTextSKK(context.getKanjiKey(), 1);
+        context.commitTextSKK(context.convertText(context.getKanjiKey()), 1);
         if (context.getOkurigana() != null) {
-            context.commitTextSKK(context.getOkurigana(), 1);
+            context.commitTextSKK(context.convertText(context.getOkurigana()), 1);
         }
         return true;
     }
 
-    public boolean toggleKana(SKKEngine context) {
+    public void toggleKana(SKKEngine context) {
         StringBuilder text = new StringBuilder(context.getKanjiKey());
         if (context.getOkurigana() != null) {
             text.append(context.getOkurigana());
         }
         if (text.length() > 0) {
-            String str = SKKUtils.hirakana2katakana(text.toString());
-            context.commitTextSKK(str, 1);
+            context.commitTextSKK(context.getToggledKanaMode().convertText(text), 1);
         }
-        context.changeState(SKKHiraganaState.INSTANCE);
-        return true;
+        context.changeState(SKKNormalState.INSTANCE);
     }
 
     public CharSequence getComposingText(SKKEngine context) {
         String okurigana = context.getOkurigana();
-        StringBuilder sb = new StringBuilder(context.getKanjiKey()).append("*");
+        StringBuilder sb = new StringBuilder();
+        sb.append(context.convertText(context.getKanjiKey()));
+        sb.append("*");
         if (okurigana != null) {
-            sb.append(okurigana);
+            sb.append(context.convertText(okurigana));
         }
         sb.append(context.getComposing());
         return sb;
     }
 
-    public int getKeyboardType(SKKEngine context) { return SKKEngine.KEYBOARD_HIRAGANA; }
+    public int getKeyboardType(SKKEngine context) { return -1; }
 
     public boolean isTransient() { return true; }
 

@@ -4,7 +4,7 @@ package jp.gr.java_conf.na2co3.skk.engine;
 public enum SKKChooseState implements SKKState {
     INSTANCE;
 
-    public void processKey(SKKEngine context, int pcode) {
+    public boolean processKey(SKKEngine context, int pcode) {
         StringBuilder kanjiKey = context.getKanjiKey();
 
         switch (pcode) {
@@ -23,15 +23,20 @@ public enum SKKChooseState implements SKKState {
             default:
                 // 暗黙の確定
                 context.pickCurrentCandidate();
-                SKKHiraganaState.INSTANCE.processKey(context, pcode);
+                context.processKey(pcode);
                 break;
         }
+        return true;
+    }
+
+    public boolean processRomajiExtension(SKKEngine context, String text, boolean isShifted) {
+        return false;
     }
 
     public void processText(SKKEngine context, String text, boolean isShifted) {
         // 暗黙の確定
         context.pickCurrentCandidate();
-        SKKHiraganaState.INSTANCE.processText(context, text, isShifted);
+        SKKNormalState.INSTANCE.processText(context, text, isShifted);
     }
 
     public void onFinishRomaji(SKKEngine context) {}
@@ -46,7 +51,7 @@ public enum SKKChooseState implements SKKState {
 
     public void afterBackspace(SKKEngine context) {
         if (context.getKanjiKey().length() == 0) {
-            context.changeState(SKKHiraganaState.INSTANCE);
+            context.changeState(SKKNormalState.INSTANCE);
         } else {
             if (context.getComposing().length() > 0) { // Abbrevモード
                 context.changeState(SKKAbbrevState.INSTANCE);
@@ -69,17 +74,20 @@ public enum SKKChooseState implements SKKState {
         return true;
     }
 
-    public boolean toggleKana(SKKEngine context) { return false; }
+    public void toggleKana(SKKEngine context) {
+        context.pickCurrentCandidate();
+        SKKNormalState.INSTANCE.toggleKana(context);
+    }
 
     public CharSequence getComposingText(SKKEngine context) {
-        return context.getCurrentCandidate();
+        return context.convertText(context.getCurrentCandidate());
     }
 
     public int getKeyboardType(SKKEngine context) {
         if (context.getComposing().length() > 0) {
             return SKKEngine.KEYBOARD_ABBREV;
         } else {
-            return SKKEngine.KEYBOARD_HIRAGANA;
+            return -1;
         }
     }
 

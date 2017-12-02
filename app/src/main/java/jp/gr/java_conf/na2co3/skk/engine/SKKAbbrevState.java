@@ -7,7 +7,7 @@ import jp.gr.java_conf.na2co3.skk.SKKUtils;
 public enum SKKAbbrevState implements SKKState {
     INSTANCE;
 
-    public void processKey(SKKEngine context, int pcode) {
+    public boolean processKey(SKKEngine context, int pcode) {
         StringBuilder composing = context.getComposing();
         StringBuilder kanjiKey = context.getKanjiKey();
 
@@ -22,17 +22,17 @@ public enum SKKAbbrevState implements SKKState {
             context.pickCurrentSuggestion();
         } else if (pcode == -1010) {
             // 全角変換
-            int len = composing.length();
-            StringBuilder buf = new StringBuilder(len);
-            for (int i=0; i<len; i++) {
-                buf.append((char) SKKUtils.hankaku2zenkaku(composing.charAt(i)));
-            }
-            context.commitTextSKK(buf, 1);
-            context.changeState(SKKHiraganaState.INSTANCE);
+            context.commitTextSKK(SKKUtils.hankaku2zenkaku(composing), 1);
+            context.changeState(SKKNormalState.INSTANCE);
         } else {
             composing.append((char) pcode);
             context.updateSuggestions(composing.toString());
         }
+        return true;
+    }
+
+    public boolean processRomajiExtension(SKKEngine context, String text, boolean isShifted) {
+        return false;
     }
 
     public void processText(SKKEngine context, String text, boolean isShifted) {
@@ -48,14 +48,14 @@ public enum SKKAbbrevState implements SKKState {
         StringBuilder composing = context.getComposing();
 
         if (composing.length() == 0) {
-            context.changeState(SKKHiraganaState.INSTANCE);
+            context.changeState(SKKNormalState.INSTANCE);
         } else {
             context.updateSuggestions(composing.toString());
         }
     }
 
     public boolean handleCancel(SKKEngine context) {
-        context.changeState(SKKHiraganaState.INSTANCE);
+        context.changeState(SKKNormalState.INSTANCE);
         return true;
     }
 
@@ -68,7 +68,7 @@ public enum SKKAbbrevState implements SKKState {
         return true;
     }
 
-    public boolean toggleKana(SKKEngine context) { return false; }
+    public void toggleKana(SKKEngine context) {}
 
     public CharSequence getComposingText(SKKEngine context) {
         return context.getComposing();

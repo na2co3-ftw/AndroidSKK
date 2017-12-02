@@ -1,44 +1,32 @@
 package jp.gr.java_conf.na2co3.skk.engine;
 
-import jp.gr.java_conf.na2co3.skk.SKKUtils;
-
-// 漢字変換のためのひらがな入力中(▽モード)
+// 漢字変換のための入力中(▽モード)
 public enum SKKKanjiState implements SKKState {
     INSTANCE;
 
-    public void processKey(SKKEngine context, int pcode) {
-        context.processRomaji(pcode);
+    public boolean processKey(SKKEngine context, int pcode) {
+        return false;
+    }
+
+    public boolean processRomajiExtension(SKKEngine context, String text, boolean isShifted) {
+        StringBuilder kanjiKey = context.getKanjiKey();
+        switch (text) {
+            case ">":
+                kanjiKey.append('>');
+                context.conversionStart(kanjiKey);
+                return true;
+            case ".":
+                context.pickCurrentSuggestion();
+                return true;
+        }
+        return false;
     }
 
     public void processText(SKKEngine context, String text, boolean isShifted) {
         StringBuilder kanjiKey = context.getKanjiKey();
-        if (text != null) {
-            switch (text) {
-                case "q":
-                    toggleKana(context);
-                    return;
-                case "l":
-                    if (isShifted) {
-                        context.changeState(SKKZenkakuState.INSTANCE, true);
-                    } else {
-                        context.changeState(SKKASCIIState.INSTANCE, true);
-                    }
-                    return;
-                case "/":
-                    context.changeState(SKKAbbrevState.INSTANCE, true);
-                    return;
-                case ">":
-                    if (text.equals(">")) {
-                        kanjiKey.append('>');
-                    }
-                    // fallthrough
-                case " ":
-                    context.conversionStart(kanjiKey);
-                    return;
-                case ".":
-                    context.pickCurrentSuggestion();
-                    return;
-            }
+        if (text != null && text.equals(" ")) {
+            context.conversionStart(kanjiKey);
+            return;
         }
 
         if (isShifted) {
@@ -69,38 +57,37 @@ public enum SKKKanjiState implements SKKState {
         StringBuilder composing = context.getComposing();
 
         if (kanjiKey.length() == 0 && composing.length() == 0) {
-            context.changeState(SKKHiraganaState.INSTANCE);
+            context.changeState(SKKNormalState.INSTANCE);
         } else {
             context.updateSuggestions(kanjiKey.toString());
         }
     }
 
     public boolean handleCancel(SKKEngine context) {
-        context.changeState(SKKHiraganaState.INSTANCE);
+        context.changeState(SKKNormalState.INSTANCE);
         return true;
     }
 
     public boolean finish(SKKEngine context) {
-        context.commitTextSKK(context.getKanjiKey(), 1);
+        context.commitTextSKK(context.convertText(context.getKanjiKey()), 1);
         return true;
     }
 
-    public boolean toggleKana(SKKEngine context) {
+    public void toggleKana(SKKEngine context) {
         StringBuilder kanjiKey = context.getKanjiKey();
         if (kanjiKey.length() > 0) {
-            String str = SKKUtils.hirakana2katakana(kanjiKey.toString());
-            context.commitTextSKK(str, 1);
+            context.commitTextSKK(context.getToggledKanaMode().convertText(kanjiKey), 1);
         }
-        context.changeState(SKKHiraganaState.INSTANCE);
-        return true;
+        context.changeState(SKKNormalState.INSTANCE);
     }
 
 
     public CharSequence getComposingText(SKKEngine context) {
-        return new StringBuilder(context.getKanjiKey()).append(context.getComposing());
+        StringBuilder sb = new StringBuilder(context.getKanjiKey()).append(context.getComposing());
+        return context.convertText(sb);
     }
 
-    public int getKeyboardType(SKKEngine context) { return SKKEngine.KEYBOARD_HIRAGANA; }
+    public int getKeyboardType(SKKEngine context) { return -1; }
 
     public boolean isTransient() { return true; }
 

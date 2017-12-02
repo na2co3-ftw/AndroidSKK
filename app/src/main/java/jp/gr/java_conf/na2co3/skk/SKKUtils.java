@@ -26,6 +26,19 @@ public class SKKUtils {
         return pcode;
     }
 
+    public static CharSequence hankaku2zenkaku(CharSequence str) {
+        if (str == null) {
+            return null;
+        }
+
+        int len = str.length();
+        StringBuilder buf = new StringBuilder(len);
+        for (int i = 0; i < len; i++) {
+            buf.append((char) SKKUtils.hankaku2zenkaku(str.charAt(i)));
+        }
+        return buf;
+    }
+
     /**
     * 文字列・改
     *

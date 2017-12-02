@@ -229,16 +229,9 @@ public class SKKService extends InputMethodService {
     public View onCreateInputView() {
         createInputView();
 
-        if (mEngine.getState() == SKKASCIIState.INSTANCE) {
-            mCurrentInputView = mQwertyInputView;
-            return mQwertyInputView;
-        }
-        if (mEngine.getState() == SKKKatakanaState.INSTANCE) {
-            mFlickJPInputView.setKatakanaMode();
-        }
-
-        mCurrentInputView = mFlickJPInputView;
-        return mFlickJPInputView;
+        SKKKeyboardView inputView = getInputViewByType(mEngine.getCurrentKeyboardType());
+        mCurrentInputView = inputView;
+        return inputView;
     }
 
     /**
@@ -259,9 +252,7 @@ public class SKKService extends InputMethodService {
             case InputType.TYPE_CLASS_NUMBER:
             case InputType.TYPE_CLASS_DATETIME:
             case InputType.TYPE_CLASS_PHONE:
-                if (mEngine.getState() != SKKASCIIState.INSTANCE) {
-                    mEngine.processKey('l');
-                }
+                mEngine.toASCIIMode();
                 break;
             case InputType.TYPE_CLASS_TEXT:
                 int variation = attribute.inputType & InputType.TYPE_MASK_VARIATION;
@@ -271,9 +262,7 @@ public class SKKService extends InputMethodService {
                     || variation == InputType.TYPE_TEXT_VARIATION_PASSWORD
                     || variation == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
                     || variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD) {
-                    if (mEngine.getState() != SKKASCIIState.INSTANCE) {
-                        mEngine.processKey('l');
-                    }
+                    mEngine.toASCIIMode();
                 }
                 break;
         }
@@ -352,7 +341,7 @@ public class SKKService extends InputMethodService {
     */
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if (mEngine.getState() == SKKASCIIState.INSTANCE) { return super.onKeyUp(keyCode, event); }
+        if (mEngine.getMode() == SKKASCIIMode.INSTANCE) { return super.onKeyUp(keyCode, event); }
 
         switch (keyCode) {
             case KeyEvent.KEYCODE_SHIFT_LEFT:
@@ -417,7 +406,7 @@ public class SKKService extends InputMethodService {
             return true;
         }
 
-        if (engineState == SKKASCIIState.INSTANCE && !mEngine.isRegistering()) {
+        if (mEngine.getMode() == SKKASCIIMode.INSTANCE && !mEngine.isRegistering()) {
             return super.onKeyDown(keyCode, event);
         }
 
@@ -533,7 +522,7 @@ public class SKKService extends InputMethodService {
     void processText(String text, boolean isShifted) { mEngine.processText(text, isShifted); }
     void handleKanaKey() { mEngine.handleKanaKey(); }
     boolean handleCancel() { return mEngine.handleCancel(); }
-    void toASCIIState() { mEngine.toASCIIState(); }
+    void toASCIIMode() { mEngine.toASCIIMode(); }
     void toAbbrevState() { mEngine.toAbbrevState(); }
     void toggleKana() { mEngine.toggleKana(); }
 
@@ -694,20 +683,25 @@ public class SKKService extends InputMethodService {
         return false;
     }
 
+    private SKKKeyboardView getInputViewByType(int keyboardType) {
+        SKKKeyboardView inputView = null;
+        if (keyboardType == SKKEngine.KEYBOARD_HIRAGANA) {
+            mFlickJPInputView.setHiraganaMode();
+            inputView = mFlickJPInputView;
+        } else if (keyboardType == SKKEngine.KEYBOARD_KATAKANA) {
+            mFlickJPInputView.setKatakanaMode();
+            inputView = mFlickJPInputView;
+        } else if (keyboardType == SKKEngine.KEYBOARD_QWERTY){
+            inputView = mQwertyInputView;
+        } else if (keyboardType == SKKEngine.KEYBOARD_ABBREV) {
+            inputView = mAbbrevKeyboardView;
+        }
+        return inputView;
+    }
+
     public void changeSoftKeyboard(int keyboardType) {
         if (mUseSoftKeyboard) {
-            SKKKeyboardView inputView = null;
-            if (keyboardType == SKKEngine.KEYBOARD_HIRAGANA) {
-                mFlickJPInputView.setHiraganaMode();
-                inputView = mFlickJPInputView;
-            } else if (keyboardType == SKKEngine.KEYBOARD_KATAKANA) {
-                mFlickJPInputView.setKatakanaMode();
-                inputView = mFlickJPInputView;
-            } else if (keyboardType == SKKEngine.KEYBOARD_QWERTY){
-                inputView = mQwertyInputView;
-            } else if (keyboardType == SKKEngine.KEYBOARD_ABBREV) {
-                inputView = mAbbrevKeyboardView;
-            }
+            SKKKeyboardView inputView = getInputViewByType(keyboardType);
 
             if (inputView != null && mCurrentInputView != inputView) {
                 InputConnection ic = getCurrentInputConnection();

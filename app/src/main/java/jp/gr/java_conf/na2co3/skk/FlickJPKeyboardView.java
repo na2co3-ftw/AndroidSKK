@@ -791,7 +791,7 @@ public class FlickJPKeyboardView extends SKKKeyboardView {
                 if (isShifted()) {
                     mService.toAbbrevState();
                 } else {
-                    mService.toASCIIState();
+                    mService.toASCIIMode();
                 }
             }
             break;
