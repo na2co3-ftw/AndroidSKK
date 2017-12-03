@@ -31,12 +31,13 @@ public class SKKEngine {
 
     private RomajiConverter mConverter = new RomajiConverter(this);
 
-    // 候補のリスト．KanjiStateとAbbrevStateでは補完リスト，ChooseStateでは変換候補リストになる
+    // 候補のリスト
+    // KanjiStateとAbbrevStateでは補完リスト，ChooseStateとAbbrevChooseStateでは変換候補リストになる
     private List<String> mCandidatesList;
     private int mCurrentCandidateIndex;
 
-    // 漢字変換のキー 変換中は不変
-    private StringBuilder mKanjiKey = new StringBuilder();
+    // 漢字，Abbrev変換のキー 変換中は不変
+    private StringBuilder mConvKey = new StringBuilder();
     // 送りがな
     private String mOkurigana = null;
     // 送りがなの最初の子音
@@ -77,8 +78,8 @@ public class SKKEngine {
         String candidate;
         List<String> list;
         int index;
-        String kanjiKey;
-        String okuri;
+        String key;
+        String okurigana;
         String okuriConconant;
         boolean abbrev;
         SKKMode mode;
@@ -87,8 +88,8 @@ public class SKKEngine {
             this.candidate = cand;
             this.list = clist;
             this.index = idx;
-            this.kanjiKey = key;
-            this.okuri = okuri;
+            this.key = key;
+            this.okurigana = okuri;
             this.okuriConconant = okuriConconant;
             this.abbrev = abbrev;
             this.mode = mode;
@@ -145,11 +146,13 @@ public class SKKEngine {
         mDisplayState = displayState;
     }
 
-    public SKKMode getMode() { return mMode; }
     public SKKState getState() { return mState; }
-    public boolean isRegistering() { return !mRegistrationStack.isEmpty(); }
-    public boolean canMoveCursor() { return (!mRegistrationStack.isEmpty() || mConverter.hasComposing() || mKanjiKey.length() != 0); }
+    public boolean canMoveCursor() { return (!mRegistrationStack.isEmpty() || mConverter.hasComposing() || mConvKey.length() != 0); }
     public void commitUserDictChanges() { mUserDict. commitChanges(); }
+
+    public boolean ignoresKeyEvent() {
+        return mMode == SKKASCIIMode.INSTANCE && mRegistrationStack.isEmpty();
+    }
 
     public void processKey(int pcode) {
         if (pcode == ' ' && !mRegistrationStack.isEmpty() && !mState.isTransient()) {
@@ -279,7 +282,7 @@ public class SKKEngine {
         }
 
         int olen = mOkurigana != null ? mOkurigana.length() : 0;
-        int klen = mKanjiKey.length();
+        int clen = mConvKey.length();
 
         if (softKeyboard && mState.isConverting()) {
             return handleCancel();
@@ -292,8 +295,8 @@ public class SKKEngine {
             } else {
                 mOkurigana = mOkurigana.substring(0, olen - 1);
             }
-        } else if (klen > 0) {
-            mKanjiKey.deleteCharAt(klen-1);
+        } else if (clen > 0) {
+            mConvKey.deleteCharAt(clen-1);
         } else if (!mRegistrationStack.isEmpty()) {
             StringBuilder regEntry = mRegistrationStack.peekFirst().entry;
             if (regEntry.length() > 0) {
@@ -373,7 +376,7 @@ public class SKKEngine {
 
     public void resetOnStartInput() {
         mConverter.reset();
-        mKanjiKey.setLength(0);
+        mConvKey.setLength(0);
         mOkurigana = null;
         mOkuriConsonant = null;
         mCandidatesList = null;
@@ -418,12 +421,12 @@ public class SKKEngine {
 
         // 最初の候補より戻ると変換に戻る 最後の候補より進むと登録
         if (mCurrentCandidateIndex > mCandidatesList.size() - 1) {
-            registerStart(mKanjiKey.toString(), mState == SKKAbbrevChooseState.INSTANCE);
+            registerStart(mState == SKKAbbrevChooseState.INSTANCE);
             updateComposingText();
             return;
         } else if (mCurrentCandidateIndex < 0) {
             if (mOkurigana != null) {
-                mKanjiKey.append(mOkurigana);
+                mConvKey.append(mOkurigana);
                 mOkurigana = null;
                 mOkuriConsonant = null;
             }
@@ -432,7 +435,7 @@ public class SKKEngine {
             } else {
                 changeState(SKKAbbrevState.INSTANCE);
             }
-            updateSuggestions(mKanjiKey.toString());
+            updateSuggestions();
             updateComposingText();
 
             mCurrentCandidateIndex = 0;
@@ -456,7 +459,7 @@ public class SKKEngine {
     public String prepareToMushroom(String clip) {
         String str;
         if (mState == SKKKanjiState.INSTANCE || mState == SKKAbbrevState.INSTANCE) {
-            str = mKanjiKey.toString();
+            str = mConvKey.toString();
         } else {
             str = clip;
         }
@@ -475,16 +478,16 @@ public class SKKEngine {
     public void changeLastChar(String type) {
         if (mState == SKKKanjiState.INSTANCE && !mConverter.hasComposing()) {
             // ▽モード
-            String s = mKanjiKey.toString();
+            String s = mConvKey.toString();
             int idx = s.length() - 1;
             String lastchar = s.substring(idx);
             String new_lastchar = RomajiConverter.convertLastChar(lastchar, type);
 
             if (new_lastchar != null) {
-                mKanjiKey.deleteCharAt(idx);
-                mKanjiKey.append(new_lastchar);
+                mConvKey.deleteCharAt(idx);
+                mConvKey.append(new_lastchar);
+                updateSuggestions();
                 updateComposingText();
-                updateSuggestions(mKanjiKey.toString());
             }
             return;
         }
@@ -500,13 +503,13 @@ public class SKKEngine {
                     mOkuriConsonant = new_okuri_consonant;
                 }
                 mOkurigana = new_okuri;
-                conversionStart(mKanjiKey); //変換やりなおし
+                conversionStart(); //変換やりなおし
                 updateComposingText();
             }
             return;
         }
 
-        if (!mConverter.hasComposing() && mKanjiKey.length() == 0) {
+        if (!mConverter.hasComposing() && mConvKey.length() == 0) {
             if (!mRegistrationStack.isEmpty()) {
                 RegistrationInfo regInfo = mRegistrationStack.peekFirst();
                 if (regInfo.entry.length() == 0) {
@@ -515,15 +518,15 @@ public class SKKEngine {
                     String new_okuri = RomajiConverter.convertLastChar(regInfo.okurigana, type);
 
                     if (new_okuri != null) {
-                        mKanjiKey.setLength(0);
-                        mKanjiKey.append(regInfo.key);
+                        mConvKey.setLength(0);
+                        mConvKey.append(regInfo.key);
                         String new_okuri_consonant = RomajiConverter.getConsonant(new_okuri);
                         if (new_okuri_consonant != null) {
                             mOkuriConsonant = new_okuri_consonant;
                         }
                         mRegistrationStack.removeFirst();
                         mOkurigana = new_okuri;
-                        conversionStart(mKanjiKey); //変換やりなおし
+                        conversionStart(); //変換やりなおし
                         updateComposingText();
                     }
                     return;
@@ -558,7 +561,7 @@ public class SKKEngine {
 
 
     boolean hasComposing() { return mConverter.hasComposing(); }
-    StringBuilder getKanjiKey() { return mKanjiKey; }
+    StringBuilder getConvKey() { return mConvKey; }
     String getOkurigana() { return mOkurigana; }
     void setOkurigana(String okr) { mOkurigana = okr; }
     void setOkuriConsonant(String c) { mOkuriConsonant = c; }
@@ -617,23 +620,21 @@ public class SKKEngine {
 
     /***
      * 変換スタート
-     * 送りありの場合，事前に送りがなをmOkuriganaにセットしておく
-     * @param key 辞書のキー 送りありの場合最後はアルファベット
      */
-    void conversionStart(StringBuilder key) {
-        if (!conversionStartInternal(key, false, false)) {
-            registerStart(key.toString(), false);
+    void conversionStart() {
+        if (!conversionStartInternal(false, false)) {
+            registerStart(false);
         }
     }
 
-    void abbrevConversionStart(StringBuilder key) {
-        if (!conversionStartInternal(key, true, false)) {
-            registerStart(key.toString(), true);
+    void abbrevConversionStart() {
+        if (!conversionStartInternal(true, false)) {
+            registerStart(true);
         }
     }
 
-    private boolean conversionStartInternal(StringBuilder key, boolean abbrev, boolean lastCandidate) {
-        String str = key.toString();
+    private boolean conversionStartInternal(boolean abbrev, boolean lastCandidate) {
+        String str = mConvKey.toString();
         if (mOkuriConsonant != null) {
             str += mOkuriConsonant;
         }
@@ -665,9 +666,9 @@ public class SKKEngine {
         if (mService.prepareReConversion(s)) {
             mUserDict.rollBack();
 
-            mKanjiKey.setLength(0);
-            mKanjiKey.append(mLastConversion.kanjiKey);
-            mOkurigana = mLastConversion.okuri;
+            mConvKey.setLength(0);
+            mConvKey.append(mLastConversion.key);
+            mOkurigana = mLastConversion.okurigana;
             mOkuriConsonant = mLastConversion.okuriConconant;
             mCandidatesList = mLastConversion.list;
             mCurrentCandidateIndex = mLastConversion.index;
@@ -686,17 +687,19 @@ public class SKKEngine {
         return false;
     }
 
-    void updateSuggestions(String str) {
-        if (str.length() == 0) { return; }
+    void updateSuggestions() {
+        if (mConvKey.length() == 0) { return; }
+
+        String text = mConvKey.toString();
         if (mOkuriConsonant != null) {
-            str += mOkuriConsonant;
+            text += mOkuriConsonant;
         }
 
         List<String> list = new ArrayList<>();
         for (SKKDictionary dic: mDicts) {
-            list.addAll(dic.findKeys(str));
+            list.addAll(dic.findKeys(text));
         }
-        List<String> list2 = mUserDict.findKeys(str);
+        List<String> list2 = mUserDict.findKeys(text);
         int idx = 0;
         for (String s : list2) {
             //個人辞書のキーを先頭に追加
@@ -710,16 +713,15 @@ public class SKKEngine {
         mService.setCandidates(list);
     }
 
-    private void registerStart(String str, boolean abbrev) {
-        StringBuilder displayKey = new StringBuilder();
-        displayKey.append(mMode.convertText(str));
+    private void registerStart(boolean abbrev) {
+        StringBuilder displayKey = new StringBuilder(mMode.convertText(mConvKey));
         if (mOkurigana != null) {
             displayKey.append("*");
             displayKey.append(mMode.convertText(mOkurigana));
         }
 
         RegistrationInfo regInfo = new RegistrationInfo(
-                str,
+                mConvKey.toString(),
                 mOkurigana,
                 mOkuriConsonant,
                 displayKey.toString(),
@@ -760,17 +762,17 @@ public class SKKEngine {
 
     private void cancelRegister() {
         RegistrationInfo regInfo = mRegistrationStack.removeFirst();
-        mKanjiKey.setLength(0);
-        mKanjiKey.append(regInfo.key);
+        mConvKey.setLength(0);
+        mConvKey.append(regInfo.key);
         mOkurigana = regInfo.okurigana;
         mOkuriConsonant = regInfo.okuriConsonant;
         mMode = regInfo.mode;
-        if (conversionStartInternal(mKanjiKey, regInfo.abbrev, true)) {
+        if (conversionStartInternal(regInfo.abbrev, true)) {
             return;
         }
 
         if (mOkurigana != null) {
-            mKanjiKey.append(mOkurigana);
+            mConvKey.append(mOkurigana);
             mOkurigana = null;
             mOkuriConsonant = null;
         }
@@ -779,7 +781,7 @@ public class SKKEngine {
         } else {
             changeState(SKKKanjiState.INSTANCE);
         }
-        updateSuggestions(mKanjiKey.toString());
+        updateSuggestions();
     }
 
     private List<String> findCandidates(String key) {
@@ -855,7 +857,7 @@ public class SKKEngine {
         }
         commitTextSKK(candidate, 1);
 
-        String key = mKanjiKey.toString();
+        String key = mConvKey.toString();
         if (mOkuriConsonant != null) {
             key += mOkuriConsonant;
         }
@@ -867,7 +869,7 @@ public class SKKEngine {
                     candidate,
                     mCandidatesList,
                     index,
-                    mKanjiKey.toString(),
+                    mConvKey.toString(),
                     mOkurigana,
                     mOkuriConsonant,
                     mState == SKKAbbrevChooseState.INSTANCE,
@@ -884,25 +886,25 @@ public class SKKEngine {
     private void pickSuggestion(int index) {
         String s = mCandidatesList.get(index);
 
-        mKanjiKey.setLength(0);
-        mKanjiKey.append(s);
+        mConvKey.setLength(0);
+        mConvKey.append(s);
         if (mState == SKKAbbrevState.INSTANCE) {
-            abbrevConversionStart(mKanjiKey);
+            abbrevConversionStart();
         } else if (mState == SKKKanjiState.INSTANCE) {
             int li = s.length() - 1;
             int last = s.codePointAt(li);
             if (SKKUtils.isAlphabet(last)) {
-                mKanjiKey.deleteCharAt(li);
+                mConvKey.deleteCharAt(li);
                 processKey(Character.toUpperCase(last));
             } else {
-                conversionStart(mKanjiKey);
+                conversionStart();
             }
         }
     }
 
     private void reset() {
         mConverter.reset();
-        mKanjiKey.setLength(0);
+        mConvKey.setLength(0);
         mOkurigana = null;
         mOkuriConsonant = null;
         mCandidatesList = null;

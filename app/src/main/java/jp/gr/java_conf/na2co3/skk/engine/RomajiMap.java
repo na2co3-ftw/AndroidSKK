@@ -48,10 +48,6 @@ class RomajiMap {
         }
     }
 
-    Node get(String key) {
-        return mMap.get(key);
-    }
-
     Node prefixSearch(String key) {
         for (int i = key.length(); i > 0; i--) {
             String prefix = key.substring(0, i);

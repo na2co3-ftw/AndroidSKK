@@ -1,12 +1,10 @@
 package jp.gr.java_conf.na2co3.skk.engine;
 
 // 変換候補選択中(▼モード)
-public enum SKKChooseState implements SKKState {
+enum SKKChooseState implements SKKState {
     INSTANCE;
 
     public boolean processKey(SKKEngine context, int pcode) {
-        StringBuilder kanjiKey = context.getKanjiKey();
-
         switch (pcode) {
             case ' ':
                 context.chooseAdjacentCandidate(true);
@@ -15,7 +13,7 @@ public enum SKKChooseState implements SKKState {
                 // 接尾辞入力
                 context.pickCurrentCandidate();
                 context.changeState(SKKKanjiState.INSTANCE);
-                kanjiKey.append('>');
+                context.getConvKey().append('>');
                 break;
             case 'x':
                 context.chooseAdjacentCandidate(false);
@@ -43,18 +41,18 @@ public enum SKKChooseState implements SKKState {
 
     public void beforeBackspace(SKKEngine context) {
         if (context.getOkurigana() != null) {
-            context.getKanjiKey().append(context.getOkurigana());
+            context.getConvKey().append(context.getOkurigana());
             context.setOkurigana(null);
             context.setOkuriConsonant(null);
         }
     }
 
     public void afterBackspace(SKKEngine context) {
-        if (context.getKanjiKey().length() == 0) {
+        if (context.getConvKey().length() == 0) {
             context.changeState(SKKNormalState.INSTANCE);
         } else {
             context.changeState(SKKKanjiState.INSTANCE);
-            context.updateSuggestions(context.getKanjiKey().toString());
+            context.updateSuggestions();
         }
     }
 

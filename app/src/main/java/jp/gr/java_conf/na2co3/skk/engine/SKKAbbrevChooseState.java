@@ -1,7 +1,7 @@
 package jp.gr.java_conf.na2co3.skk.engine;
 
 // Abbrev変換候補選択中(▼モード)
-public enum SKKAbbrevChooseState implements SKKState {
+enum SKKAbbrevChooseState implements SKKState {
     INSTANCE;
 
     public boolean processKey(SKKEngine context, int pcode) {
@@ -23,11 +23,11 @@ public enum SKKAbbrevChooseState implements SKKState {
     }
 
     public void afterBackspace(SKKEngine context) {
-        if (context.getKanjiKey().length() == 0) {
+        if (context.getConvKey().length() == 0) {
             context.changeState(SKKNormalState.INSTANCE);
         } else {
             context.changeState(SKKAbbrevState.INSTANCE);
-            context.updateSuggestions(context.getKanjiKey().toString());
+            context.updateSuggestions();
         }
     }
 

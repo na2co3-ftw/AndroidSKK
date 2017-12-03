@@ -4,7 +4,7 @@ import jp.gr.java_conf.na2co3.skk.R;
 import jp.gr.java_conf.na2co3.skk.SKKUtils;
 
 // 全角英数モード
-public enum SKKZenkakuMode implements SKKMode {
+enum SKKZenkakuMode implements SKKMode {
     INSTANCE;
 
     public void processKey(SKKEngine context, int pcode) {

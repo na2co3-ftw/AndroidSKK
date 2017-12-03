@@ -3,7 +3,7 @@ package jp.gr.java_conf.na2co3.skk.engine;
 import jp.gr.java_conf.na2co3.skk.R;
 
 // ひらがなモード
-public enum SKKHiraganaMode implements SKKMode {
+enum SKKHiraganaMode implements SKKMode {
     INSTANCE;
 
     public void processKey(SKKEngine context, int pcode) {

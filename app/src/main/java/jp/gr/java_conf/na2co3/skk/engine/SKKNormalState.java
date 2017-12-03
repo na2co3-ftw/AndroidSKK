@@ -1,7 +1,7 @@
 package jp.gr.java_conf.na2co3.skk.engine;
 
 // 通常状態(■モード)
-public enum SKKNormalState implements SKKState {
+enum SKKNormalState implements SKKState {
     INSTANCE;
 
     public boolean processKey(SKKEngine context, int pcode) {

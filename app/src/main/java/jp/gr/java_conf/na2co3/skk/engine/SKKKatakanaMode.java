@@ -4,7 +4,7 @@ import jp.gr.java_conf.na2co3.skk.R;
 import jp.gr.java_conf.na2co3.skk.SKKUtils;
 
 // カタカナモード
-public enum SKKKatakanaMode implements SKKMode {
+enum SKKKatakanaMode implements SKKMode {
     INSTANCE;
 
     public void processKey(SKKEngine context, int pcode) {
@@ -12,7 +12,7 @@ public enum SKKKatakanaMode implements SKKMode {
     }
 
     public CharSequence convertText(CharSequence text) {
-        return SKKUtils.hirakana2katakana(text.toString());
+        return SKKUtils.hirakana2katakana(text);
     }
 
     public SKKMode getToggledKanaMode() { return SKKHiraganaMode.INSTANCE; }

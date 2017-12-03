@@ -47,7 +47,7 @@ public class SKKUtils {
     /**
     * ひらがなを全角カタカナにする
     */
-    public static String hirakana2katakana(String str) {
+    public static CharSequence hirakana2katakana(CharSequence str) {
         if (str == null) return null;
 
         StringBuilder str2 = new StringBuilder();

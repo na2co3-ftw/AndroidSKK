@@ -341,7 +341,7 @@ public class SKKService extends InputMethodService {
     */
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if (mEngine.getMode() == SKKASCIIMode.INSTANCE) { return super.onKeyUp(keyCode, event); }
+        if (mEngine.ignoresKeyEvent()) { return super.onKeyUp(keyCode, event); }
 
         switch (keyCode) {
             case KeyEvent.KEYCODE_SHIFT_LEFT:
@@ -406,7 +406,7 @@ public class SKKService extends InputMethodService {
             return true;
         }
 
-        if (mEngine.getMode() == SKKASCIIMode.INSTANCE && !mEngine.isRegistering()) {
+        if (mEngine.ignoresKeyEvent()) {
             return super.onKeyDown(keyCode, event);
         }
 
@@ -415,15 +415,14 @@ public class SKKService extends InputMethodService {
             if (handleCancel()) {return true;}
         }
 
-        if (engineState == SKKAbbrevState.INSTANCE
-                && keyCode == 'q'
+        if (keyCode == 'q'
                 && checkMetaState(SKKPrefs.getModCancelKey(context), metaState)) {
             processKey(-1010);
             return true;
         }
 
         if (keyCode == KeyEvent.KEYCODE_TAB) {
-            if (engineState == SKKKanjiState.INSTANCE || engineState == SKKAbbrevState.INSTANCE) {
+            if (engineState.isTransient() && !engineState.isConverting()) {
                 boolean isShifted = false;
                 if (mStickyMeta) {
                     if ((mMetaKey.useMetaState() & KeyEvent.META_SHIFT_ON) != 0) {

@@ -1,7 +1,7 @@
 package jp.gr.java_conf.na2co3.skk.engine;
 
 // ASCIIモード
-public enum SKKASCIIMode implements SKKMode {
+enum SKKASCIIMode implements SKKMode {
     INSTANCE;
 
     public void processKey(SKKEngine context, int pcode) {

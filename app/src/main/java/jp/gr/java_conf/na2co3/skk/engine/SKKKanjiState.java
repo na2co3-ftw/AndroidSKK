@@ -1,7 +1,7 @@
 package jp.gr.java_conf.na2co3.skk.engine;
 
 // 漢字変換のための入力中(▽モード)
-public enum SKKKanjiState implements SKKState {
+enum SKKKanjiState implements SKKState {
     INSTANCE;
 
     public boolean processKey(SKKEngine context, int pcode) {
@@ -9,11 +9,10 @@ public enum SKKKanjiState implements SKKState {
     }
 
     public boolean processRomajiExtension(SKKEngine context, String text, boolean isShifted) {
-        StringBuilder kanjiKey = context.getKanjiKey();
         switch (text) {
             case ">":
-                kanjiKey.append('>');
-                context.conversionStart(kanjiKey);
+                context.getConvKey().append('>');
+                context.conversionStart();
                 return true;
             case ".":
                 context.pickCurrentSuggestion();
@@ -23,9 +22,8 @@ public enum SKKKanjiState implements SKKState {
     }
 
     public void processText(SKKEngine context, String text, char initial, boolean isShifted) {
-        StringBuilder kanjiKey = context.getKanjiKey();
         if (text != null && text.equals(" ")) {
-            context.conversionStart(kanjiKey);
+            context.conversionStart();
             return;
         }
 
@@ -38,8 +36,8 @@ public enum SKKKanjiState implements SKKState {
         } else {
             // 未確定
             if (text != null) {
-                kanjiKey.append(text);
-                context.updateSuggestions(kanjiKey.toString());
+                context.getConvKey().append(text);
+                context.updateSuggestions();
             }
         }
     }
@@ -48,12 +46,10 @@ public enum SKKKanjiState implements SKKState {
     public void beforeBackspace(SKKEngine context) {}
 
     public void afterBackspace(SKKEngine context) {
-        StringBuilder kanjiKey = context.getKanjiKey();
-
-        if (kanjiKey.length() == 0 && !context.hasComposing()) {
+        if (context.getConvKey().length() == 0 && !context.hasComposing()) {
             context.changeState(SKKNormalState.INSTANCE);
         } else {
-            context.updateSuggestions(kanjiKey.toString());
+            context.updateSuggestions();
         }
     }
 
@@ -63,21 +59,21 @@ public enum SKKKanjiState implements SKKState {
     }
 
     public boolean finish(SKKEngine context) {
-        context.commitTextSKK(context.convertText(context.getKanjiKey()), 1);
+        context.commitTextSKK(context.convertText(context.getConvKey()), 1);
         return true;
     }
 
     public void toggleKana(SKKEngine context) {
-        StringBuilder kanjiKey = context.getKanjiKey();
-        if (kanjiKey.length() > 0) {
-            context.commitTextSKK(context.getToggledKanaMode().convertText(kanjiKey), 1);
+        StringBuilder convKey = context.getConvKey();
+        if (convKey.length() > 0) {
+            context.commitTextSKK(context.getToggledKanaMode().convertText(convKey), 1);
         }
         context.changeState(SKKNormalState.INSTANCE);
     }
 
 
     public CharSequence getComposingText(SKKEngine context) {
-        return context.convertText(context.getKanjiKey());
+        return context.convertText(context.getConvKey());
     }
 
     public int getKeyboardType(SKKEngine context) { return -1; }

@@ -12,7 +12,7 @@ public interface SKKState {
     void toggleKana(SKKEngine context);
     CharSequence getComposingText(SKKEngine context);
     int getKeyboardType(SKKEngine context);
-    boolean isTransient();
-    boolean isConverting();
+    boolean isTransient(); // ■モードはfalse，▽▼モードはtrue
+    boolean isConverting(); // ■▽モードはfalse，▼モードはtrue
     int getIcon();
 }

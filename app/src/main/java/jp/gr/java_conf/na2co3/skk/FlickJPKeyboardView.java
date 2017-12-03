@@ -689,7 +689,7 @@ public class FlickJPKeyboardView extends SKKKeyboardView {
                 if (isHiragana) {
                     mCurrentPopupLabels[i] = chars[i];
                 } else {
-                    mCurrentPopupLabels[i] = SKKUtils.hirakana2katakana(chars[i]);
+                    mCurrentPopupLabels[i] = SKKUtils.hirakana2katakana(chars[i]).toString();
                 }
             }
             setupPopupTextView();

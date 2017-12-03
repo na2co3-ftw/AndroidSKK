@@ -1,7 +1,7 @@
 package jp.gr.java_conf.na2co3.skk.engine;
 
 // 送り仮名入力中(▽モード，*つき)
-public enum SKKOkuriganaState implements SKKState {
+enum SKKOkuriganaState implements SKKState {
     INSTANCE;
 
     public boolean processKey(SKKEngine context, int pcode) {
@@ -29,7 +29,7 @@ public enum SKKOkuriganaState implements SKKState {
     }
 
     public void onFinishRomaji(SKKEngine context) {
-        context.conversionStart(context.getKanjiKey());
+        context.conversionStart();
     }
 
     public void beforeBackspace(SKKEngine context) {}
@@ -45,7 +45,7 @@ public enum SKKOkuriganaState implements SKKState {
     }
 
     public boolean finish(SKKEngine context) {
-        context.commitTextSKK(context.convertText(context.getKanjiKey()), 1);
+        context.commitTextSKK(context.convertText(context.getConvKey()), 1);
         if (context.getOkurigana() != null) {
             context.commitTextSKK(context.convertText(context.getOkurigana()), 1);
         }
@@ -53,7 +53,7 @@ public enum SKKOkuriganaState implements SKKState {
     }
 
     public void toggleKana(SKKEngine context) {
-        StringBuilder text = new StringBuilder(context.getKanjiKey());
+        StringBuilder text = new StringBuilder(context.getConvKey());
         if (context.getOkurigana() != null) {
             text.append(context.getOkurigana());
         }
@@ -66,7 +66,7 @@ public enum SKKOkuriganaState implements SKKState {
     public CharSequence getComposingText(SKKEngine context) {
         String okurigana = context.getOkurigana();
         StringBuilder sb = new StringBuilder();
-        sb.append(context.convertText(context.getKanjiKey()));
+        sb.append(context.convertText(context.getConvKey()));
         sb.append("*");
         if (okurigana != null) {
             sb.append(context.convertText(okurigana));
