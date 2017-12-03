@@ -41,13 +41,7 @@ public enum SKKOkuriganaState implements SKKState {
     }
 
     public boolean handleCancel(SKKEngine context) {
-        StringBuilder kanjiKey = context.getKanjiKey();
-        context.setOkurigana(null);
-        context.setOkuriConsonant(null);
-        kanjiKey.deleteCharAt(kanjiKey.length()-1);
-        context.changeState(SKKKanjiState.INSTANCE);
-
-        return true;
+        return SKKKanjiState.INSTANCE.handleCancel(context);
     }
 
     public boolean finish(SKKEngine context) {
