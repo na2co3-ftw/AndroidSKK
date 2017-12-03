@@ -544,7 +544,7 @@ public class SKKService extends InputMethodService {
 
     boolean handleDpad(int keyCode) {
         if (mStickyMeta) {mMetaKey.useMetaState();}
-        if (mEngine.getState() == SKKChooseState.INSTANCE) {
+        if (mEngine.getState().isConverting()) {
             if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
                 mEngine.chooseAdjacentCandidate(false);
             } else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {

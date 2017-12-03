@@ -8,25 +8,22 @@ public enum SKKAbbrevState implements SKKState {
     INSTANCE;
 
     public boolean processKey(SKKEngine context, int pcode) {
-        StringBuilder composing = context.getComposing();
         StringBuilder kanjiKey = context.getKanjiKey();
 
         // スペースで変換するかそのままComposingに積む
         if (pcode == ' ') {
-            if (composing.length() != 0) {
-                kanjiKey.setLength(0);
-                kanjiKey.append(composing);
-                context.conversionStart(kanjiKey);
+            if (kanjiKey.length() != 0) {
+                context.abbrevConversionStart(kanjiKey);
             }
         } else if (pcode == '.') {
             context.pickCurrentSuggestion();
         } else if (pcode == -1010) {
             // 全角変換
-            context.commitTextSKK(SKKUtils.hankaku2zenkaku(composing), 1);
+            context.commitTextSKK(SKKUtils.hankaku2zenkaku(kanjiKey), 1);
             context.changeState(SKKNormalState.INSTANCE);
         } else {
-            composing.append((char) pcode);
-            context.updateSuggestions(composing.toString());
+            kanjiKey.append((char) pcode);
+            context.updateSuggestions(kanjiKey.toString());
         }
         return true;
     }
@@ -35,48 +32,38 @@ public enum SKKAbbrevState implements SKKState {
         return false;
     }
 
-    public void processText(SKKEngine context, String text, boolean isShifted) {
-        StringBuilder composing = context.getComposing();
-        composing.append(text);
-        context.updateSuggestions(composing.toString());
+    public void processText(SKKEngine context, String text, char initial, boolean isShifted) {
+        StringBuilder kanjiKey = context.getKanjiKey();
+        kanjiKey.append(text);
+        context.updateSuggestions(kanjiKey.toString());
     }
 
     public void onFinishRomaji(SKKEngine context) {}
     public void beforeBackspace(SKKEngine context) {}
 
     public void afterBackspace(SKKEngine context) {
-        StringBuilder composing = context.getComposing();
-
-        if (composing.length() == 0) {
-            context.changeState(SKKNormalState.INSTANCE);
-        } else {
-            context.updateSuggestions(composing.toString());
-        }
+        SKKKanjiState.INSTANCE.afterBackspace(context);
     }
 
     public boolean handleCancel(SKKEngine context) {
-        context.changeState(SKKNormalState.INSTANCE);
-        return true;
+        return SKKKanjiState.INSTANCE.handleCancel(context);
     }
 
     public boolean finish(SKKEngine context) {
-        StringBuilder composing = context.getComposing();
-        if (composing.length() > 0) {
-            context.commitTextSKK(composing, 1);
-            composing.setLength(0);
-        }
+        context.commitTextSKK(context.getKanjiKey(), 1);
         return true;
     }
 
     public void toggleKana(SKKEngine context) {}
 
     public CharSequence getComposingText(SKKEngine context) {
-        return context.getComposing();
+        return context.getKanjiKey();
     }
 
     public int getKeyboardType(SKKEngine context) { return SKKEngine.KEYBOARD_ABBREV; }
 
     public boolean isTransient() { return true; }
+    public boolean isConverting() { return false; }
 
     public int getIcon() { return R.drawable.immodeic_eng2jp; }
 }

@@ -12,11 +12,16 @@ public enum SKKOkuriganaState implements SKKState {
         return false;
     }
 
-    public void processText(SKKEngine context, String text, boolean isShifted) {
+    public void processText(SKKEngine context, String text, char initial, boolean isShifted) {
         if (text != null) {
             String okurigana = context.getOkurigana();
             if (okurigana == null) {
                 context.setOkurigana(text);
+                if (initial != '\0') {
+                    context.setOkuriConsonant(String.valueOf(initial));
+                } else {
+                    context.setOkuriConsonant(RomajiConverter.getConsonant(text.substring(0, 1)));
+                }
             } else {
                 context.setOkurigana(okurigana + text);
             }
@@ -24,27 +29,19 @@ public enum SKKOkuriganaState implements SKKState {
     }
 
     public void onFinishRomaji(SKKEngine context) {
-        String okurigana = context.getOkurigana();
-        if (context.getOkuriConsonant() == null && okurigana != null) {
-            String okuriConsonant = RomajiConverter.getConsonant(okurigana.substring(0, 1));
-            if (okuriConsonant != null) {
-                context.setOkuriConsonant(okuriConsonant);
-            }
-        }
         context.conversionStart(context.getKanjiKey());
     }
 
     public void beforeBackspace(SKKEngine context) {}
 
     public void afterBackspace(SKKEngine context) {
-        if (context.getComposing().length() == 0 && context.getOkurigana() == null) {
+        if (!context.hasComposing() && context.getOkurigana() == null) {
             context.changeState(SKKKanjiState.INSTANCE);
         }
     }
 
     public boolean handleCancel(SKKEngine context) {
         StringBuilder kanjiKey = context.getKanjiKey();
-        context.getComposing().setLength(0);
         context.setOkurigana(null);
         context.setOkuriConsonant(null);
         kanjiKey.deleteCharAt(kanjiKey.length()-1);
@@ -80,13 +77,13 @@ public enum SKKOkuriganaState implements SKKState {
         if (okurigana != null) {
             sb.append(context.convertText(okurigana));
         }
-        sb.append(context.getComposing());
         return sb;
     }
 
     public int getKeyboardType(SKKEngine context) { return -1; }
 
     public boolean isTransient() { return true; }
+    public boolean isConverting() { return false; }
 
     public int getIcon() { return 0; }
 }

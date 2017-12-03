@@ -12,11 +12,11 @@ public enum SKKNormalState implements SKKState {
         return false;
     }
 
-    public void processText(SKKEngine context, String text, boolean isShifted) {
+    public void processText(SKKEngine context, String text, char initial, boolean isShifted) {
         if (isShifted) {
             context.changeState(SKKKanjiState.INSTANCE);
             if (text != null) {
-                SKKKanjiState.INSTANCE.processText(context, text, false);
+                SKKKanjiState.INSTANCE.processText(context, text, initial, false);
             }
         } else {
             if (text != null) {
@@ -37,13 +37,12 @@ public enum SKKNormalState implements SKKState {
         context.changeMode(context.getToggledKanaMode(), false);
     }
 
-    public CharSequence getComposingText(SKKEngine context) {
-        return context.getComposing();
-    }
+    public CharSequence getComposingText(SKKEngine context) { return null; }
 
     public int getKeyboardType(SKKEngine context) { return -1; }
 
     public boolean isTransient() { return false; }
+    public boolean isConverting() { return false; }
 
     public int getIcon() { return 0; }
 }

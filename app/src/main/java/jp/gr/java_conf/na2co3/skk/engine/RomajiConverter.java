@@ -191,6 +191,14 @@ public class RomajiConverter {
         mEngine = engine;
     }
 
+    CharSequence getComposing() {
+        return mComposing;
+    }
+
+    boolean hasComposing() {
+        return mComposing.length() != 0;
+    }
+
     void processKey(int pcode) {
         // シフトキーの状態をチェック
         boolean isUpper = Character.isUpperCase(pcode);
@@ -201,10 +209,14 @@ public class RomajiConverter {
         mComposing.append((char) pcode);
 
         while (true) {
+            char initialChar = '\0';
+            if (mComposing.length() > 0) {
+                initialChar = mComposing.charAt(0);
+            }
             RomajiMap.Node node = mRomajiMap.prefixSearch(mComposing.toString());
             if (node == null) {
                 // ローマ字表にない場合はそのまま確定
-                mEngine.commitRomajiText(mComposing.toString(), isUpper);
+                mEngine.commitRomajiText(mComposing.toString(), initialChar, isUpper);
                 mShiftSent = false;
                 mComposing.setLength(0);
                 mEngine.onFinishRomaji();
@@ -217,7 +229,7 @@ public class RomajiConverter {
                         isUpper = false;
                         mShiftSent = false;
                     }
-                    mEngine.commitRomajiText(node.getValue(), isUpper);
+                    mEngine.commitRomajiText(node.getValue(), initialChar, isUpper);
 
                     mComposing.setLength(0);
                     if (node.getNext() != null) {
@@ -232,13 +244,13 @@ public class RomajiConverter {
                     } else if (isUpper) {
                         mShiftSent = true;
                     }
-                    mEngine.commitRomajiText(null, isUpper);
+                    mEngine.commitRomajiText(null, '\0', isUpper);
                 }
                 break;
             } else {
                 if (node.getValue() != null) {
                     // 先頭一致で確定できるものがあれば確定
-                    mEngine.commitRomajiText(node.getValue(), false);
+                    mEngine.commitRomajiText(node.getValue(), initialChar, false);
                     mShiftSent = false;
 
                     mComposing.delete(0, node.getKey().length());
@@ -247,14 +259,12 @@ public class RomajiConverter {
                     }
                 } else {
                     // ローマ字表にない場合はそのまま確定
-                    mEngine.commitRomajiText(node.getKey(), false);
+                    mEngine.commitRomajiText(node.getKey(), initialChar, false);
                     mShiftSent = false;
                     mComposing.delete(0, node.getKey().length());
                 }
             }
         }
-
-        mEngine.setRomajiComposing(mComposing.toString());
     }
 
     // composingに残っているものを出力する
@@ -265,26 +275,30 @@ public class RomajiConverter {
         }
 
         while (true) {
+            char initialChar = '\0';
+            if (mComposing.length() > 0) {
+                initialChar = mComposing.charAt(0);
+            }
             RomajiMap.Node node = mRomajiMap.prefixSearch(mComposing.toString());
             if (node == null) {
                 break;
             }
             if (node.getValue() != null) {
                 // 先頭一致で確定できるものがあれば確定
-                mEngine.commitRomajiText(node.getValue(), false);
+                mEngine.commitRomajiText(node.getValue(), initialChar, false);
                 mComposing.delete(0, node.getKey().length());
                 if (node.getNext() != null) {
                     mComposing.append(node.getNext());
                 }
             } else {
                 // ローマ字表にない場合はそのまま確定
-                mEngine.commitRomajiText(node.getKey(), false);
+                mEngine.commitRomajiText(node.getKey(), initialChar, false);
                 mComposing.delete(0, node.getKey().length());
             }
         }
         if (mComposing.length() != 0) {
             // ローマ字表にない場合はそのまま確定
-            mEngine.commitRomajiText(mComposing.toString(), false);
+            mEngine.commitRomajiText(mComposing.toString(), mComposing.charAt(0), false);
         }
 
         reset();
@@ -303,7 +317,6 @@ public class RomajiConverter {
     boolean handleBackspace() {
         if (mComposing.length() > 0) {
             mComposing.deleteCharAt(mComposing.length() - 1);
-            mEngine.setRomajiComposing(mComposing.toString());
             if (mComposing.length() == 0) {
                 mShiftSent = false;
             }

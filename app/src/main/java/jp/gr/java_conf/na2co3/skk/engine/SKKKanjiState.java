@@ -22,7 +22,7 @@ public enum SKKKanjiState implements SKKState {
         return false;
     }
 
-    public void processText(SKKEngine context, String text, boolean isShifted) {
+    public void processText(SKKEngine context, String text, char initial, boolean isShifted) {
         StringBuilder kanjiKey = context.getKanjiKey();
         if (text != null && text.equals(" ")) {
             context.conversionStart(kanjiKey);
@@ -30,16 +30,11 @@ public enum SKKKanjiState implements SKKState {
         }
 
         if (isShifted) {
-            // 送り仮名入力，変換
-            if (text != null) {
-                String okuriConsonant = RomajiConverter.getConsonant(text.substring(0, 1));
-                context.setOkuriConsonant(okuriConsonant);
-                context.setOkurigana(text);
-            } else {
-                context.setOkuriConsonant(null);
-                context.setOkurigana(null);
-            }
+            // 送り仮名入力
+            context.setOkuriConsonant(null);
+            context.setOkurigana(null);
             context.changeState(SKKOkuriganaState.INSTANCE);
+            SKKOkuriganaState.INSTANCE.processText(context, text, initial, false);
         } else {
             // 未確定
             if (text != null) {
@@ -54,9 +49,8 @@ public enum SKKKanjiState implements SKKState {
 
     public void afterBackspace(SKKEngine context) {
         StringBuilder kanjiKey = context.getKanjiKey();
-        StringBuilder composing = context.getComposing();
 
-        if (kanjiKey.length() == 0 && composing.length() == 0) {
+        if (kanjiKey.length() == 0 && !context.hasComposing()) {
             context.changeState(SKKNormalState.INSTANCE);
         } else {
             context.updateSuggestions(kanjiKey.toString());
@@ -83,13 +77,13 @@ public enum SKKKanjiState implements SKKState {
 
 
     public CharSequence getComposingText(SKKEngine context) {
-        StringBuilder sb = new StringBuilder(context.getKanjiKey()).append(context.getComposing());
-        return context.convertText(sb);
+        return context.convertText(context.getKanjiKey());
     }
 
     public int getKeyboardType(SKKEngine context) { return -1; }
 
     public boolean isTransient() { return true; }
+    public boolean isConverting() { return false; }
 
     public int getIcon() { return 0; }
 }

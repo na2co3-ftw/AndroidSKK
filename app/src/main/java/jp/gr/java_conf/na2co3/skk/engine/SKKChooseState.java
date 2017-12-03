@@ -33,10 +33,10 @@ public enum SKKChooseState implements SKKState {
         return false;
     }
 
-    public void processText(SKKEngine context, String text, boolean isShifted) {
+    public void processText(SKKEngine context, String text, char initial, boolean isShifted) {
         // 暗黙の確定
         context.pickCurrentCandidate();
-        SKKNormalState.INSTANCE.processText(context, text, isShifted);
+        SKKNormalState.INSTANCE.processText(context, text, initial, isShifted);
     }
 
     public void onFinishRomaji(SKKEngine context) {}
@@ -53,13 +53,8 @@ public enum SKKChooseState implements SKKState {
         if (context.getKanjiKey().length() == 0) {
             context.changeState(SKKNormalState.INSTANCE);
         } else {
-            if (context.getComposing().length() > 0) { // Abbrevモード
-                context.changeState(SKKAbbrevState.INSTANCE);
-                context.updateSuggestions(context.getComposing().toString());
-            } else { // 漢字変換中
-                context.changeState(SKKKanjiState.INSTANCE);
-                context.updateSuggestions(context.getKanjiKey().toString());
-            }
+            context.changeState(SKKKanjiState.INSTANCE);
+            context.updateSuggestions(context.getKanjiKey().toString());
         }
     }
 
@@ -83,15 +78,10 @@ public enum SKKChooseState implements SKKState {
         return context.convertText(context.getCurrentCandidate());
     }
 
-    public int getKeyboardType(SKKEngine context) {
-        if (context.getComposing().length() > 0) {
-            return SKKEngine.KEYBOARD_ABBREV;
-        } else {
-            return -1;
-        }
-    }
+    public int getKeyboardType(SKKEngine context) { return -1; }
 
     public boolean isTransient() { return true; }
+    public boolean isConverting() { return true; }
 
     public int getIcon() { return 0; }
 }
