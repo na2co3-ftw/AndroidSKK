@@ -197,6 +197,16 @@ public class SKKService extends InputMethodService {
         return result;
     }
 
+    // 画面回転等の時にIMEの表示画面が再生成されるのでInputViewを破棄する
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        mFlickJPInputView = null;
+        mQwertyInputView = null;
+        mAbbrevKeyboardView = null;
+        mCurrentInputView = null;
+        super.onConfigurationChanged(newConfig);
+    }
+
     /**
     * This is the point where you can do all of your UI initialization.  It
     * is called after creation and any configuration change.
