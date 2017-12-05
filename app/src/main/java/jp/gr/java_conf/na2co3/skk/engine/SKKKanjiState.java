@@ -59,7 +59,10 @@ enum SKKKanjiState implements SKKState {
     }
 
     public boolean finish(SKKEngine context) {
-        context.commitTextSKK(context.convertText(context.getConvKey()), 1);
+        StringBuilder convKey = context.getConvKey();
+        if (convKey.length() > 0) {
+            context.commitTextSKK(context.convertText(convKey), 1);
+        }
         return true;
     }
 

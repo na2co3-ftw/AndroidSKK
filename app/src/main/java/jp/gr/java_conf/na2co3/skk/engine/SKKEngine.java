@@ -567,9 +567,6 @@ public class SKKEngine {
     void setOkuriConsonant(String c) { mOkuriConsonant = c; }
 
     private void updateComposingText() {
-        InputConnection ic = mService.getCurrentInputConnection();
-        if (ic == null) return;
-
         SpannableStringBuilder ct = new SpannableStringBuilder();
 
         if (!mRegistrationStack.isEmpty()) {
@@ -615,7 +612,7 @@ public class SKKEngine {
             ct.setSpan(new UnderlineSpan(), 0, ct.length(), Spanned.SPAN_COMPOSING);
         }
 
-        ic.setComposingText(ct, 1);
+        mService.setComposingText(ct, 1);
     }
 
     /***
@@ -909,11 +906,6 @@ public class SKKEngine {
         mOkuriConsonant = null;
         mCandidatesList = null;
 
-        //setCandidatesViewShown()ではComposingTextがflushされるので消す
-        InputConnection ic = mService.getCurrentInputConnection();
-        if (ic != null) {
-            ic.setComposingText("", 1);
-        }
         mService.setCandidatesViewShown(false);
 //        mMetaKey.clearMetaKeyState();
 //        if (mStickyMeta) {mMetaKey.clearMetaKeyState();}

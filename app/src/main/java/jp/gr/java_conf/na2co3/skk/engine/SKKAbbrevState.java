@@ -19,7 +19,9 @@ enum SKKAbbrevState implements SKKState {
             context.pickCurrentSuggestion();
         } else if (pcode == -1010) {
             // 全角変換
-            context.commitTextSKK(SKKUtils.hankaku2zenkaku(convKey), 1);
+            if (convKey.length() > 0) {
+                context.commitTextSKK(SKKUtils.hankaku2zenkaku(convKey), 1);
+            }
             context.changeState(SKKNormalState.INSTANCE);
         } else {
             convKey.append((char) pcode);
@@ -49,7 +51,10 @@ enum SKKAbbrevState implements SKKState {
     }
 
     public boolean finish(SKKEngine context) {
-        context.commitTextSKK(context.getConvKey(), 1);
+        StringBuilder convKey = context.getConvKey();
+        if (convKey.length() > 0) {
+            context.commitTextSKK(convKey, 1);
+        }
         return true;
     }
 

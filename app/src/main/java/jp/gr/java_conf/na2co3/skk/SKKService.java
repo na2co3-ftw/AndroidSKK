@@ -51,6 +51,8 @@ public class SKKService extends InputMethodService {
 
     private boolean mUseSoftKeyboard = false;
 
+    private boolean mHasComposingText = false;
+
     private BroadcastReceiver mMushroomReceiver;
     private String mMushroomWord = null;
     private Handler hMushroom = new Handler();
@@ -256,6 +258,7 @@ public class SKKService extends InputMethodService {
 
         if (mStickyMeta) {mMetaKey.clearMetaKeyState();}
         if (mSandS) {mSpacePressed = false; mSandSUsed = false;}
+        mHasComposingText = false;
 
         mEngine.resetOnStartInput();
         switch (attribute.inputType & InputType.TYPE_MASK_CLASS) {
@@ -713,10 +716,6 @@ public class SKKService extends InputMethodService {
             SKKKeyboardView inputView = getInputViewByType(keyboardType);
 
             if (inputView != null && mCurrentInputView != inputView) {
-                InputConnection ic = getCurrentInputConnection();
-                if (ic != null) {
-                    ic.setComposingText("", 1);
-                }
                 setInputView(inputView);
                 mCurrentInputView = inputView;
             }
@@ -728,5 +727,18 @@ public class SKKService extends InputMethodService {
         if (!mUseSoftKeyboard) {
             if (iconRes != 0) { super.showStatusIcon(iconRes); }
         }
+    }
+
+    public boolean setComposingText(CharSequence text, int newCursorPosition) {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic == null) {
+            mHasComposingText = false;
+            return false;
+        }
+        if (!mHasComposingText && text.length() == 0) {
+            return true;
+        }
+        mHasComposingText = text.length() != 0;
+        return ic.setComposingText(text, newCursorPosition);
     }
 }
