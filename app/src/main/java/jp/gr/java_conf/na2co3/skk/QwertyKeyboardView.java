@@ -35,6 +35,15 @@ public class QwertyKeyboardView extends SKKKeyboardView {
     }
 
     @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (getKeyboard() == mSymbolsShiftedKeyboard) {
+            mSymbolsKeyboard.setShifted(false);
+            setKeyboard(mSymbolsKeyboard);
+        }
+    }
+
+    @Override
     public void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         setShifted(false);
@@ -127,6 +136,7 @@ public class QwertyKeyboardView extends SKKKeyboardView {
         } else if (code == KEYCODE_QWERTY_TOJP) {
             mService.handleKanaKey();
         } else if (code == KEYCODE_QWERTY_TOSYM) {
+            mSymbolsKeyboard.setShifted(false);
             setKeyboard(mSymbolsKeyboard);
         } else if (code == KEYCODE_QWERTY_TOLATIN) {
             setKeyboard(mLatinKeyboard);
