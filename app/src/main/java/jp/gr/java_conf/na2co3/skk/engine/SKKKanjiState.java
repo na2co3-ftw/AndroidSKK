@@ -79,7 +79,7 @@ enum SKKKanjiState implements SKKState {
         return context.convertText(context.getConvKey());
     }
 
-    public int getKeyboardType(SKKEngine context) { return -1; }
+    public int getKeyboardType() { return SKKEngine.KEYBOARD_NONE; }
 
     public boolean isTransient() { return true; }
     public boolean isConverting() { return false; }

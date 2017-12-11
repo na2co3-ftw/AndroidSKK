@@ -49,7 +49,7 @@ enum SKKAbbrevChooseState implements SKKState {
         return SKKChooseState.INSTANCE.getComposingText(context);
     }
 
-    public int getKeyboardType(SKKEngine context) { return SKKEngine.KEYBOARD_ABBREV; }
+    public int getKeyboardType() { return SKKEngine.KEYBOARD_ABBREV; }
 
     public boolean isTransient() { return true; }
     public boolean isConverting() { return true; }

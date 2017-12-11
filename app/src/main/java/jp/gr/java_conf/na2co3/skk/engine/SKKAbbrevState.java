@@ -64,7 +64,7 @@ enum SKKAbbrevState implements SKKState {
         return context.getConvKey();
     }
 
-    public int getKeyboardType(SKKEngine context) { return SKKEngine.KEYBOARD_ABBREV; }
+    public int getKeyboardType() { return SKKEngine.KEYBOARD_ABBREV; }
 
     public boolean isTransient() { return true; }
     public boolean isConverting() { return false; }

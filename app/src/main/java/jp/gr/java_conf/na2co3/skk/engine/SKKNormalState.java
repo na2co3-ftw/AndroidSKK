@@ -39,7 +39,7 @@ enum SKKNormalState implements SKKState {
 
     public CharSequence getComposingText(SKKEngine context) { return null; }
 
-    public int getKeyboardType(SKKEngine context) { return -1; }
+    public int getKeyboardType() { return SKKEngine.KEYBOARD_NONE; }
 
     public boolean isTransient() { return false; }
     public boolean isConverting() { return false; }

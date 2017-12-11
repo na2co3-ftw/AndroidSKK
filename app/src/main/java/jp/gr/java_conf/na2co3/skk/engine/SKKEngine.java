@@ -105,6 +105,7 @@ public class SKKEngine {
     public static final String LAST_CONVERTION_HANDAKUTEN = "handaku";
     public static final String LAST_CONVERTION_ROTATE = "rotate";
 
+    static final int KEYBOARD_NONE = -1;
     public static final int KEYBOARD_HIRAGANA = 0;
     public static final int KEYBOARD_KATAKANA = 1;
     public static final int KEYBOARD_QWERTY = 2;
@@ -943,8 +944,8 @@ public class SKKEngine {
     }
 
     public int getCurrentKeyboardType() {
-        int keyboardType = mState.getKeyboardType(this);
-        if (keyboardType < 0) {
+        int keyboardType = mState.getKeyboardType();
+        if (keyboardType == SKKEngine.KEYBOARD_NONE) {
             keyboardType = mMode.getKeyboardType();
         }
         return keyboardType;
