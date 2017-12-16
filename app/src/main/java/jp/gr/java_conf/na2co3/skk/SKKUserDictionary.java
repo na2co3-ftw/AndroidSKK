@@ -53,7 +53,7 @@ public class SKKUserDictionary extends SKKDictionary {
         return null;
     }
 
-    public Entry getEntry(String key) {
+    Entry getEntry(String key) {
         List<String> cd = new ArrayList<>();
         List<List<String>> okr = new ArrayList<>();
         String[] va_array;
@@ -97,7 +97,7 @@ public class SKKUserDictionary extends SKKDictionary {
         return new Entry(cd, okr);
     }
 
-    public void addEntry(String key, String val, String okuri) {
+    void addEntry(String key, String val, String okuri) {
         mOldKey = key;
         StringBuilder new_val = new StringBuilder();
         Entry entry = getEntry(key);
@@ -165,7 +165,7 @@ public class SKKUserDictionary extends SKKDictionary {
         }
     }
 
-    public void rollBack() {
+    void rollBack() {
         if (mOldKey == null) { return; }
 
         try {
@@ -183,7 +183,7 @@ public class SKKUserDictionary extends SKKDictionary {
         mOldKey = null;
     }
 
-    public void commitChanges() {
+    void commitChanges() {
         try {
             mRecMan.commit();
         } catch (Exception e) {

@@ -268,20 +268,7 @@ public class CandidateView extends View {
 
     public void setContents(List<String> list) {
         if (list != null) {
-            mSuggestions = new ArrayList<>();
-            for (String str: list) {
-                int semicolon = str.indexOf(";");
-                String newstr;
-                if (semicolon == -1) {
-                    newstr = SKKUtils.processConcatAndEscape(str);
-                } else {
-                    newstr =
-                        SKKUtils.processConcatAndEscape(str.substring(0, semicolon))
-                        + ";"
-                        + SKKUtils.processConcatAndEscape(str.substring(semicolon+1, str.length()));
-                }
-                mSuggestions.add(newstr);
-            }
+            mSuggestions = list;
         } else {
             mSuggestions = EMPTY_LIST;
         }

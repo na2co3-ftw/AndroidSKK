@@ -6,11 +6,9 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -78,7 +76,7 @@ public class SKKDictionary {
         return va_array;
     }
 
-    public List<String> findKeys(String key) {
+    List<String> findKeys(String key) {
         List<String> list = new ArrayList<>();
         Tuple         tuple = new Tuple();
         TupleBrowser  browser;
@@ -102,7 +100,7 @@ public class SKKDictionary {
         return list;
     }
 
-    public void close() {
+    void close() {
         try {
             mRecMan.commit();
             mRecMan.close();

@@ -9,17 +9,16 @@ import android.view.inputmethod.InputConnection;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import jp.gr.java_conf.na2co3.skk.SKKDictionary;
+import jp.gr.java_conf.na2co3.skk.DictionaryProcessor;
+import jp.gr.java_conf.na2co3.skk.DictionaryProcessor.Candidate;
 import jp.gr.java_conf.na2co3.skk.SKKPrefs;
 import jp.gr.java_conf.na2co3.skk.SKKService;
-import jp.gr.java_conf.na2co3.skk.SKKUserDictionary;
 import jp.gr.java_conf.na2co3.skk.SKKUtils;
 import jp.gr.java_conf.na2co3.skk.R;
 
@@ -31,10 +30,13 @@ public class SKKEngine {
 
     private RomajiConverter mConverter = new RomajiConverter(this);
 
-    // 候補のリスト
-    // KanjiStateとAbbrevStateでは補完リスト，ChooseStateとAbbrevChooseStateでは変換候補リストになる
-    private List<String> mCandidatesList;
+    // 変換候補リスト
+    private List<Candidate> mCandidateList;
     private int mCurrentCandidateIndex;
+
+    // 補完リスト
+    private List<String> mSuggestionList;
+    private int mCurrentSuggestionIndex;
 
     // 漢字，Abbrev変換のキー 変換中は不変
     private StringBuilder mConvKey = new StringBuilder();
@@ -43,8 +45,7 @@ public class SKKEngine {
     // 送りがなの最初の子音
     private String mOkuriConsonant = null;
 
-    private List<SKKDictionary> mDicts;
-    private SKKUserDictionary mUserDict;
+    private DictionaryProcessor mDictionary;
 
     // 単語登録のための情報
     private Deque<RegistrationInfo> mRegistrationStack = new ArrayDeque<>();
@@ -76,7 +77,7 @@ public class SKKEngine {
     // 再変換のための情報
     private class ConversionInfo {
         String candidate;
-        List<String> list;
+        List<Candidate> list;
         int index;
         String key;
         String okurigana;
@@ -84,7 +85,7 @@ public class SKKEngine {
         boolean abbrev;
         SKKMode mode;
 
-        ConversionInfo(String cand, List<String> clist, int idx, String key, String okuri, String okuriConconant, boolean abbrev, SKKMode mode) {
+        ConversionInfo(String cand, List<Candidate> clist, int idx, String key, String okuri, String okuriConconant, boolean abbrev, SKKMode mode) {
             this.candidate = cand;
             this.list = clist;
             this.index = idx;
@@ -111,20 +112,14 @@ public class SKKEngine {
     public static final int KEYBOARD_QWERTY = 2;
     public static final int KEYBOARD_ABBREV = 3;
 
-    public SKKEngine(SKKService engine, List<SKKDictionary> dics, SKKUserDictionary userDic) {
+    public SKKEngine(SKKService engine, DictionaryProcessor dictionary) {
         mService = engine;
-        mDicts = dics;
-        mUserDict = userDic;
+        mDictionary = dictionary;
         mZenkakuSeparatorMap = new HashMap<>();
         setZenkakuPunctuationMarks("en");
         Resources res = engine.getResources();
         mColorComposing = res.getColor(R.color.composing_composing);
         mColorConverting = res.getColor(R.color.composing_converting);
-    }
-
-    public void reopenDictionaries(List<SKKDictionary> dics) {
-        for (SKKDictionary dic: mDicts) { dic.close(); }
-        mDicts = dics;
     }
 
     public void setZenkakuPunctuationMarks(String type) {
@@ -149,7 +144,6 @@ public class SKKEngine {
 
     public SKKState getState() { return mState; }
     public boolean canMoveCursor() { return (!mRegistrationStack.isEmpty() || mConverter.hasComposing() || mConvKey.length() != 0); }
-    public void commitUserDictChanges() { mUserDict. commitChanges(); }
 
     public boolean ignoresKeyEvent() {
         return mMode == SKKASCIIMode.INSTANCE && mRegistrationStack.isEmpty();
@@ -380,7 +374,7 @@ public class SKKEngine {
         mConvKey.setLength(0);
         mOkurigana = null;
         mOkuriConsonant = null;
-        mCandidatesList = null;
+        mCandidateList = null;
         if (mState.isTransient()) {
             changeState(SKKNormalState.INSTANCE);
         }
@@ -395,25 +389,25 @@ public class SKKEngine {
     }
 
     public void chooseAdjacentSuggestion(boolean isForward) {
-        if (mCandidatesList == null) { return; }
+        if (mSuggestionList == null) { return; }
         if (isForward) {
-            mCurrentCandidateIndex++;
+            mCurrentSuggestionIndex++;
         } else {
-            mCurrentCandidateIndex--;
+            mCurrentSuggestionIndex--;
         }
 
         // 範囲外になったら反対側へ
-        if (mCurrentCandidateIndex > mCandidatesList.size() - 1) {
-            mCurrentCandidateIndex = 0;
-        } else if (mCurrentCandidateIndex < 0) {
-            mCurrentCandidateIndex = mCandidatesList.size() - 1;
+        if (mCurrentSuggestionIndex > mSuggestionList.size() - 1) {
+            mCurrentSuggestionIndex = 0;
+        } else if (mCurrentSuggestionIndex < 0) {
+            mCurrentSuggestionIndex = mSuggestionList.size() - 1;
         }
 
-        mService.requestChooseCandidate(mCurrentCandidateIndex);
+        mService.requestChooseCandidate(mCurrentSuggestionIndex);
     }
 
     public void chooseAdjacentCandidate(boolean isForward) {
-        if (mCandidatesList == null) { return; }
+        if (mCandidateList == null) { return; }
         if (isForward) {
             mCurrentCandidateIndex++;
         } else {
@@ -421,7 +415,7 @@ public class SKKEngine {
         }
 
         // 最初の候補より戻ると変換に戻る 最後の候補より進むと登録
-        if (mCurrentCandidateIndex > mCandidatesList.size() - 1) {
+        if (mCurrentCandidateIndex > mCandidateList.size() - 1) {
             registerStart(mState == SKKAbbrevChooseState.INSTANCE);
             updateComposingText();
             return;
@@ -637,7 +631,7 @@ public class SKKEngine {
             str += mOkuriConsonant;
         }
 
-        List<String> list = findCandidates(str);
+        List<Candidate> list = mDictionary.findCandidates(str, mOkurigana);
         if (list == null) {
             return false;
         }
@@ -647,9 +641,9 @@ public class SKKEngine {
         } else {
             changeState(SKKChooseState.INSTANCE);
         }
-        mCandidatesList = list;
+        mCandidateList = list;
         mCurrentCandidateIndex = lastCandidate ? list.size() - 1 : 0;
-        mService.setCandidates(list);
+        updateCandidates();
         if (mCurrentCandidateIndex != 0) {
             mService.requestChooseCandidate(mCurrentCandidateIndex);
         }
@@ -662,16 +656,16 @@ public class SKKEngine {
         String s = mLastConversion.candidate;
         SKKUtils.dlog("last conversion: " + s);
         if (mService.prepareReConversion(s)) {
-            mUserDict.rollBack();
+            mDictionary.rollback();
 
             mConvKey.setLength(0);
             mConvKey.append(mLastConversion.key);
             mOkurigana = mLastConversion.okurigana;
             mOkuriConsonant = mLastConversion.okuriConconant;
-            mCandidatesList = mLastConversion.list;
+            mCandidateList = mLastConversion.list;
             mCurrentCandidateIndex = mLastConversion.index;
             mMode = mLastConversion.mode;
-            mService.setCandidates(mCandidatesList);
+            updateCandidates();
 
             if (mLastConversion.abbrev) {
                 changeState(SKKAbbrevChooseState.INSTANCE);
@@ -685,6 +679,18 @@ public class SKKEngine {
         return false;
     }
 
+    private void updateCandidates() {
+        List<String> displayCandidates = new ArrayList<>();
+        for (Candidate candidate : mCandidateList) {
+            if (candidate.annotation != null) {
+                displayCandidates.add(candidate.candidate + ";" + candidate.annotation);
+            } else {
+                displayCandidates.add(candidate.candidate);
+            }
+        }
+        mService.setCandidates(displayCandidates);
+    }
+
     void updateSuggestions() {
         if (mConvKey.length() == 0) { return; }
 
@@ -693,21 +699,10 @@ public class SKKEngine {
             text += mOkuriConsonant;
         }
 
-        List<String> list = new ArrayList<>();
-        for (SKKDictionary dic: mDicts) {
-            list.addAll(dic.findKeys(text));
-        }
-        List<String> list2 = mUserDict.findKeys(text);
-        int idx = 0;
-        for (String s : list2) {
-            //個人辞書のキーを先頭に追加
-            list.remove(s);
-            list.add(idx, s);
-            idx++;
-        }
+        List<String> list = mDictionary.findSuggestions(text);
 
-        mCandidatesList = list;
-        mCurrentCandidateIndex = 0;
+        mSuggestionList = list;
+        mCurrentSuggestionIndex = 0;
         mService.setCandidates(list);
     }
 
@@ -745,8 +740,8 @@ public class SKKEngine {
             if (regInfo.okuriConsonant != null) {
                 regKeyStr += regInfo.okuriConsonant;
             }
-            mUserDict.addEntry(regKeyStr, regEntryStr, regInfo.okurigana);
-            mUserDict.commitChanges();
+            mDictionary.addEntry(regKeyStr, regEntryStr, regInfo.okurigana);
+            mDictionary.commitChanges();
             mMode = regInfo.mode;
             if (regInfo.okurigana == null || regInfo.okurigana.length() == 0) {
                 commitTextSKK(mMode.convertText(regInfo.entry), 1);
@@ -782,53 +777,8 @@ public class SKKEngine {
         updateSuggestions();
     }
 
-    private List<String> findCandidates(String key) {
-        List<String> list1 = new ArrayList<>();
-        for (SKKDictionary dic: mDicts) {
-            String[] cands = dic.getCandidates(key);
-            if (cands != null) {
-                Collections.addAll(list1, cands);
-            }
-        }
-
-        List<String> list2 = null;
-
-        SKKUserDictionary.Entry entry = mUserDict.getEntry(key);
-        if (entry != null) {
-            list2 = entry.candidates;
-        }
-
-        if (list1.isEmpty() && list2 == null) {
-            SKKUtils.dlog("Dictoinary: Can't find Kanji for " + key);
-            return null;
-        }
-
-        if (list2 != null) {
-            int idx = 0;
-            for (String s : list2) {
-                if (mOkurigana != null) {
-                    boolean found = false;
-                    for (List<String> lst : entry.okuri_blocks) {
-                        if (lst.get(0).equals(mOkurigana) && lst.contains(s)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) {continue;} //送りがなブロックに見つからなければ，追加しない
-                }
-                //個人辞書の候補を先頭に追加
-                list1.remove(s);
-                list1.add(idx, s);
-                idx++;
-            }
-        }
-        if (list1.size() == 0) {list1 = null;}
-
-        return list1;
-    }
-
     String getCurrentCandidate() {
-        String candidate = SKKUtils.processConcatAndEscape(SKKUtils.removeAnnotation(mCandidatesList.get(mCurrentCandidateIndex)));
+        String candidate = mCandidateList.get(mCurrentCandidateIndex).candidate;
         if (mOkurigana != null) {
             return candidate.concat(mOkurigana);
         } else {
@@ -846,8 +796,8 @@ public class SKKEngine {
             return;
         }
 
-        String s = mCandidatesList.get(index);
-        String candidate = SKKUtils.processConcatAndEscape(SKKUtils.removeAnnotation(s));
+        Candidate c = mCandidateList.get(index);
+        String candidate = c.candidate;
         if (mOkurigana != null) {
             candidate = mMode.convertText(candidate + mOkurigana).toString();
         } else {
@@ -859,13 +809,13 @@ public class SKKEngine {
         if (mOkuriConsonant != null) {
             key += mOkuriConsonant;
         }
-        mUserDict.addEntry(key, s, mOkurigana);
+        mDictionary.addEntry(key, c.rawCandidate, mOkurigana);
         // ユーザー辞書登録時はエスケープや注釈を消さない
 
         if (mRegistrationStack.isEmpty()) {
             mLastConversion = new SKKEngine.ConversionInfo(
                     candidate,
-                    mCandidatesList,
+                    mCandidateList,
                     index,
                     mConvKey.toString(),
                     mOkurigana,
@@ -882,7 +832,7 @@ public class SKKEngine {
     }
 
     private void pickSuggestion(int index) {
-        String s = mCandidatesList.get(index);
+        String s = mSuggestionList.get(index);
 
         mConvKey.setLength(0);
         mConvKey.append(s);
@@ -905,7 +855,7 @@ public class SKKEngine {
         mConvKey.setLength(0);
         mOkurigana = null;
         mOkuriConsonant = null;
-        mCandidatesList = null;
+        mCandidateList = null;
 
         mService.setCandidatesViewShown(false);
 //        mMetaKey.clearMetaKeyState();

@@ -38,6 +38,8 @@ public class SKKService extends InputMethodService {
 
     private SKKEngine mEngine;
 
+    private DictionaryProcessor mDictionary;
+
     // onKeyDown()でEnterキーのイベントを消費したかどうかのフラグ．onKeyUp()で判定するのに使う
     private boolean isEnterUsed = false;
 
@@ -113,7 +115,8 @@ public class SKKService extends InputMethodService {
 
         Thread.setDefaultUncaughtExceptionHandler(new MyUncaughtExceptionHandler(getApplicationContext()));
 
-        mEngine = new SKKEngine(SKKService.this, openDictionaries(), openUserDictionary());
+        mDictionary = new DictionaryProcessor(openDictionaries(), openUserDictionary());
+        mEngine = new SKKEngine(SKKService.this, mDictionary);
 
         mMushroomReceiver = new BroadcastReceiver() {
             @Override
@@ -324,7 +327,7 @@ public class SKKService extends InputMethodService {
 
     @Override
     public void onDestroy() {
-        mEngine.commitUserDictChanges();
+        mDictionary.commitChanges();
         unregisterReceiver(mMushroomReceiver);
 
         super.onDestroy();
@@ -339,11 +342,11 @@ public class SKKService extends InputMethodService {
     public void onAppPrivateCommand(String action, Bundle data) {
         if (action.equals(ACTION_COMMIT_USERDIC)) {
             SKKUtils.dlog("commit user dictionary!");
-            mEngine.commitUserDictChanges();
+            mDictionary.commitChanges();
         } else if (action.equals(ACTION_READ_PREFS)) {
             readPrefs();
         } else if (action.equals(ACTION_RELOAD_DICS)) {
-            mEngine.reopenDictionaries(openDictionaries());
+            mDictionary.reopenDictionaries(openDictionaries());
         }
     }
 
