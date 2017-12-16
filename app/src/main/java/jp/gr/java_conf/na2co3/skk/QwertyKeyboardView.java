@@ -37,16 +37,9 @@ public class QwertyKeyboardView extends SKKKeyboardView {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        if (getKeyboard() == mSymbolsShiftedKeyboard) {
-            mSymbolsKeyboard.setShifted(false);
-            setKeyboard(mSymbolsKeyboard);
-        }
-    }
-
-    @Override
-    public void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        setShifted(false);
+        mLatinKeyboard.setShifted(false);
+        mSymbolsKeyboard.setShifted(false);
+        setKeyboard(mLatinKeyboard);
     }
 
     private void setup(Context context) {
