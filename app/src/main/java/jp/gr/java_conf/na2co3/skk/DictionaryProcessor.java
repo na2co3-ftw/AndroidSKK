@@ -35,7 +35,7 @@ public class DictionaryProcessor {
     }
 
     public void addEntry(String key, String val, String okuri) {
-        mUserDict.addEntry(key, val, okuri);
+        mUserDict.addEntry(convertKey(key), val, okuri);
     }
 
     public void commitChanges() {
@@ -47,6 +47,7 @@ public class DictionaryProcessor {
     }
 
     public List<Candidate> findCandidates(String key, String okurigana) {
+        key = convertKey(key);
         List<String> list1 = new ArrayList<>();
         for (SKKDictionary dic: mDicts) {
             String[] cands = dic.getCandidates(key);
@@ -109,17 +110,21 @@ public class DictionaryProcessor {
     }
 
     public List<String> findSuggestions(String text) {
+        String key = convertKey(text);
         List<String> list = new ArrayList<>();
         for (SKKDictionary dic: mDicts) {
-            list.addAll(dic.findKeys(text));
+            list.addAll(dic.findKeys(key));
         }
-        List<String> list2 = mUserDict.findKeys(text);
+        List<String> list2 = mUserDict.findKeys(key);
         int idx = 0;
         for (String s : list2) {
             //個人辞書のキーを先頭に追加
             list.remove(s);
             list.add(idx, s);
             idx++;
+        }
+        for (int i = 0; i < list.size(); i++) {
+            list.set(i, inverseConvertKey(list.get(i)));
         }
         return list;
     }
@@ -145,5 +150,19 @@ public class DictionaryProcessor {
         m.appendTail(buf2);
 
         return buf2.toString();
+    }
+
+    private static String convertKey(String key) {
+        if (key.contains("ゔ")) {
+            return key.replace("ゔ", "う゛");
+        }
+        return key;
+    }
+
+    private static String inverseConvertKey(String key) {
+        if (key.contains("う゛")) {
+            return key.replace("う゛", "ゔ");
+        }
+        return key;
     }
 }

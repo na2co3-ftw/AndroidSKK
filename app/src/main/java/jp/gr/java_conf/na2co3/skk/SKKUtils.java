@@ -49,14 +49,11 @@ public class SKKUtils {
         for (int i=0; i<str.length(); i++) {
             char ch = str.charAt(i);
 
-            if (ch >= 0x3040 && ch <= 0x309A) {
+            if (ch >= 0x3040 && ch <= 0x3096) {
                 ch += 0x60;
             }
             str2.append(ch);
         }
-
-        int idx = str2.indexOf("ウ゛");
-        if (idx != -1) str2.replace(idx, idx+2, "ヴ");
 
         return str2.toString();
     }

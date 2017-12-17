@@ -23,7 +23,7 @@ public class RomajiConverter {
         m.put("da", "だ");m.put("di", "ぢ");m.put("du", "づ");m.put("de", "で");m.put("do", "ど");
         m.put("ba", "ば");m.put("bi", "び");m.put("bu", "ぶ");m.put("be", "べ");m.put("bo", "ぼ");
         m.put("pa", "ぱ");m.put("pi", "ぴ");m.put("pu", "ぷ");m.put("pe", "ぺ");m.put("po", "ぽ");
-        m.put("va", "う゛ぁ");m.put("vi", "う゛ぃ");m.put("vu", "う゛");m.put("ve", "う゛ぇ");m.put("vo", "う゛ぉ");
+        m.put("va", "ゔぁ");m.put("vi", "ゔぃ");m.put("vu", "ゔ");m.put("ve", "ゔぇ");m.put("vo", "ゔぉ");
 
         m.put("xa", "ぁ");m.put("xi", "ぃ");m.put("xu", "ぅ");m.put("xe", "ぇ");m.put("xo", "ぉ");
         m.put("xtu", "っ");m.put("xke", "ヶ");
@@ -83,7 +83,7 @@ public class RomajiConverter {
         m.put("や", "y");                 m.put("ゆ", "y");                 m.put("よ", "y");
         m.put("ら", "r");m.put("り", "r");m.put("る", "r");m.put("れ", "r");m.put("ろ", "r");
         m.put("わ", "w");m.put("ゐ", "w");                 m.put("ゑ", "w");m.put("を", "w");
-        m.put("ん", "n");m.put("っ", "t");
+        m.put("ん", "n");m.put("っ", "t");m.put("ゔ", "v");
     }
 
     // かな小文字変換用
@@ -111,6 +111,7 @@ public class RomajiConverter {
         m.put("だ", "た");m.put("ぢ", "ち");m.put("づ", "つ");m.put("で", "て");m.put("ど", "と");
         m.put("は", "ば");m.put("ひ", "び");m.put("ふ", "ぶ");m.put("へ", "べ");m.put("ほ", "ぼ");
         m.put("ば", "は");m.put("び", "ひ");m.put("ぶ", "ふ");m.put("べ", "へ");m.put("ぼ", "ほ");
+        m.put("う", "ゔ");m.put("ゔ", "う");
         m.put("カ", "ガ");m.put("キ", "ギ");m.put("ク", "グ");m.put("ケ", "ゲ");m.put("コ", "ゴ");
         m.put("ガ", "カ");m.put("ギ", "キ");m.put("グ", "ク");m.put("ゲ", "ケ");m.put("ゴ", "コ");
         m.put("サ", "ザ");m.put("シ", "ジ");m.put("ス", "ズ");m.put("セ", "ゼ");m.put("ソ", "ゾ");
@@ -135,7 +136,8 @@ public class RomajiConverter {
     static {
         Map<String, String> m = mRotateKanaMap;
         m.put("あ", "ぁ");m.put("い", "ぃ");m.put("う", "ぅ");m.put("え", "ぇ");m.put("お", "ぉ");
-        m.put("ぁ", "あ");m.put("ぃ", "い");m.put("ぅ", "う");m.put("ぇ", "え");m.put("ぉ", "お");
+        m.put("ぁ", "あ");m.put("ぃ", "い");m.put("ぅ", "ゔ");m.put("ぇ", "え");m.put("ぉ", "お");
+                                            m.put("ゔ", "う");
         m.put("か", "が");m.put("き", "ぎ");m.put("く", "ぐ");m.put("け", "げ");m.put("こ", "ご");
         m.put("が", "か");m.put("ぎ", "き");m.put("ぐ", "く");m.put("げ", "け");m.put("ご", "こ");
         m.put("さ", "ざ");m.put("し", "じ");m.put("す", "ず");m.put("せ", "ぜ");m.put("そ", "ぞ");
