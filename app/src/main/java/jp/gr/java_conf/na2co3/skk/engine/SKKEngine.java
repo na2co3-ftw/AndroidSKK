@@ -224,22 +224,24 @@ public class SKKEngine {
 
     public boolean handleBackKey() {
         boolean shouldReset = false;
+        if (mConverter.hasComposing()) {
+            shouldReset = true;
+        }
+        if (mState.isTransient()) {
+            shouldReset = true;
+        }
         if (!mRegistrationStack.isEmpty()) {
             mRegistrationStack.clear();
             shouldReset = true;
-        } else if (mConverter.hasComposing()) {
-            shouldReset = true;
         }
 
-        if (mState.isTransient()) {
-            changeState(SKKNormalState.INSTANCE);
-            return true;
-        } else if (shouldReset) {
-            reset();
-            return true;
+        if (!shouldReset) {
+            return false;
         }
 
-        return false;
+        changeState(SKKNormalState.INSTANCE);
+        updateComposingText();
+        return true;
     }
 
     public boolean handleEnter() {
@@ -459,12 +461,7 @@ public class SKKEngine {
             str = clip;
         }
 
-        if (mState.isTransient()) {
-            changeState(SKKNormalState.INSTANCE);
-        } else {
-            reset();
-            mRegistrationStack.clear();
-        }
+        handleBackKey();
 
         return str;
     }
