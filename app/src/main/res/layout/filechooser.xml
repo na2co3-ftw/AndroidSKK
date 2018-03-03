@@ -5,7 +5,7 @@
 	android:layout_height="fill_parent"
 	>
 	<TextView
-	    android:id="@+id/TextDirName"
+	    android:id="@+id/textViewDirName"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:maxLines="1"
@@ -13,7 +13,7 @@
 		android:layout_marginBottom="2dip"
 	/>
 	<ListView
-		android:id="@+id/ListFileChooser"
+		android:id="@+id/android:list"
 		android:layout_width="fill_parent"
 		android:layout_height="0dip"
 		android:scrollbars="vertical"
@@ -22,7 +22,7 @@
 		android:focusableInTouchMode="true"
 	/>
 	<EditText
-	    android:id="@+id/EditTextFileName"
+	    android:id="@+id/editTextFileName"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:maxLines="1"
@@ -37,14 +37,14 @@
 	    android:layout_height="wrap_content"
 	>
 		<Button
-		    android:id="@+id/ButtonCancel"
+		    android:id="@+id/buttonCancel"
 			android:layout_weight="1"
 			android:layout_width="0dip"
 			android:layout_height="wrap_content"
 			android:text="@string/label_CANCEL"
 		/>
 		<Button
-			android:id="@+id/ButtonOK"
+			android:id="@+id/buttonOK"
 			android:layout_weight="1"
 			android:layout_width="0dip"
 			android:layout_height="wrap_content"

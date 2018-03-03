@@ -12,11 +12,11 @@
 			<meta-data android:name="android.view.im" android:resource="@xml/method" />
 		</service>
 
-		<activity android:name="SKKPrefs"
+		<activity android:name=".SKKPrefs"
 			android:theme="@style/Theme.AppCompat.Light.NoActionBar"
 			android:label="@string/label_pref_activity" >
 		</activity>
-		<activity android:name="SKKDicExtractActivity"
+		<activity android:name=".SKKDicExtractActivity"
 			android:label="@string/label_extdic_activity"
 			android:configChanges="keyboard|keyboardHidden|orientation"
 			android:screenOrientation="nosensor"
@@ -30,10 +30,10 @@
 				  android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
 				  android:label="@string/label_dicmanager_activity" >
 		</activity>
-		<activity android:name="FileChooser"
-				android:theme="@style/Theme.AppCompat.Light.DarkActionBar" >
+		<activity android:name=".FileChooser"
+			android:theme="@style/Theme.AppCompat.Light.DarkActionBar" >
 		</activity>
-		<activity android:name="SKKMushroom"
+		<activity android:name=".SKKMushroom"
 			android:label="@string/label_mushroom"
 			android:theme="@style/Theme.AppCompat.Light.Dialog">
 		</activity>

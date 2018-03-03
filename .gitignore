@@ -6,5 +6,6 @@
 /.idea/misc.xml
 /build
 /captures
+/app/release/output.json
 
 /svg

@@ -1,15 +1,17 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion '25.0.3'
+    buildToolsVersion '26.0.2'
 
     defaultConfig {
         applicationId "jp.deadend.noname.skk"
         minSdkVersion 9
         targetSdkVersion 25
-        versionCode 28
-        versionName "3.1"
+        versionCode 29
+        versionName "3.2"
     }
 
     buildTypes {
@@ -24,4 +26,8 @@ dependencies {
     compile files('libs/jdbm-1.0.jar')
     compile 'com.android.support:support-v4:25.+'
     compile 'com.android.support:appcompat-v7:25.+'
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+repositories {
+    mavenCentral()
 }

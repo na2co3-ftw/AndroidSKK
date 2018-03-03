@@ -3,7 +3,7 @@
 	xmlns:seekbar="http://schemas.android.com/apk/res/jp.deadend.noname.skk"
 	android:title="@string/label_pref_activity">
 	<ListPreference
-		android:key="PrefKeyKutoutenType"
+		android:key="@string/prefkey_kutouten_type"
 		android:title="句読点のタイプ"
 		android:summary="かなモードで入力される句読点"
 		android:entries="@array/kutouten_entries"
@@ -11,7 +11,7 @@
 		android:dialogTitle="句読点のタイプ"
 		android:defaultValue="en" />
 	<com.hlidskialf.android.preference.SeekBarPreference
-		android:key="PrefKeyCandidatesSize"
+		android:key="@string/prefkey_candidates_size"
 		android:title="候補表示の文字サイズ"
 		android:dialogTitle="候補表示の文字サイズ"
 		android:defaultValue="18"
@@ -33,51 +33,35 @@
 	<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
 		android:title="@string/label_pref_hardkeyboard">
 		<jp.deadend.noname.skk.SetKeyPreference
-			android:key="PrefKeyKanaKey"
+			android:key="@string/prefkey_kana_key"
 			android:title="かなキー"
 			android:summary="かなモードに移行するキー"
 			android:dialogTitle="Press a key ..."
 			android:negativeButtonText="キャンセル"
 			android:positiveButtonText="OK" />
-		<ListPreference
-			android:key="PrefKeyModKanaKey"
-			android:title="かなキーの修飾キー"
-			android:summary="かなモード移行時に同時押しをするキー"
-			android:entries="@array/modifier_entries"
-			android:entryValues="@array/modifier_values"
-			android:dialogTitle="かなキーの修飾キー"
-			android:defaultValue="none" />
 		<CheckBoxPreference
-			android:key="PrefKeyToggleKanaKey"
+			android:key="@string/prefkey_toggle_kana_key"
 			android:title="かなキーをトグルに"
 			android:summary="オンだと，かなモードでかなキーを押すとASCIIモードに戻ります"
 			android:defaultValue="true" />
 		<jp.deadend.noname.skk.SetKeyPreference
-			android:key="PrefKeyCancelKey"
+			android:key="@string/prefkey_cancel_key"
 			android:title="キャンセルキー"
 			android:dialogTitle="Press a key ..."
 			android:negativeButtonText="キャンセル"
 			android:positiveButtonText="OK" />
-		<ListPreference
-			android:key="PrefKeyModCancelKey"
-			android:title="キャンセルキーの修飾キー"
-			android:summary="キャンセル時に同時押しをするキー"
-			android:entries="@array/modifier_entries"
-			android:entryValues="@array/modifier_values"
-			android:dialogTitle="キャンセルキーの修飾キー"
-			android:defaultValue="none" />
 		<CheckBoxPreference
-			android:key="PrefKeyUseCandidatesView"
+			android:key="@string/prefkey_use_candidates_view"
 			android:title="補完・候補の一覧表示"
 			android:summary="補完候補や変換候補を一覧表示します"
 			android:defaultValue="true" />
 		<CheckBoxPreference
-			android:key="PrefKeyStickyMeta"
-			android:title="Sticky shift/alt"
-			android:summary="shiftとaltキーを同時押しでなくても効くようにします"
+			android:key="@string/prefkey_sticky_meta"
+			android:title="Sticky shift"
+			android:summary="shiftを同時押しでなくても効くようにします"
 			android:defaultValue="false" />
 		<CheckBoxPreference
-			android:key="PrefKeySandS"
+			android:key="@string/prefkey_sands"
 			android:title="SandS"
 			android:summary="スペースキーをshiftとして使います"
 			android:defaultValue="false" />
@@ -85,13 +69,13 @@
 	<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
 		android:title="@string/label_pref_softkeyboard">
 		<ListPreference
-			android:key="PrefKeyUseSoftKey"
+			android:key="@string/prefkey_use_softkey"
 			android:title="ソフトウェアキーボードの使用"
 			android:entries="@array/usesoftkey_entries"
 			android:entryValues="@array/usesoftkey_values"
 			android:defaultValue="auto" />
 		<com.hlidskialf.android.preference.SeekBarPreference
-			android:key="PrefKeyFlickSensitivity"
+			android:key="@string/prefkey_flick_sensitivity"
 			android:title="フリック感度"
 			android:summary="少ない値のほうが敏感になります"
 			android:dialogMessage="少ない値のほうが敏感になります"
@@ -100,7 +84,7 @@
 			seekbar:min="5"
 			android:max="150" />
 		<ListPreference
-			android:key="PrefKeyCurveSensitivity"
+			android:key="@string/prefkey_curve_sensitivity"
 			android:title="フリック曲げ角度の感度"
 			android:summary="「低」にすると，鋭く曲げる必要があります"
 			android:entries="@array/curve_sensitivity_entries"
@@ -108,24 +92,24 @@
 			android:dialogTitle="フリック曲げ感度"
 			android:defaultValue="high" />
 		<CheckBoxPreference
-			android:key="PrefKeyUsePopup"
+			android:key="@string/prefkey_use_popup"
 			android:title="ポップアップの使用"
 			android:summary="フリック入力用のガイドを表示します"
 			android:disableDependentsState="false"
 			android:defaultValue="true" />
 		<CheckBoxPreference
-			android:key="PrefKeyFixedPopup"
+			android:key="@string/prefkey_fixed_popup"
 			android:title="ポップアップの固定"
 			android:summary="フリック入力ガイドを，常に上部の同じ場所に表示します"
 			android:dependency="PrefKeyUsePopup"
 			android:defaultValue="true" />
 		<CheckBoxPreference
-			android:key="PrefKeyUseSoftCancelKey"
+			android:key="@string/prefkey_use_soft_cancel_key"
 			android:title="キャンセルキーの使用"
 			android:summary="小文字キーのかわりにキャンセルキーを使います"
 			android:defaultValue="false" />
 		<com.hlidskialf.android.preference.SeekBarPreference
-			android:key="PrefKeyKeyHeightPort"
+			android:key="@string/prefkey_key_height_port"
 			android:title="キーボードの高さ（縦画面）"
 			android:dialogMessage="縦画面での高さを指定してください（画面の高さに対する割合）"
 			android:defaultValue="30"
@@ -133,7 +117,7 @@
 			seekbar:min="20"
 			android:max="50" />
 		<com.hlidskialf.android.preference.SeekBarPreference
-			android:key="PrefKeyKeyHeightLand"
+			android:key="@string/prefkey_key_height_land"
 			android:title="キーボードの高さ（横画面）"
 			android:dialogMessage="横画面での高さを指定してください（画面の高さに対する割合）"
 			android:defaultValue="30"
@@ -141,7 +125,7 @@
 			seekbar:min="20"
 			android:max="50" />
 		<com.hlidskialf.android.preference.SeekBarPreference
-			android:key="PrefKeyKeyWidthPort"
+			android:key="@string/prefkey_key_width_port"
 			android:title="日本語キーボードの幅（縦画面）"
 			android:dialogMessage="縦画面での幅を指定してください（画面の幅に対する割合）"
 			android:defaultValue="100"
@@ -150,7 +134,7 @@
 			android:max="100"
 			seekbar:step="5" />
 		<com.hlidskialf.android.preference.SeekBarPreference
-			android:key="PrefKeyKeyWidthLand"
+			android:key="@string/prefkey_key_width_land"
 			android:title="日本語キーボードの幅（横画面）"
 			android:dialogMessage="横画面での幅を指定してください（画面の幅に対する割合）"
 			android:defaultValue="100"
@@ -159,7 +143,7 @@
 			android:max="100"
 			seekbar:step="5" />
 		<ListPreference
-			android:key="PrefKeyKeyPosition"
+			android:key="@string/prefkey_key_position"
 			android:title="日本語キーボードの位置"
 			android:entries="@array/position_entries"
 			android:entryValues="@array/position_values"

@@ -5,20 +5,20 @@
 	android:layout_height="fill_parent"
 	android:padding="5dip" >
 	<ProgressBar
-		android:id="@+id/ProgressBar"
+		android:id="@+id/dicExtractProgressBar"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:max="100"
 		style="?android:attr/progressBarStyleHorizontal" />
 	<TextView
-		android:id="@+id/Message"
+		android:id="@+id/dicExtractMessage"
 		android:text="@string/message_extract"
 		android:textSize="24sp"
 		android:gravity="center"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content" />
 	<Button
-		android:id="@+id/Button"
+		android:id="@+id/dicExtractButton"
 		android:text="@string/label_CANCEL"
 		android:textSize="18sp"
 		android:layout_width="fill_parent"
