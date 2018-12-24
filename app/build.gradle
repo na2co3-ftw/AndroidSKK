@@ -1,13 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion '25.0.2'
+    compileSdkVersion 27
 
     defaultConfig {
         applicationId "jp.gr.java_conf.na2co3.skk"
-        minSdkVersion 9
-        targetSdkVersion 25
+        minSdkVersion 15
+        targetSdkVersion 27
         versionCode 27
         versionName "3.0"
     }
@@ -21,8 +20,8 @@ android {
 }
 
 dependencies {
-    compile files('libs/jdbm-1.0.jar')
-    compile 'com.android.support:support-v4:25.+'
-    compile 'com.android.support:appcompat-v7:25.+'
-    compile 'com.android.support:preference-v7:25.+'
+    implementation files('libs/jdbm-1.0.jar')
+    implementation 'com.android.support:support-v4:27.1.1'
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support:preference-v7:27.1.1'
 }
