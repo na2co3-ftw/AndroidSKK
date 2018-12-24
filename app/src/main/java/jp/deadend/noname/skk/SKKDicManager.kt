@@ -16,11 +16,9 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.TextView
 import android.widget.Toast
-
 import java.io.File
 import java.io.IOException
 import java.nio.charset.CharacterCodingException
-
 import jdbm.RecordManager
 import jdbm.RecordManagerFactory
 import jdbm.btree.BTree
@@ -28,7 +26,8 @@ import jdbm.helper.StringComparator
 import jdbm.helper.Tuple
 import jp.deadend.noname.dialog.ConfirmationDialogFragment
 import jp.deadend.noname.dialog.TextInputDialogFragment
-import kotlinx.android.synthetic.main.dic_manager.*
+import kotlinx.android.synthetic.main.dic_manager.dicManagerButton
+import kotlinx.android.synthetic.main.dic_manager.dicManagerList
 
 class SKKDicManager : AppCompatActivity() {
     private val mDics = mutableListOf<Tuple>()
@@ -51,7 +50,8 @@ class SKKDicManager : AppCompatActivity() {
         }
 
         mDics.add(Tuple(getString(R.string.label_dicmanager_ldic), ""))
-        val optDics = PreferenceManager.getDefaultSharedPreferences(this).getString(getString(R.string.prefkey_optional_dics), "")
+        val optDics = PreferenceManager.getDefaultSharedPreferences(this)
+                .getString(getString(R.string.prefkey_optional_dics), "")
         if (optDics.isNotEmpty()) {
             optDics.split("/").dropLastWhile { it.isEmpty() }.chunked(2).forEach {
                 mDics.add(Tuple(it[0], it[1]))
@@ -60,7 +60,7 @@ class SKKDicManager : AppCompatActivity() {
 
         dicManagerList.adapter = TupleAdapter(this, mDics)
         dicManagerList.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
-            if (position == 0) { return@OnItemClickListener }
+            if (position == 0) return@OnItemClickListener
             val dialog = ConfirmationDialogFragment.newInstance(R.string.message_confirm_remove_dic)
             dialog.setListener(
                     object : ConfirmationDialogFragment.Listener {
@@ -91,7 +91,8 @@ class SKKDicManager : AppCompatActivity() {
                     .apply()
 
 
-            val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            val inputMethodManager =
+                    getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             inputMethodManager.sendAppPrivateCommand(null, SKKService.ACTION_RELOAD_DICS, null)
         }
 
@@ -122,7 +123,11 @@ class SKKDicManager : AppCompatActivity() {
             dialog.setListener(
                     object : TextInputDialogFragment.Listener {
                         override fun onPositiveClick(result: String) {
-                            val dicName = if (result.isEmpty()) getString(R.string.label_dicmanager_optionaldic) else result.replace("/", "")
+                            val dicName = if (result.isEmpty()) {
+                                getString(R.string.label_dicmanager_optionaldic)
+                            } else {
+                                result.replace("/", "")
+                            }
                             var name = dicName
                             var suffix = 1
                             while (containsName(name)) {
@@ -146,7 +151,11 @@ class SKKDicManager : AppCompatActivity() {
     private fun loadDic(filePath: String): String? {
         val file = File(filePath)
         val name = file.name
-        val dicFileBaseName = if (name.startsWith("SKK-JISYO.")) "skk_dict_" + name.substring(10) else "skk_dict_" + name.replace(".", "_")
+        val dicFileBaseName = if (name.startsWith("SKK-JISYO.")) {
+            "skk_dict_" + name.substring(10)
+        } else {
+            "skk_dict_" + name.replace(".", "_")
+        }
 
         val filesDir = filesDir
         filesDir.listFiles().forEach {
@@ -155,16 +164,24 @@ class SKKDicManager : AppCompatActivity() {
 
         var recMan: RecordManager? = null
         try {
-            recMan = RecordManagerFactory.createRecordManager(filesDir.absolutePath + "/" + dicFileBaseName)
+            recMan = RecordManagerFactory.createRecordManager(
+                    filesDir.absolutePath + "/" + dicFileBaseName
+            )
             val btree = BTree.createInstance(recMan, StringComparator())
             recMan.setNamedObject(getString(R.string.btree_name), btree.recid)
             recMan.commit()
             loadFromTextDic(filePath, recMan, btree, true)
         } catch (e: IOException) {
             if (e is CharacterCodingException) {
-                Toast.makeText(this@SKKDicManager, getString(R.string.error_text_dic_coding), Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                        this@SKKDicManager, getString(R.string.error_text_dic_coding),
+                        Toast.LENGTH_LONG
+                ).show()
             } else {
-                Toast.makeText(this@SKKDicManager, getString(R.string.error_file_load, filePath), Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                        this@SKKDicManager, getString(R.string.error_file_load, filePath),
+                        Toast.LENGTH_LONG
+                ).show()
             }
             Log.e("SKK", "SKKDicManager#loadDic() Error: " + e.toString())
             if (recMan != null) {
@@ -190,13 +207,17 @@ class SKKDicManager : AppCompatActivity() {
         return dicFileBaseName
     }
 
-    private fun containsName(s: String) = mDics.any {s == it.key}
+    private fun containsName(s: String) = mDics.any { s == it.key }
 
-    private class TupleAdapter constructor(context: Context, items: List<Tuple>) : ArrayAdapter<Tuple>(context, 0, items) {
+    private class TupleAdapter constructor(
+            context: Context,
+            items: List<Tuple>
+    ) : ArrayAdapter<Tuple>(context, 0, items) {
         private val mLayoutInflater = LayoutInflater.from(context)
 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-            val view = convertView ?: mLayoutInflater.inflate(android.R.layout.simple_list_item_1, parent, false)
+            val view = convertView
+                    ?: mLayoutInflater.inflate(android.R.layout.simple_list_item_1, parent, false)
             (view as TextView).text = getItem(position).key as String
 
             return view

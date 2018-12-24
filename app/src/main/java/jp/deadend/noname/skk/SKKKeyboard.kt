@@ -3,7 +3,11 @@ package jp.deadend.noname.skk
 import android.content.Context
 import android.inputmethodservice.Keyboard
 
-internal class SKKKeyboard(context: Context, xmlLayoutResId: Int, private val mNumRow: Int) : Keyboard(context, xmlLayoutResId) {
+internal class SKKKeyboard(
+        context: Context,
+        xmlLayoutResId: Int,
+        private val mNumRow: Int
+) : Keyboard(context, xmlLayoutResId) {
     override fun getHeight() = keyHeight * mNumRow
 
     fun changeKeyHeight(px: Int) {

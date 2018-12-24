@@ -6,9 +6,13 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
 import android.inputmethodservice.InputMethodService
+import android.media.AudioManager
 import android.os.Bundle
 import android.os.Handler
 import android.preference.PreferenceManager
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
 import android.text.ClipboardManager
 import android.text.InputType
 import android.util.TypedValue
@@ -26,7 +30,12 @@ class SKKService : InputMethodService() {
     private var mFlickJPInputView: FlickJPKeyboardView? = null
     private var mQwertyInputView: QwertyKeyboardView? = null
     private var mAbbrevKeyboardView: AbbrevKeyboardView? = null
-    private var mScreenHeight: Int = 0
+    private var mScreenHeight = 0
+
+    private val mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+    private var mIsRecording = false
+    private lateinit var mAudioManager: AudioManager
+    private var mStreamVolume = 0
 
     private lateinit var mEngine: SKKEngine
 
@@ -58,9 +67,7 @@ class SKKService : InputMethodService() {
     private val mMushroomReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val extras = intent.extras
-            extras?.let {
-                mMushroomWord = extras.getString(SKKMushroom.REPLACE_KEY)
-            }
+            extras?.let { mMushroomWord = extras.getString(SKKMushroom.REPLACE_KEY) }
             hMushroom.postDelayed(rMushroom, 250)
 
 //                if (mMushroomWord != null) {
@@ -81,7 +88,8 @@ class SKKService : InputMethodService() {
             stopSelf()
         }
 
-        val prefVal = PreferenceManager.getDefaultSharedPreferences(this).getString(getString(R.string.prefkey_optional_dics), "")
+        val prefVal = PreferenceManager.getDefaultSharedPreferences(this)
+                .getString(getString(R.string.prefkey_optional_dics), "")
         prefVal?.let {
             if (prefVal.isNotEmpty()) {
                 val vals = prefVal.split("/").dropLastWhile { it.isEmpty() }
@@ -89,7 +97,7 @@ class SKKService : InputMethodService() {
                 while (i < vals.size) {
                     result.add(SKKDictionary(dd + "/" + vals[i], getString(R.string.btree_name)))
                     val last = result.size - 1
-                    if (!result[last].isValid) { result.removeAt(last) }
+                    if (!result[last].isValid) result.removeAt(last)
                     i += 2
                 }
             }
@@ -100,9 +108,14 @@ class SKKService : InputMethodService() {
 
     private fun openUserDictionary(): SKKUserDictionary {
         val dd = filesDir.absolutePath
-        val dic = SKKUserDictionary(dd + "/" + getString(R.string.dic_name_user), getString(R.string.btree_name))
+        val dic = SKKUserDictionary(
+                dd + "/" + getString(R.string.dic_name_user), getString(R.string.btree_name)
+        )
         if (!dic.isValid) {
-            Toast.makeText(this@SKKService, getString(R.string.error_user_dic), Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                    this@SKKService, getString(R.string.error_user_dic),
+                    Toast.LENGTH_LONG
+            ).show()
             stopSelf()
         }
 
@@ -120,6 +133,29 @@ class SKKService : InputMethodService() {
         filter.addCategory(SKKMushroom.CATEGORY_BROADCAST)
         registerReceiver(mMushroomReceiver, filter)
 
+        mSpeechRecognizer.setRecognitionListener(object : RecognitionListener {
+            override fun onBeginningOfSpeech() {}
+            override fun onBufferReceived(buffer: ByteArray?) {}
+            override fun onEndOfSpeech() {}
+            override fun onError(error: Int) {}
+            override fun onEvent(eventType: Int, params: Bundle?) {}
+            override fun onPartialResults(partialResults: Bundle?) {}
+            override fun onReadyForSpeech(params: Bundle?) {}
+            override fun onRmsChanged(rmsdB: Float) {}
+            override fun onResults(results: Bundle?) {
+                results?.let {
+                    val matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    commitTextSKK(matches[0], 0)
+                }
+                mFlickJPInputView?.setHighlightedKey(-1)
+                mIsRecording = false
+                Handler().postDelayed({
+                    mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, mStreamVolume, 0)
+                }, 500)
+            }
+        })
+        mAudioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
         readPrefs()
     }
 
@@ -132,18 +168,22 @@ class SKKService : InputMethodService() {
         mUseSoftKeyboard = checkUseSoftKeyboard()
         updateInputViewShown()
 
-        if (mFlickJPInputView != null) { readPrefsForInputView() }
+        if (mFlickJPInputView != null) readPrefsForInputView()
         val container = mCandidateViewContainer
         container?.let {
             val sp = SKKPrefs.getCandidatesSize(context)
-            val px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp.toFloat(), context.resources.displayMetrics).toInt()
+            val px = TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_SP, sp.toFloat(), context.resources.displayMetrics
+            ).toInt()
             container.setSize(px)
         }
     }
 
     private fun readPrefsForInputView() {
-        val flick = mFlickJPInputView; val qwerty = mQwertyInputView; val abbrev = mAbbrevKeyboardView
-        if (flick == null || qwerty == null || abbrev == null) { return }
+        val flick = mFlickJPInputView
+        val qwerty = mQwertyInputView
+        val abbrev = mAbbrevKeyboardView
+        if (flick == null || qwerty == null || abbrev == null) return
 
         val context = applicationContext
         val config = resources.configuration
@@ -164,8 +204,17 @@ class SKKService : InputMethodService() {
             }
         }
 
-        flick.prepareNewKeyboard(applicationContext, keyWidth, mScreenHeight * keyHeight / (4 * 100), SKKPrefs.getKeyPosition(context))
-        qwerty.setFlickSensitivity(SKKPrefs.getFlickSensitivity(context))
+        flick.prepareNewKeyboard(
+                applicationContext,
+                keyWidth, mScreenHeight * keyHeight / (4 * 100), SKKPrefs.getKeyPosition(context)
+        )
+        val density = context.resources.displayMetrics.density
+        val sensitivity = when (SKKPrefs.getFlickSensitivity(context)) {
+            "low"  -> (36 * density + 0.5f).toInt()
+            "high" -> (12 * density + 0.5f).toInt()
+            else   -> (24 * density + 0.5f).toInt()
+        }
+        qwerty.setFlickSensitivity(sensitivity)
         qwerty.changeKeyHeight(mScreenHeight * keyHeight / (4 * 100))
         abbrev.changeKeyHeight(mScreenHeight * keyHeight / (4 * 100))
     }
@@ -188,7 +237,7 @@ class SKKService : InputMethodService() {
             }
         }
 
-        if (result) { hideStatusIcon() }
+        if (result) hideStatusIcon()
 
         return result
     }
@@ -200,7 +249,8 @@ class SKKService : InputMethodService() {
     override fun onInitializeInterface() {
         mUseSoftKeyboard = checkUseSoftKeyboard()
         updateInputViewShown()
-        mScreenHeight = (getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.height
+        mScreenHeight = (getSystemService(Context.WINDOW_SERVICE) as WindowManager)
+                .defaultDisplay.height
     }
 
     override fun onEvaluateInputViewShown(): Boolean {
@@ -244,7 +294,7 @@ class SKKService : InputMethodService() {
     override fun onStartInput(attribute: EditorInfo, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
 
-        if (mStickyShift) { mShiftKey.clearState() }
+        if (mStickyShift) mShiftKey.clearState()
         if (mSandS) {
             mSpacePressed = false
             mSandSUsed = false
@@ -252,8 +302,10 @@ class SKKService : InputMethodService() {
 
         mEngine.resetOnStartInput()
         when (attribute.inputType and InputType.TYPE_MASK_CLASS) {
-            InputType.TYPE_CLASS_NUMBER, InputType.TYPE_CLASS_DATETIME, InputType.TYPE_CLASS_PHONE -> {
-                if (mEngine.state !== SKKASCIIState) { mEngine.processKey('l'.toInt()) }
+            InputType.TYPE_CLASS_NUMBER,
+            InputType.TYPE_CLASS_DATETIME,
+            InputType.TYPE_CLASS_PHONE -> {
+                if (mEngine.state !== SKKASCIIState) mEngine.processKey('l'.toInt())
             }
             InputType.TYPE_CLASS_TEXT -> {
                 val variation = attribute.inputType and InputType.TYPE_MASK_VARIATION
@@ -262,8 +314,9 @@ class SKKService : InputMethodService() {
                         || variation == InputType.TYPE_TEXT_VARIATION_URI
                         || variation == InputType.TYPE_TEXT_VARIATION_PASSWORD
                         || variation == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-                        || variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD) {
-                    if (mEngine.state !== SKKASCIIState) { mEngine.processKey('l'.toInt()) }
+                        || variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
+                ) {
+                    if (mEngine.state !== SKKASCIIState) mEngine.processKey('l'.toInt())
                 }
             }
         }
@@ -283,7 +336,9 @@ class SKKService : InputMethodService() {
 
         val context = applicationContext
         val sp = SKKPrefs.getCandidatesSize(context)
-        val px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp.toFloat(), context.resources.displayMetrics).toInt()
+        val px = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_SP, sp.toFloat(), context.resources.displayMetrics
+        ).toInt()
         container.setSize(px)
 
         mCandidateViewContainer = container
@@ -349,7 +404,7 @@ class SKKService : InputMethodService() {
             KeyEvent.KEYCODE_SPACE -> {
                 if (mSandS) {
                     mSpacePressed = false
-                    if (!mSandSUsed) { processKey(' '.toInt()) }
+                    if (!mSandSUsed) processKey(' '.toInt())
                     mSandSUsed = false
                     return true
                 }
@@ -428,8 +483,8 @@ class SKKService : InputMethodService() {
                     return true
                 }
             }
-            KeyEvent.KEYCODE_BACK -> if (mEngine.handleBackKey()) { return true }
-            KeyEvent.KEYCODE_DEL -> if (handleBackspace()) { return true }
+            KeyEvent.KEYCODE_BACK  -> if (mEngine.handleBackKey()) { return true }
+            KeyEvent.KEYCODE_DEL   -> if (handleBackspace()) { return true }
             KeyEvent.KEYCODE_ENTER -> if (handleEnter()) { return true }
             KeyEvent.KEYCODE_SPACE -> {
                 if (mSandS) {
@@ -439,7 +494,10 @@ class SKKService : InputMethodService() {
                 }
                 return true
             }
-            KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> if (handleDpad(keyCode)) { return true }
+            KeyEvent.KEYCODE_DPAD_LEFT,
+            KeyEvent.KEYCODE_DPAD_RIGHT,
+            KeyEvent.KEYCODE_DPAD_UP,
+            KeyEvent.KEYCODE_DPAD_DOWN -> if (handleDpad(keyCode)) { return true }
             else ->
                 // For all other keys, if we want to do transformations on
                 // text being entered with a hard keyboard, we need to
@@ -475,20 +533,32 @@ class SKKService : InputMethodService() {
         return true
     }
 
-    fun processKey(pcode: Int) = mEngine.processKey(pcode)
-    fun handleKanaKey() = mEngine.handleKanaKey()
-    fun handleCancel() = mEngine.handleCancel()
-    fun changeLastChar(type: String) = mEngine.changeLastChar(type)
-    fun commitTextSKK(text: CharSequence, newCursorPosition: Int) = mEngine.commitTextSKK(text, newCursorPosition)
-    fun pickCandidateViewManually(index: Int) = mEngine.pickCandidateViewManually(index)
+    fun processKey(pcode: Int) {
+        mEngine.processKey(pcode)
+    }
+    fun handleKanaKey() {
+        mEngine.handleKanaKey()
+    }
+    fun handleCancel(): Boolean {
+        return mEngine.handleCancel()
+    }
+    fun changeLastChar(type: String) {
+        mEngine.changeLastChar(type)
+    }
+    fun commitTextSKK(text: CharSequence, newCursorPosition: Int) {
+        mEngine.commitTextSKK(text, newCursorPosition)
+    }
+    fun pickCandidateViewManually(index: Int) {
+        mEngine.pickCandidateViewManually(index)
+    }
 
     fun handleBackspace(): Boolean {
-        if (mStickyShift) { mShiftKey.useState() }
+        if (mStickyShift) mShiftKey.useState()
         return mEngine.handleBackspace()
     }
 
     fun handleEnter(): Boolean {
-        if (mStickyShift) { mShiftKey.useState() }
+        if (mStickyShift) mShiftKey.useState()
 
         if (mEngine.handleEnter()) {
             isEnterUsed = true
@@ -499,7 +569,7 @@ class SKKService : InputMethodService() {
     }
 
     fun handleDpad(keyCode: Int): Boolean {
-        if (mStickyShift) { mShiftKey.useState() }
+        if (mStickyShift) mShiftKey.useState()
         if (mEngine.isRegistering) {
             return true
         } else if (mEngine.state === SKKChooseState) {
@@ -527,7 +597,8 @@ class SKKService : InputMethodService() {
         val ic = currentInputConnection ?: return
         val editorInfo = currentInputEditorInfo
 
-        when (editorInfo.imeOptions and (EditorInfo.IME_MASK_ACTION or EditorInfo.IME_FLAG_NO_ENTER_ACTION)) {
+        when (editorInfo.imeOptions and
+                (EditorInfo.IME_MASK_ACTION or EditorInfo.IME_FLAG_NO_ENTER_ACTION)) {
             EditorInfo.IME_ACTION_DONE   -> ic.performEditorAction(EditorInfo.IME_ACTION_DONE)
             EditorInfo.IME_ACTION_GO     -> ic.performEditorAction(EditorInfo.IME_ACTION_GO)
             EditorInfo.IME_ACTION_NEXT   -> ic.performEditorAction(EditorInfo.IME_ACTION_NEXT)
@@ -539,12 +610,12 @@ class SKKService : InputMethodService() {
 
     fun onStartRegister() {
         val flick = mFlickJPInputView ?: return
-        if (mUseSoftKeyboard) { flick.setRegisterMode(true) }
+        if (mUseSoftKeyboard) flick.setRegisterMode(true)
     }
 
     fun onFinishRegister() {
         val flick = mFlickJPInputView ?: return
-        if (mUseSoftKeyboard) { flick.setRegisterMode(false) }
+        if (mUseSoftKeyboard) flick.setRegisterMode(false)
     }
 
     fun sendToMushroom() {
@@ -560,6 +631,24 @@ class SKKService : InputMethodService() {
         startActivity(mushroom)
     }
 
+    fun recognizeSpeech() {
+        if (mIsRecording) {
+            mSpeechRecognizer.stopListening()
+            mFlickJPInputView?.setHighlightedKey(-1)
+            mIsRecording = false
+            return
+        }
+        mIsRecording = true
+        mFlickJPInputView?.setHighlightedKey(2) // 「声」キー
+        mStreamVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, this.packageName)
+        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
+        mSpeechRecognizer.startListening(intent)
+    }
+
     fun setCandidates(list: List<String>?) {
         if (!isCandidatesViewShownFlag) {
             if (mUseSoftKeyboard || SKKPrefs.getUseCandidatesView(this)) {
@@ -567,12 +656,12 @@ class SKKService : InputMethodService() {
             }
         }
 
-        if (list != null) {
-            mCandidateView?.setContents(list)
-        }
+        if (list != null) mCandidateView?.setContents(list)
     }
 
-    fun requestChooseCandidate(index: Int) = mCandidateView?.choose(index)
+    fun requestChooseCandidate(index: Int) {
+        mCandidateView?.choose(index)
+    }
 
     // カーソル直前に引数と同じ文字列があるなら，それを消してtrue なければfalse
     fun prepareReConversion(candidate: String): Boolean {
@@ -586,7 +675,7 @@ class SKKService : InputMethodService() {
     }
 
     fun changeSoftKeyboard(state: SKKState) {
-        if (!mUseSoftKeyboard) { return }
+        if (!mUseSoftKeyboard) return
         when (state) {
             SKKASCIIState -> {
                 val qwerty = mQwertyInputView ?: return
@@ -610,7 +699,7 @@ class SKKService : InputMethodService() {
     }
 
     override fun showStatusIcon(iconRes: Int) {
-        if (!mUseSoftKeyboard && iconRes != 0) { super.showStatusIcon(iconRes) }
+        if (!mUseSoftKeyboard && iconRes != 0) super.showStatusIcon(iconRes)
     }
 
     companion object {

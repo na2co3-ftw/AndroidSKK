@@ -1,9 +1,7 @@
 package jp.deadend.noname.skk
 
 import android.util.Log
-
 import java.io.IOException
-
 import jdbm.RecordManager
 import jdbm.RecordManagerFactory
 import jdbm.btree.BTree

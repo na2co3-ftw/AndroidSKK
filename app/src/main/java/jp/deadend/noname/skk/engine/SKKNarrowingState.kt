@@ -9,7 +9,9 @@ object SKKNarrowingState : SKKState {
     internal val mHint = StringBuilder()
     internal var mOriginalCandidates: List<String>? = null
 
-    override fun handleKanaKey(context: SKKEngine) = SKKChooseState.handleKanaKey(context)
+    override fun handleKanaKey(context: SKKEngine) {
+        SKKChooseState.handleKanaKey(context)
+    }
 
     override fun processKey(context: SKKEngine, pcode: Int) {
         when {
@@ -17,7 +19,11 @@ object SKKNarrowingState : SKKState {
             pcode == 'x'.toInt() -> context.chooseAdjacentCandidate(false)
             isAlphabet(pcode) -> {
                 val composing = context.mComposing
-                val pcodeLower = if (Character.isUpperCase(pcode)) Character.toLowerCase(pcode) else pcode
+                val pcodeLower = if (Character.isUpperCase(pcode)) {
+                    Character.toLowerCase(pcode)
+                } else {
+                    pcode
+                }
 
                 if (composing.length == 1) {
                     val hchr = RomajiConverter.checkSpecialConsonants(composing[0], pcodeLower)
@@ -47,10 +53,10 @@ object SKKNarrowingState : SKKState {
         } else {
             val composing = context.mComposing
             if (composing.isNotEmpty()) {
-                composing.deleteCharAt(composing.length-1)
+                composing.deleteCharAt(composing.length - 1)
                 context.setCurrentCandidateToComposing()
             } else {
-                mHint.deleteCharAt(mHint.length-1)
+                mHint.deleteCharAt(mHint.length - 1)
                 context.narrowCandidates(mHint.toString())
             }
         }

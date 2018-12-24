@@ -14,17 +14,18 @@ import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
-import kotlinx.android.synthetic.main.filechooser.*
-
+import kotlinx.android.synthetic.main.filechooser.buttonCancel
+import kotlinx.android.synthetic.main.filechooser.buttonOK
+import kotlinx.android.synthetic.main.filechooser.editTextFileName
+import kotlinx.android.synthetic.main.filechooser.textViewDirName
 import java.io.File
-
 import java.util.Locale
 
 class FileChooser : ListActivity() {
     private lateinit var mCurrentDir: File
     private lateinit var mMode: String
     private lateinit var mSearchToast: Toast
-    private val mSearchString: StringBuilder = StringBuilder()
+    private val mSearchString = StringBuilder()
     private var mFontSize = DEFAULT_FONTSIZE
 
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,7 +83,7 @@ class FileChooser : ListActivity() {
                 } else {
                     intent.putExtra(KEY_FILENAME, fileNameStr)
                     intent.putExtra(KEY_DIRNAME, currentDirStr)
-                    intent.putExtra(KEY_FILEPATH, currentDirStr+fileNameStr)
+                    intent.putExtra(KEY_FILEPATH, currentDirStr + fileNameStr)
                     setResult(Activity.RESULT_OK, intent)
                 }
             }
@@ -110,14 +111,18 @@ class FileChooser : ListActivity() {
                     val lv = v as ListView
                     val startIndex = if (lv.selectedItem == null) 0 else lv.selectedItemPosition
                     for (i in startIndex until lv.count) {
-                        if ((lv.getItemAtPosition(i) as String).toLowerCase(Locale.US).startsWith(str)) {
+                        if ((lv.getItemAtPosition(i) as String)
+                                        .toLowerCase(Locale.US).startsWith(str)
+                        ) {
                             lv.setSelection(i)
                             return@OnKeyListener true
                         }
                     }
                     if (startIndex > 0) { // restart from the top
                         for (i in 0 until startIndex - 1) {
-                            if ((lv.getItemAtPosition(i) as String).toLowerCase(Locale.US).startsWith(str)) {
+                            if ((lv.getItemAtPosition(i) as String)
+                                            .toLowerCase(Locale.US).startsWith(str)
+                            ) {
                                 lv.setSelection(i)
                                 return@OnKeyListener true
                             }
@@ -163,14 +168,20 @@ class FileChooser : ListActivity() {
             fillList()
             editTextFileName.setText("")
         } else {
-            Toast.makeText(this, getString(R.string.error_access_failed, newDir.absolutePath), Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                    this, getString(R.string.error_access_failed, newDir.absolutePath),
+                    Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
     private fun fillList() {
         val filesArray = mCurrentDir.listFiles()
         if (filesArray == null) {
-            Toast.makeText(this, getString(R.string.error_access_failed, mCurrentDir.absolutePath), Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                    this, getString(R.string.error_access_failed, mCurrentDir.absolutePath),
+                    Toast.LENGTH_SHORT
+            ).show()
             return
         }
 
@@ -188,9 +199,7 @@ class FileChooser : ListActivity() {
         }
         dirs.sort()
         files.sort()
-        if (mCurrentDir.absolutePath != "/") {
-            dirs.add(0, "..")
-        }
+        if (mCurrentDir.absolutePath != "/") dirs.add(0, "..")
         val items = dirs.plus(files)
 
         val fileList: ArrayAdapter<String>

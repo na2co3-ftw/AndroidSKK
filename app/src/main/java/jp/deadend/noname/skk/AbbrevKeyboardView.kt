@@ -35,15 +35,9 @@ class AbbrevKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener {
         when (primaryCode) {
             Keyboard.KEYCODE_SHIFT -> isShifted = !isShifted
             Keyboard.KEYCODE_DELETE -> {
-                if (!mService.handleBackspace()) {
-                    mService.keyDownUp(KeyEvent.KEYCODE_DEL)
-                }
+                if (!mService.handleBackspace()) mService.keyDownUp(KeyEvent.KEYCODE_DEL)
             }
-            KEYCODE_ABBREV_ENTER -> {
-                if (!mService.handleEnter()) {
-                    mService.pressEnter()
-                }
-            }
+            KEYCODE_ABBREV_ENTER -> if (!mService.handleEnter()) mService.pressEnter()
             KEYCODE_ABBREV_CANCEL -> mService.handleCancel()
             KEYCODE_ABBREV_ZENKAKU -> mService.processKey(primaryCode)
             else -> {

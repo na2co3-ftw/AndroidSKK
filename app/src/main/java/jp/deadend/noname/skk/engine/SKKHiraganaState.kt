@@ -7,13 +7,21 @@ import jp.deadend.noname.skk.isAlphabet
 // ひらがなモード
 object SKKHiraganaState : SKKState {
     override val isTransient = false
-    override val icon = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) R.drawable.ic_hiragana else R.drawable.immodeic_hiragana
-
-    override fun handleKanaKey(context: SKKEngine) {
-        if (context.toggleKanaKey) { context.changeState(SKKASCIIState) }
+    override val icon = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        R.drawable.ic_hiragana
+    } else {
+        R.drawable.immodeic_hiragana
     }
 
-    internal fun processKana(context: SKKEngine, pcode: Int, commitFunc: (SKKEngine, String) -> Unit) {
+    override fun handleKanaKey(context: SKKEngine) {
+        if (context.toggleKanaKey) context.changeState(SKKASCIIState)
+    }
+
+    internal fun processKana(
+            context: SKKEngine,
+            pcode: Int, commitFunc:
+            (SKKEngine, String) -> Unit
+    ) {
         val composing = context.mComposing
 
         // シフトキーの状態をチェック
@@ -23,7 +31,7 @@ object SKKHiraganaState : SKKState {
 
         if (composing.length == 1) {
             val hchr = RomajiConverter.checkSpecialConsonants(composing[0], pcodeLower)
-            if (hchr != null) { commitFunc(context, hchr) }
+            if (hchr != null) commitFunc(context, hchr)
         }
         if (isUpper) {
             // 漢字変換候補入力の開始。KanjiModeへの移行
@@ -36,7 +44,8 @@ object SKKHiraganaState : SKKState {
         } else {
             composing.append(pcodeLower.toChar())
             // 全角にする記号ならば全角，そうでなければローマ字変換
-            val hchr = context.getZenkakuSeparator(composing.toString()) ?: RomajiConverter.convert(composing.toString())
+            val hchr = context.getZenkakuSeparator(composing.toString())
+                    ?: RomajiConverter.convert(composing.toString())
 
             if (hchr != null) { // 確定できるものがあれば確定
                 commitFunc(context, hchr)
@@ -52,14 +61,16 @@ object SKKHiraganaState : SKKState {
     }
 
     override fun processKey(context: SKKEngine, pcode: Int) {
-        if (context.changeInputMode(pcode, true)) { return }
+        if (context.changeInputMode(pcode, true)) return
         processKana(context, pcode) { engine, hchr ->
             engine.commitTextSKK(hchr, 1)
             engine.mComposing.setLength(0)
         }
     }
 
-    override fun afterBackspace(context: SKKEngine) = context.setComposingTextSKK(context.mComposing, 1)
+    override fun afterBackspace(context: SKKEngine) {
+        context.setComposingTextSKK(context.mComposing, 1)
+    }
 
     override fun handleCancel(context: SKKEngine): Boolean {
         if (context.isRegistering) {

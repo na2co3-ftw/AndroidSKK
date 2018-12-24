@@ -1,25 +1,26 @@
 package jp.deadend.noname.skk.engine
 
 import java.util.ArrayDeque
-
+import jp.deadend.noname.skk.dlog
+import jp.deadend.noname.skk.isAlphabet
+import jp.deadend.noname.skk.processConcatAndEscape
+import jp.deadend.noname.skk.removeAnnotation
 import jp.deadend.noname.skk.SKKDictionary
 import jp.deadend.noname.skk.SKKPrefs
 import jp.deadend.noname.skk.SKKService
 import jp.deadend.noname.skk.SKKUserDictionary
 
-import jp.deadend.noname.skk.dlog
-import jp.deadend.noname.skk.isAlphabet
-import jp.deadend.noname.skk.processConcatAndEscape
-import jp.deadend.noname.skk.removeAnnotation
-
-class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDictionary>, private val mUserDict: SKKUserDictionary) {
-
+class SKKEngine(
+        private val mService: SKKService,
+        private var mDicts: List<SKKDictionary>,
+        private val mUserDict: SKKUserDictionary
+) {
     var state: SKKState = SKKHiraganaState
         private set
 
     // 候補のリスト．KanjiStateとAbbrevStateでは補完リスト，ChooseStateでは変換候補リストになる
     private var mCandidatesList: List<String>? = null
-    private var mCurrentCandidateIndex: Int = 0
+    private var mCurrentCandidateIndex = 0
 
     // ひらがなや英単語などの入力途中
     internal val mComposing = StringBuilder()
@@ -45,12 +46,16 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
     }
 
     // 再変換のための情報
-    private class ConversionInfo(val candidate: String, val list: List<String>, val index: Int, val kanjiKey: String, val okurigana: String?)
+    private class ConversionInfo(
+            val candidate: String,
+            val list: List<String>,
+            val index: Int,
+            val kanjiKey: String,
+            val okurigana: String?
+    )
     private var mLastConversion: ConversionInfo? = null
 
-    init {
-        setZenkakuPunctuationMarks("en")
-    }
+    init { setZenkakuPunctuationMarks("en") }
 
     fun reopenDictionaries(dics: List<SKKDictionary>) {
         for (dic in mDicts) { dic.close() }
@@ -78,11 +83,17 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
         }
     }
 
-    fun commitUserDictChanges() = mUserDict.commitChanges()
+    fun commitUserDictChanges() {
+        mUserDict.commitChanges()
+    }
 
-    fun processKey(pcode: Int) = state.processKey(this, pcode)
+    fun processKey(pcode: Int) {
+        state.processKey(this, pcode)
+    }
 
-    fun handleKanaKey() = state.handleKanaKey(this)
+    fun handleKanaKey() {
+        state.handleKanaKey(this)
+    }
 
     fun handleBackKey(): Boolean {
         if (!mRegistrationStack.isEmpty()) {
@@ -110,7 +121,11 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
             }
             else -> {
                 if (mComposing.isEmpty()) {
-                    if (!mRegistrationStack.isEmpty()) { registerWord() } else { return false }
+                    if (!mRegistrationStack.isEmpty()) {
+                        registerWord()
+                    } else {
+                        return false
+                    }
                 } else {
                     commitTextSKK(mComposing, 1)
                     mComposing.setLength(0)
@@ -122,7 +137,7 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
     }
 
     fun handleBackspace(): Boolean {
-        if (state == SKKNarrowingState) {
+        if (state == SKKNarrowingState || state == SKKChooseState) {
             state.afterBackspace(this)
             return true
         }
@@ -132,6 +147,10 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
 
         // 変換中のものがない場合
         if (clen == 0 && klen == 0) {
+            if (state == SKKKanjiState || state == SKKAbbrevState) {
+                changeState(SKKHiraganaState)
+                return true
+            }
             if (!mRegistrationStack.isEmpty()) {
                 val regEntry = mRegistrationStack.peekFirst().entry
                 if (regEntry.isNotEmpty()) {
@@ -153,7 +172,9 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
         return true
     }
 
-    fun handleCancel() = state.handleCancel(this)
+    fun handleCancel(): Boolean {
+        return state.handleCancel(this)
+    }
 
     /**
      * commitTextのラッパー 登録作業中なら登録内容に追加し，表示を更新
@@ -295,7 +316,7 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
             }
             state === SKKNarrowingState && mComposing.isEmpty() -> {
                 val hint = SKKNarrowingState.mHint
-                val idx = hint.length-1
+                val idx = hint.length - 1
                 val newLastChar = RomajiConverter.convertLastChar(hint.substring(idx), type) ?: return
 
                 hint.deleteCharAt(idx)
@@ -403,7 +424,11 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
         if (SKKNarrowingState.mOriginalCandidates == null) {
             SKKNarrowingState.mOriginalCandidates = mCandidatesList
         }
-        val hintKanjis = findCandidates(hint)?.joinToString(separator="", transform={ processConcatAndEscape(removeAnnotation(it)) }) ?: ""
+        val hintKanjis = findCandidates(hint)
+                ?.joinToString(
+                    separator="",
+                    transform={ processConcatAndEscape(removeAnnotation(it)) }
+                ) ?: ""
 
         val narrowed = candidates.filter { str -> str.any { ch -> hintKanjis.contains(ch) } }
         if (narrowed.isNotEmpty()) {
@@ -422,6 +447,8 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
         if (mService.prepareReConversion(s)) {
             mUserDict.rollBack()
 
+            changeState(SKKChooseState)
+
             mComposing.setLength(0)
             mKanjiKey.setLength(0)
             mKanjiKey.append(lastConv.kanjiKey)
@@ -429,9 +456,8 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
             mCandidatesList = lastConv.list
             mCurrentCandidateIndex = lastConv.index
             mService.setCandidates(mCandidatesList)
+            mService.requestChooseCandidate(mCurrentCandidateIndex)
             setCurrentCandidateToComposing()
-
-            changeState(SKKChooseState)
 
             return true
         }
@@ -440,17 +466,18 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
     }
 
     internal fun updateSuggestions(str: String) {
-        if (str.isEmpty()) { return }
-
         val list = mutableListOf<String>()
-        for (dic in mDicts) {
-            list.addAll(dic.findKeys(str))
-        }
-        val list2 = mUserDict.findKeys(str)
-        for ((idx, s) in list2.withIndex()) {
-            //個人辞書のキーを先頭に追加
-            list.remove(s)
-            list.add(idx, s)
+
+        if (str.isNotEmpty()) {
+            for (dic in mDicts) {
+                list.addAll(dic.findKeys(str))
+            }
+            val list2 = mUserDict.findKeys(str)
+            for ((idx, s) in list2.withIndex()) {
+                //個人辞書のキーを先頭に追加
+                list.remove(s)
+                list.add(idx, s)
+            }
         }
 
         mCandidatesList = list
@@ -472,9 +499,11 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
             var regEntryStr = regInfo.entry.toString()
             if (regEntryStr.indexOf(';') != -1 || regEntryStr.indexOf('/') != -1) {
                 // セミコロンとスラッシュのエスケープ
-                regEntryStr = ("(concat \""
+                regEntryStr = (
+                        "(concat \""
                         + regEntryStr.replace(";", "\\073").replace("/", "\\057")
-                        + "\")")
+                        + "\")"
+                        )
             }
             mUserDict.addEntry(regInfo.key, regEntryStr, regInfo.okurigana)
             mUserDict.commitChanges()
@@ -485,9 +514,7 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
             }
         }
         reset()
-        if (!mRegistrationStack.isEmpty()) {
-            setComposingTextSKK("", 1)
-        }
+        if (!mRegistrationStack.isEmpty()) setComposingTextSKK("", 1)
 
         mService.onFinishRegister()
     }
@@ -504,7 +531,9 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
     }
 
     private fun findCandidates(key: String): List<String>? {
-        val list1 = mDicts.mapNotNull { it.getCandidates(key) }.fold(listOf()) { acc: Iterable<String>, list: Iterable<String> -> acc.union(list) }.toMutableList()
+        val list1 = mDicts.mapNotNull { it.getCandidates(key) }
+                .fold(listOf()) { acc: Iterable<String>, list: Iterable<String> -> acc.union(list) }
+                .toMutableList()
 
         val entry = mUserDict.getEntry(key)
         val list2 = entry?.candidates
@@ -518,7 +547,7 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
             var idx = 0
             for (s in list2) {
                 if (mOkurigana != null) {
-                    if (entry.okuri_blocks.all { it[0] != mOkurigana || !it.contains(s)}) { continue; }
+                    if (entry.okuri_blocks.all { it[0] != mOkurigana || !it.contains(s) }) continue
                     //送りがなブロックに見つからなければ，追加しない
                 }
                 //個人辞書の候補を先頭に追加
@@ -541,10 +570,12 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
         }
     }
 
-    internal fun pickCurrentCandidate() = pickCandidate(mCurrentCandidateIndex)
+    internal fun pickCurrentCandidate() {
+        pickCandidate(mCurrentCandidateIndex)
+    }
 
     private fun pickCandidate(index: Int) {
-        if (state !== SKKChooseState && state !== SKKNarrowingState) { return }
+        if (state !== SKKChooseState && state !== SKKNarrowingState) return
         val candList = mCandidatesList ?: return
         val candidate = processConcatAndEscape(removeAnnotation(candList[index]))
 
@@ -556,11 +587,15 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
         if (okuri != null) {
             commitTextSKK(okuri, 1)
             if (mRegistrationStack.isEmpty()) {
-                mLastConversion = ConversionInfo(candidate + okuri, candList, index, mKanjiKey.toString(), okuri)
+                mLastConversion = ConversionInfo(
+                        candidate + okuri, candList, index, mKanjiKey.toString(), okuri
+                )
             }
         } else {
             if (mRegistrationStack.isEmpty()) {
-                mLastConversion = ConversionInfo(candidate, candList, index, mKanjiKey.toString(), null)
+                mLastConversion = ConversionInfo(
+                        candidate, candList, index, mKanjiKey.toString(), null
+                )
             }
         }
 
@@ -573,9 +608,9 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
 
         if (state === SKKAbbrevState) {
             setComposingTextSKK(s, 1)
-            mComposing.setLength(0)
-            mComposing.append(s)
-            conversionStart(mComposing)
+            mKanjiKey.setLength(0)
+            mKanjiKey.append(s)
+            conversionStart(mKanjiKey)
         } else if (state === SKKKanjiState) {
             setComposingTextSKK(s, 1)
             val li = s.length - 1
@@ -604,8 +639,6 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
         val ic = mService.currentInputConnection
         ic?.setComposingText("", 1)
         mService.setCandidatesViewShown(false)
-//        mMetaKey.clearState()
-//        if (mStickyMeta) {mMetaKey.clearState()}
     }
 
     internal fun changeInputMode(pcode: Int, toKatakana: Boolean): Boolean {
@@ -644,10 +677,9 @@ class SKKEngine(private val mService: SKKService, private var mDicts: List<SKKDi
         if (!state.isTransient) {
             reset()
             mService.changeSoftKeyboard(state)
-            if (!mRegistrationStack.isEmpty()) {
-                setComposingTextSKK("", 1)
-            }
-            // ComposingTextのflush回避のためreset()で一旦消してるので，登録中はここまで来てからComposingText復活
+            if (!mRegistrationStack.isEmpty()) setComposingTextSKK("", 1)
+            // ComposingTextのflush回避のためreset()で一旦消してるので，
+            // 登録中はここまで来てからComposingText復活
         }
 
         when (state) {

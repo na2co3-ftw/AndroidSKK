@@ -8,7 +8,7 @@ import android.preference.PreferenceActivity
 import android.preference.PreferenceManager
 import android.support.v7.app.AppCompatDelegate
 import android.view.inputmethod.InputMethodManager
-import kotlinx.android.synthetic.main.skkprefs.*
+import kotlinx.android.synthetic.main.skkprefs.pref_toolbar
 
 class SKKPrefs : PreferenceActivity() {
     private val delegate: AppCompatDelegate by lazy {
@@ -58,82 +58,65 @@ class SKKPrefs : PreferenceActivity() {
     }
 
     companion object {
-        fun getKutoutenType(context: Context): String {
-            return PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefkey_kutouten_type), "en")
-        }
+        private fun getPrefs(context: Context) = PreferenceManager.getDefaultSharedPreferences(context)
 
-        fun getUseCandidatesView(context: Context): Boolean {
-            return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.prefkey_use_candidates_view), true)
-        }
+        fun getKutoutenType(context: Context): String = getPrefs(context)
+                .getString(context.getString(R.string.prefkey_kutouten_type), "en")
 
-        fun getCandidatesSize(context: Context): Int {
-            return PreferenceManager.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefkey_candidates_size), 18)
-        }
+        fun getUseCandidatesView(context: Context) = getPrefs(context)
+                .getBoolean(context.getString(R.string.prefkey_use_candidates_view), true)
 
-        fun getKanaKey(context: Context): Int {
-            return PreferenceManager.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefkey_kana_key), 612)
-            // 612はCtrl+j
-        }
+        fun getCandidatesSize(context: Context) = getPrefs(context)
+                .getInt(context.getString(R.string.prefkey_candidates_size), 18)
 
-        fun getCancelKey(context: Context): Int {
-            return PreferenceManager.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefkey_cancel_key), 564)
-            // 564はCtrl+g
-        }
+        fun getKanaKey(context: Context) = getPrefs(context)
+                .getInt(context.getString(R.string.prefkey_kana_key), 612)
+        // 612はCtrl+j
 
-        fun getToggleKanaKey(context: Context): Boolean {
-            return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.prefkey_toggle_kana_key), true)
-        }
+        fun getCancelKey(context: Context) = getPrefs(context)
+                .getInt(context.getString(R.string.prefkey_cancel_key), 564)
+        // 564はCtrl+g
 
-        fun getFlickSensitivity(context: Context): Int {
-            return PreferenceManager.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefkey_flick_sensitivity), 30)
-        }
+        fun getToggleKanaKey(context: Context) = getPrefs(context)
+                .getBoolean(context.getString(R.string.prefkey_toggle_kana_key), true)
 
-        fun getCurveSensitivity(context: Context): String {
-            return PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefkey_curve_sensitivity), "high")
-        }
+        fun getFlickSensitivity(context: Context): String = getPrefs(context)
+                .getString(context.getString(R.string.prefkey_flick_sensitivity2), "mid")
 
-        fun getUseSoftKey(context: Context): String {
-            return PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefkey_use_softkey), "auto")
-        }
+        fun getCurveSensitivity(context: Context): String  = getPrefs(context)
+                .getString(context.getString(R.string.prefkey_curve_sensitivity), "high")
 
-        fun getUsePopup(context: Context): Boolean {
-            return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.prefkey_use_popup), true)
-        }
+        fun getUseSoftKey(context: Context): String = getPrefs(context)
+                .getString(context.getString(R.string.prefkey_use_softkey), "auto")
 
-        fun getFixedPopup(context: Context): Boolean {
-            return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.prefkey_fixed_popup), true)
-        }
+        fun getUsePopup(context: Context) = getPrefs(context)
+                .getBoolean(context.getString(R.string.prefkey_use_popup), true)
 
-        fun getUseSoftCancelKey(context: Context): Boolean {
-            return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.prefkey_use_soft_cancel_key), false)
-        }
+        fun getFixedPopup(context: Context) = getPrefs(context)
+                .getBoolean(context.getString(R.string.prefkey_fixed_popup), true)
 
-        fun getKeyHeightPort(context: Context): Int {
-            return PreferenceManager.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefkey_key_height_port), 30)
-        }
+        fun getUseSoftCancelKey(context: Context) = getPrefs(context)
+                .getBoolean(context.getString(R.string.prefkey_use_soft_cancel_key), false)
 
-        fun getKeyHeightLand(context: Context): Int {
-            return PreferenceManager.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefkey_key_height_land), 30)
-        }
+        fun getKeyHeightPort(context: Context) = getPrefs(context)
+                .getInt(context.getString(R.string.prefkey_key_height_port), 30)
 
-        fun getKeyWidthPort(context: Context): Int {
-            return PreferenceManager.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefkey_key_width_port), 100)
-        }
+        fun getKeyHeightLand(context: Context) = getPrefs(context)
+                .getInt(context.getString(R.string.prefkey_key_height_land), 30)
 
-        fun getKeyWidthLand(context: Context): Int {
-            return PreferenceManager.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefkey_key_width_land), 100)
-        }
+        fun getKeyWidthPort(context: Context) = getPrefs(context)
+                .getInt(context.getString(R.string.prefkey_key_width_port), 100)
 
-        fun getKeyPosition(context: Context): String {
-            return PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefkey_key_position), "center")
-        }
+        fun getKeyWidthLand(context: Context) = getPrefs(context)
+                .getInt(context.getString(R.string.prefkey_key_width_land), 100)
 
-        fun getStickyMeta(context: Context): Boolean {
-            return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.prefkey_sticky_meta), false)
-        }
+        fun getKeyPosition(context: Context): String = getPrefs(context)
+                .getString(context.getString(R.string.prefkey_key_position), "center")
 
-        fun getSandS(context: Context): Boolean {
-            return PreferenceManager.getDefaultSharedPreferences(context).getBoolean(context.getString(R.string.prefkey_sands), false)
-        }
+        fun getStickyMeta(context: Context) = getPrefs(context)
+                .getBoolean(context.getString(R.string.prefkey_sticky_meta), false)
+
+        fun getSandS(context: Context) = getPrefs(context)
+                .getBoolean(context.getString(R.string.prefkey_sands), false)
     }
 }

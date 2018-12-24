@@ -1,16 +1,16 @@
 package jp.deadend.noname.skk
 
 import android.util.Log
-import jdbm.RecordManager
-import jdbm.btree.BTree
-import jdbm.helper.Tuple
-import jdbm.helper.TupleBrowser
 import java.io.BufferedReader
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.Charset
 import java.nio.charset.CodingErrorAction
+import jdbm.RecordManager
+import jdbm.btree.BTree
+import jdbm.helper.Tuple
+import jdbm.helper.TupleBrowser
 
 @Throws(IOException::class)
 private fun appendToEntry(key: String, value: String, btree: BTree) {
@@ -30,7 +30,12 @@ private fun appendToEntry(key: String, value: String, btree: BTree) {
 }
 
 @Throws(IOException::class)
-internal fun loadFromTextDic(file: String, recMan: RecordManager, btree: BTree, overwrite: Boolean) {
+internal fun loadFromTextDic(
+        file: String,
+        recMan: RecordManager,
+        btree: BTree,
+        overwrite: Boolean
+) {
     val decoder = Charset.forName("UTF-8").newDecoder()
     decoder.onMalformedInput(CodingErrorAction.REPORT)
     decoder.onUnmappableCharacter(CodingErrorAction.REPORT)
@@ -59,9 +64,7 @@ internal fun loadFromTextDic(file: String, recMan: RecordManager, btree: BTree, 
             appendToEntry(key, value, btree)
         }
 
-        if (++count % 1000 == 0) {
-            recMan.commit()
-        }
+        if (++count % 1000 == 0) recMan.commit()
         line = br.readLine()
     }
 
@@ -86,10 +89,10 @@ interface SKKDictionaryInterface {
             browser = mBTree.browse(key) ?: return list
 
             while (list.size < 5) {
-                if (!browser.getNext(tuple)) { break }
+                if (!browser.getNext(tuple)) break
                 str = tuple.key as String
-                if (!str.startsWith(key)) { break }
-                if (isAlphabet(str[str.length - 1].toInt()) && !isAlphabet(str[0].toInt())) { continue }
+                if (!str.startsWith(key)) break
+                if (isAlphabet(str[str.length - 1].toInt()) && !isAlphabet(str[0].toInt())) continue
                 // 送りありエントリは飛ばす
 
                 list.add(str)

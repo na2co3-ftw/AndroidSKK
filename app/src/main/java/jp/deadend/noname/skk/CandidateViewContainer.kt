@@ -20,20 +20,21 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.widget.LinearLayout
-
-import kotlinx.android.synthetic.main.candidates.view.*
+import kotlinx.android.synthetic.main.candidates.view.candidates
+import kotlinx.android.synthetic.main.candidates.view.candidate_left
+import kotlinx.android.synthetic.main.candidates.view.candidate_right
 
 class CandidateViewContainer(screen: Context, attrs: AttributeSet) : LinearLayout(screen, attrs) {
     private var mFontSize = -1
     private var mButtonWidth = screen.resources.getDimensionPixelSize(R.dimen.candidates_scrollbutton_width)
 
     fun initViews() {
-        candidate_left.setOnTouchListener {_, event ->
-            if (event.action == MotionEvent.ACTION_DOWN) { candidates.scrollPrev() }
+        candidate_left.setOnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) candidates.scrollPrev()
             false
         }
-        candidate_right.setOnTouchListener {_, event ->
-            if (event.action == MotionEvent.ACTION_DOWN) { candidates.scrollNext() }
+        candidate_right.setOnTouchListener { _, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) candidates.scrollNext()
             false
         }
     }
@@ -44,7 +45,7 @@ class CandidateViewContainer(screen: Context, attrs: AttributeSet) : LinearLayou
     }
 
     fun setSize(px: Int) {
-        if (px == mFontSize) { return }
+        if (px == mFontSize) return
 
         candidates.setTextSize(px)
         candidates.layoutParams = LinearLayout.LayoutParams(0, px + px / 3, 1f)

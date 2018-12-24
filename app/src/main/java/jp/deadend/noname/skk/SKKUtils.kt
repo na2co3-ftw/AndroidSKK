@@ -9,7 +9,7 @@ fun hankaku2zenkaku(pcode: Int) = if (pcode == 0x20) 0x3000 else pcode - 0x20 + 
 
 // ひらがなを全角カタカナにする
 fun hirakana2katakana(str: String?): String? {
-    if (str == null) return null
+    if (str == null) { return null }
 
     val str2 = str.map { if (it in 'ぁ'..'ん') it.plus(0x60) else it }.joinToString("")
     val idx = str2.indexOf("ウ゛")
@@ -29,12 +29,17 @@ fun removeAnnotation(str: String): String {
 fun processConcatAndEscape(str: String): String {
     val len = str.length
     if (len < 12) { return str }
-    if (str[0] != '(' || str.substring(1, 9) != "concat \"" || str.substring(len - 2, len) != "\")") { return str }
+    if (str[0] != '('
+            || str.substring(1, 9) != "concat \""
+            || str.substring(len - 2, len) != "\")"
+    ) { return str }
     // (concat "...") の形に決め打ち
 
 //    val str2 = PAT_QUOTED.findAll(str.substring(8 until len-1)).map { it.value }.joinToString("")
 
-    return PAT_ESCAPE_NUM.replace(str.substring(9 until len-2)) { it.value.substring(1).toInt(8).toChar().toString() }
+    return PAT_ESCAPE_NUM.replace(
+            str.substring(9 until len-2), { it.value.substring(1).toInt(8).toChar().toString() }
+    )
     // emacs-lispのリテラルは8進数
 }
 
@@ -46,5 +51,5 @@ fun createTrimmedBuilder(orig: StringBuilder): StringBuilder {
 
 // debug log
 fun dlog(msg: String) {
-    if (BuildConfig.DEBUG) { android.util.Log.d("SKK", msg) }
+    if (BuildConfig.DEBUG) android.util.Log.d("SKK", msg)
 }

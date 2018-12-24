@@ -1,13 +1,11 @@
 package jp.deadend.noname.skk
 
 import android.util.Log
-import jdbm.RecordManager
-
 import java.io.IOException
-
-import jdbm.RecordManagerFactory
 import jdbm.btree.BTree
 import jdbm.helper.StringComparator
+import jdbm.RecordManager
+import jdbm.RecordManagerFactory
 
 class SKKUserDictionary(mDicFile: String, btreeName: String): SKKDictionaryInterface {
     override val mRecMan: RecordManager
@@ -74,7 +72,7 @@ class SKKUserDictionary(mDicFile: String, btreeName: String): SKKDictionaryInter
     }
 
     fun addEntry(key: String, value: String, okuri: String?) {
-        if (!isValid) { return }
+        if (!isValid) return
 
         mOldKey = key
         val newVal = StringBuilder()
@@ -82,9 +80,7 @@ class SKKUserDictionary(mDicFile: String, btreeName: String): SKKDictionaryInter
 
         if (entry == null) {
             newVal.append("/", value, "/")
-            if (okuri != null) {
-                newVal.append("[", okuri, "/", value, "/]/")
-            }
+            if (okuri != null) newVal.append("[", okuri, "/", value, "/]/")
             mOldValue = ""
         } else {
             val cands = entry.candidates
@@ -130,8 +126,8 @@ class SKKUserDictionary(mDicFile: String, btreeName: String): SKKDictionaryInter
     }
 
     fun rollBack() {
-        if (!isValid) { return }
-        if (mOldKey.isEmpty()) { return }
+        if (!isValid) return
+        if (mOldKey.isEmpty()) return
 
         try {
             if (mOldValue.isEmpty()) {
@@ -149,7 +145,7 @@ class SKKUserDictionary(mDicFile: String, btreeName: String): SKKDictionaryInter
     }
 
     fun commitChanges() {
-        if (!isValid) { return }
+        if (!isValid) return
         try {
             mRecMan.commit()
         } catch (e: Exception) {

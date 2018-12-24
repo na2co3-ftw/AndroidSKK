@@ -10,9 +10,7 @@ internal class SKKStickyShift(private val mIs: InputMethodService) {
     private var isPressed = false
     private var isUsed = false
 
-    init {
-        clearState()
-    }
+    init { clearState() }
 
     fun clearState() {
         val ic = mIs.currentInputConnection
@@ -25,14 +23,15 @@ internal class SKKStickyShift(private val mIs: InputMethodService) {
 
     fun press() {
         // send a key press event also to an editor
-        mIs.currentInputConnection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SHIFT_LEFT))
+        mIs.currentInputConnection
+                ?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SHIFT_LEFT))
 
         isPressed = true
         isUsed = false
         mState = when (mState) {
-            State.STATE_NONE     -> State.STATE_ON // off -> on
-            State.STATE_ON       -> State.STATE_LOCKED // on -> locked
-            State.STATE_LOCKED   -> State.STATE_NONE // locked -> off
+            State.STATE_NONE   -> State.STATE_ON // off -> on
+            State.STATE_ON     -> State.STATE_LOCKED // on -> locked
+            State.STATE_LOCKED -> State.STATE_NONE // locked -> off
         }
     }
 

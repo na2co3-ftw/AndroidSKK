@@ -5,14 +5,15 @@ import android.os.AsyncTask
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import kotlinx.android.synthetic.main.dic_extract.*
-
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.zip.ZipInputStream
+import kotlinx.android.synthetic.main.dic_extract.dicExtractButton
+import kotlinx.android.synthetic.main.dic_extract.dicExtractMessage
+import kotlinx.android.synthetic.main.dic_extract.dicExtractProgressBar
 
 class SKKDicExtractActivity : Activity() {
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,7 +54,7 @@ class SKKDicExtractActivity : Activity() {
                 val extractedSize = java.lang.Long.valueOf(ze.size)!!.toInt()
                 val buf = ByteArray(1024)
                 var size: Int
-                var size_done = 0
+                var sizeProcessed = 0
 
                 size = zis.read(buf, 0, buf.size)
                 while (size > -1) {
@@ -64,8 +65,8 @@ class SKKDicExtractActivity : Activity() {
                         return false
                     }
                     bos.write(buf, 0, size)
-                    size_done += size
-                    publishProgress(size_done * 100 / extractedSize)
+                    sizeProcessed += size
+                    publishProgress(sizeProcessed * 100 / extractedSize)
                     size = zis.read(buf, 0, buf.size)
                 }
 
@@ -88,9 +89,7 @@ class SKKDicExtractActivity : Activity() {
         }
 
         override fun onPostExecute(result: Boolean?) {
-            if (result != null) {
-                dialogDone(result)
-            }
+            if (result != null) dialogDone(result)
         }
     }
 

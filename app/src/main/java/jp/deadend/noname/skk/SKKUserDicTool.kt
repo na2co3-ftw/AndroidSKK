@@ -1,28 +1,26 @@
 package jp.deadend.noname.skk
 
 import android.app.Activity
-import java.io.BufferedWriter
-import java.io.File
-import java.io.FileWriter
-import java.io.IOException
-import java.nio.charset.CharacterCodingException
-
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Environment
 import android.support.v7.app.AppCompatActivity
+import android.view.inputmethod.InputMethodManager
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.TextView
 import android.widget.Toast
-
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
+import java.nio.charset.CharacterCodingException
 import jdbm.RecordManager
 import jdbm.RecordManagerFactory
 import jdbm.btree.BTree
@@ -30,7 +28,7 @@ import jdbm.helper.StringComparator
 import jdbm.helper.Tuple
 import jp.deadend.noname.dialog.ConfirmationDialogFragment
 import jp.deadend.noname.dialog.SimpleMessageDialogFragment
-import kotlinx.android.synthetic.main.userdictool.*
+import kotlinx.android.synthetic.main.userdictool.userDictoolList
 
 class SKKUserDicTool : AppCompatActivity() {
     private lateinit var mRecMan: RecordManager
@@ -46,7 +44,8 @@ class SKKUserDicTool : AppCompatActivity() {
         mExternalStorageDir = Environment.getExternalStorageDirectory()
 
         userDictoolList.emptyView = findViewById(R.id.EmptyListItem)
-        userDictoolList.onItemClickListener = AdapterView.OnItemClickListener { parent, _, position, _ ->
+        userDictoolList.onItemClickListener =
+                AdapterView.OnItemClickListener { parent, _, position, _ ->
             val dialog = ConfirmationDialogFragment.newInstance(R.string.message_confirm_remove)
             dialog.setListener(
                 object : ConfirmationDialogFragment.Listener {
@@ -91,17 +90,24 @@ class SKKUserDicTool : AppCompatActivity() {
                 try {
                     writeToExternalStorage()
                 } catch (e: IOException) {
-                    val errorDialog = SimpleMessageDialogFragment.newInstance(getString(R.string.error_write_to_external_storage))
+                    val errorDialog = SimpleMessageDialogFragment.newInstance(
+                            getString(R.string.error_write_to_external_storage)
+                    )
                     errorDialog.show(supportFragmentManager, "dialog")
                     return true
                 }
 
-                val msgDialog = SimpleMessageDialogFragment.newInstance(getString(R.string.message_written_to_external_storage, mExternalStorageDir.path + "/" + getString(R.string.dic_name_user) + ".txt"))
+                val msgDialog = SimpleMessageDialogFragment.newInstance(
+                        getString(R.string.message_written_to_external_storage,
+                                mExternalStorageDir.path + "/" + getString(R.string.dic_name_user) + ".txt")
+                )
                 msgDialog.show(supportFragmentManager, "dialog")
                 return true
             }
             R.id.menu_user_dic_tool_clear -> {
-                val cfDialog = ConfirmationDialogFragment.newInstance(R.string.message_confirm_clear)
+                val cfDialog = ConfirmationDialogFragment.newInstance(
+                        R.string.message_confirm_clear
+                )
                 cfDialog.setListener(
                     object : ConfirmationDialogFragment.Listener {
                         override fun onPositiveClick() { recreateUserDic() }
@@ -124,9 +130,15 @@ class SKKUserDicTool : AppCompatActivity() {
                 loadFromTextDic(str, mRecMan, mBtree, false)
             } catch (e: IOException) {
                 if (e is CharacterCodingException) {
-                    Toast.makeText(this@SKKUserDicTool, getString(R.string.error_text_dic_coding), Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                            this@SKKUserDicTool, getString(R.string.error_text_dic_coding),
+                            Toast.LENGTH_LONG
+                    ).show()
                 } else {
-                    Toast.makeText(this@SKKUserDicTool, getString(R.string.error_file_load, str), Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                            this@SKKUserDicTool, getString(R.string.error_file_load, str),
+                            Toast.LENGTH_LONG
+                    ).show()
                 }
             }
 
@@ -190,7 +202,9 @@ class SKKUserDicTool : AppCompatActivity() {
     private fun openUserDict() {
         val recID: Long?
         try {
-            mRecMan = RecordManagerFactory.createRecordManager(filesDir.absolutePath + "/" + getString(R.string.dic_name_user))
+            mRecMan = RecordManagerFactory.createRecordManager(
+                    filesDir.absolutePath + "/" + getString(R.string.dic_name_user)
+            )
             recID = mRecMan.getNamedObject(getString(R.string.btree_name))
         } catch (e: IOException) {
             onFailToOpenUserDict()
@@ -274,11 +288,15 @@ class SKKUserDicTool : AppCompatActivity() {
         bw.close()
     }
 
-    private class EntryAdapter(context: Context, items: List<Tuple>) : ArrayAdapter<Tuple>(context, 0, items) {
+    private class EntryAdapter(
+            context: Context,
+            items: List<Tuple>
+    ) : ArrayAdapter<Tuple>(context, 0, items) {
         private val mLayoutInflater = LayoutInflater.from(context)
 
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-            val tv = convertView ?: mLayoutInflater.inflate(android.R.layout.simple_list_item_1, parent, false)
+            val tv = convertView
+                    ?: mLayoutInflater.inflate(android.R.layout.simple_list_item_1, parent, false)
 
             val item = getItem(position)
             (tv as TextView).text = (item.key as String) + "  " + (item.value as String)

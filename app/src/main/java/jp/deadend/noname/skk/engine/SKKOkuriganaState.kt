@@ -24,7 +24,11 @@ object SKKOkuriganaState : SKKState {
             val hchr = RomajiConverter.checkSpecialConsonants(composing[0], pcodeLower)
             if (hchr != null) {
                 context.mOkurigana = hchr
-                context.setComposingTextSKK(createTrimmedBuilder(kanjiKey).append('*').append(hchr).append(pcodeLower.toChar()), 1)
+                context.setComposingTextSKK(
+                        createTrimmedBuilder(kanjiKey)
+                                .append('*').append(hchr).append(pcodeLower.toChar())
+                        , 1
+                )
                 composing.setLength(0)
                 composing.append(pcodeLower.toChar())
                 return
@@ -39,7 +43,11 @@ object SKKOkuriganaState : SKKState {
                 context.mOkurigana = okurigana + hchr
                 context.conversionStart(kanjiKey)
             } else {
-                context.setComposingTextSKK(createTrimmedBuilder(kanjiKey).append('*').append(okurigana).append(composing), 1)
+                context.setComposingTextSKK(
+                        createTrimmedBuilder(kanjiKey)
+                                .append('*').append(okurigana).append(composing)
+                        , 1
+                )
             }
         } else {
             if (hchr != null) {
@@ -47,7 +55,9 @@ object SKKOkuriganaState : SKKState {
                 context.mOkurigana = hchr
                 context.conversionStart(kanjiKey)
             } else {
-                context.setComposingTextSKK(createTrimmedBuilder(kanjiKey).append('*').append(composing), 1)
+                context.setComposingTextSKK(
+                        createTrimmedBuilder(kanjiKey).append('*').append(composing), 1
+                )
             }
         }
     }

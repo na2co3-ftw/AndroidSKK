@@ -16,7 +16,12 @@ import android.widget.Toast
 class SKKMushroom : ListActivity() {
     private lateinit var mStr: String
 
-    private class AppInfo(internal var icon: Drawable, internal var appName: String, internal var packageName: String, internal var className: String)
+    private class AppInfo(
+            internal var icon: Drawable,
+            internal var appName: String,
+            internal var packageName: String,
+            internal var className: String
+    )
 
     override fun onCreate(icicle: Bundle?) {
         super.onCreate(icicle)
@@ -70,7 +75,10 @@ class SKKMushroom : ListActivity() {
         return result.sortedBy { it.appName }
     }
 
-    private inner class AppListAdapter(context: Context, items: List<AppInfo>) : ArrayAdapter<AppInfo>(context, 0, items) {
+    private inner class AppListAdapter(
+            context: Context,
+            items: List<AppInfo>
+    ) : ArrayAdapter<AppInfo>(context, 0, items) {
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
             val tv = convertView ?: TextView(this@SKKMushroom).apply {
                 textSize = 20f

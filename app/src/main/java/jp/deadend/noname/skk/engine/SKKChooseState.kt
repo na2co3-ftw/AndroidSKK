@@ -47,19 +47,17 @@ object SKKChooseState : SKKState {
         if (kanjiKey.isEmpty()) {
             context.changeState(SKKHiraganaState)
         } else {
-            if (context.mComposing.isNotEmpty()) { // Abbrevモード
+            if (isAlphabet(kanjiKey[0].toInt())) { // Abbrevモード
                 context.changeState(SKKAbbrevState)
-                context.setComposingTextSKK(context.mComposing, 1)
-                context.updateSuggestions(context.mComposing.toString())
             } else { // 漢字変換中
                 context.mOkurigana = null
                 context.changeState(SKKKanjiState)
-                if (isAlphabet(kanjiKey[kanjiKey.length-1].toInt())) {
-                    kanjiKey.deleteCharAt(kanjiKey.length-1) // 送りがなのアルファベットを削除
+                if (isAlphabet(kanjiKey[kanjiKey.length - 1].toInt())) {
+                    kanjiKey.deleteCharAt(kanjiKey.length - 1) // 送りがなのアルファベットを削除
                 }
-                context.setComposingTextSKK(kanjiKey, 1)
-                context.updateSuggestions(kanjiKey.toString())
             }
+            context.setComposingTextSKK(kanjiKey, 1)
+            context.updateSuggestions(kanjiKey.toString())
         }
     }
 

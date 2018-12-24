@@ -17,16 +17,16 @@ class SetKeyPreference : DialogPreference, OnKeyListener {
     private lateinit var mTextView: TextView
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
-
     constructor(context: Context, attrs: AttributeSet, defStyle: Int) : super(context, attrs, defStyle)
 
-    internal fun getValue(defaultValue: Int): Int {
-        return getPersistedInt(defaultValue)
-    }
+    internal fun getValue(defaultValue: Int) = getPersistedInt(defaultValue)
 
     override fun onSetInitialValue(restorePersistedValue: Boolean, defaultValue: Any?) {
-        mValue = if (restorePersistedValue) this.getPersistedInt(DEFAULT_VALUE)
-                    else defaultValue as Int
+        mValue = if (restorePersistedValue) {
+            this.getPersistedInt(DEFAULT_VALUE)
+        } else {
+            defaultValue as Int
+        }
     }
 
     override fun onGetDefaultValue(a: TypedArray, index: Int): Any {
@@ -74,9 +74,9 @@ class SetKeyPreference : DialogPreference, OnKeyListener {
 
     companion object {
         private const val SHIFT_PRESSED = 1
-        private const val ALT_PRESSED = 2
-        private const val CTRL_PRESSED = 4
-        private const val META_PRESSED = 8
+        private const val ALT_PRESSED   = 2
+        private const val CTRL_PRESSED  = 4
+        private const val META_PRESSED  = 8
 
         private const val DEFAULT_VALUE = KeyEvent.KEYCODE_UNKNOWN shl 4
 
@@ -101,10 +101,10 @@ class SetKeyPreference : DialogPreference, OnKeyListener {
 
         private fun getKeyName(key: Int): String {
             val result = StringBuilder()
-            if (key and META_PRESSED != 0)  { result.append("META+") }
-            if (key and CTRL_PRESSED != 0)  { result.append("CTRL+") }
-            if (key and ALT_PRESSED != 0)   { result.append("ALT+") }
-            if (key and SHIFT_PRESSED != 0) { result.append("SHIFT+") }
+            if (key and META_PRESSED != 0)  result.append("META+")
+            if (key and CTRL_PRESSED != 0)  result.append("CTRL+")
+            if (key and ALT_PRESSED != 0)   result.append("ALT+")
+            if (key and SHIFT_PRESSED != 0) result.append("SHIFT+")
 
             val keyCode = key ushr 4
             when (keyCode) {

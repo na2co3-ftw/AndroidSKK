@@ -32,7 +32,7 @@ object SKKKanjiState : SKKState {
             // カタカナ変換
             if (kanjiKey.isNotEmpty()) {
                 val str = hirakana2katakana(kanjiKey.toString())
-                if (str != null ) { context.commitTextSKK(str, 1) }
+                if (str != null) context.commitTextSKK(str, 1)
             }
             context.changeState(SKKHiraganaState)
         } else if (pcodeLower == ' '.toInt() || pcodeLower == '>'.toInt()) {
@@ -42,10 +42,7 @@ object SKKKanjiState : SKKState {
                 kanjiKey.append('ん')
                 context.setComposingTextSKK(kanjiKey, 1)
             }
-            if (pcodeLower == '>'.toInt()) {
-                // 接頭辞入力
-                kanjiKey.append('>')
-            }
+            if (pcodeLower == '>'.toInt()) kanjiKey.append('>') // 接頭辞入力
             composing.setLength(0)
             context.conversionStart(kanjiKey)
         } else if (isUpper && kanjiKey.isNotEmpty()) {
@@ -60,14 +57,17 @@ object SKKKanjiState : SKKState {
                 context.conversionStart(kanjiKey)
             } else { // それ以外は送り仮名モード
                 composing.append(pcodeLower.toChar())
-                context.setComposingTextSKK(createTrimmedBuilder(kanjiKey).append('*').append(pcodeLower.toChar()), 1)
+                context.setComposingTextSKK(
+                        createTrimmedBuilder(kanjiKey).append('*').append(pcodeLower.toChar()), 1
+                )
                 context.changeState(SKKOkuriganaState)
             }
         } else {
             // 未確定
             composing.append(pcodeLower.toChar())
             // 全角にする記号ならば全角，そうでなければローマ字変換
-            val hchr = context.getZenkakuSeparator(composing.toString()) ?: RomajiConverter.convert(composing.toString())
+            val hchr = context.getZenkakuSeparator(composing.toString())
+                    ?: RomajiConverter.convert(composing.toString())
 
             if (hchr != null) {
                 composing.setLength(0)
@@ -81,15 +81,11 @@ object SKKKanjiState : SKKState {
     }
 
     override fun afterBackspace(context: SKKEngine) {
-        val kanjiKey = context.mKanjiKey
-        val composing = context.mComposing
+        val kanjiKey = context.mKanjiKey.toString()
+        val composing = context.mComposing.toString()
 
-        if (kanjiKey.isEmpty() && composing.isEmpty()) {
-            context.changeState(SKKHiraganaState)
-        } else {
-            context.setComposingTextSKK(kanjiKey.toString() + composing.toString(), 1)
-            context.updateSuggestions(kanjiKey.toString())
-        }
+        context.setComposingTextSKK(kanjiKey + composing, 1)
+        context.updateSuggestions(kanjiKey)
     }
 
     override fun handleCancel(context: SKKEngine): Boolean {

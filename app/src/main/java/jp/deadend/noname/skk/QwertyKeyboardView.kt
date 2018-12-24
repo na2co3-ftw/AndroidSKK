@@ -82,9 +82,7 @@ class QwertyKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener {
     override fun onKey(primaryCode: Int, keyCodes: IntArray) {
         when (primaryCode) {
             Keyboard.KEYCODE_DELETE -> {
-                if (!mService.handleBackspace()) {
-                    mService.keyDownUp(KeyEvent.KEYCODE_DEL)
-                }
+                if (!mService.handleBackspace()) mService.keyDownUp(KeyEvent.KEYCODE_DEL)
             }
             Keyboard.KEYCODE_SHIFT -> {
                 isShifted = !isShifted
@@ -98,16 +96,16 @@ class QwertyKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener {
                     mSymbolsKeyboard.isShifted = false
                 }
             }
-            KEYCODE_QWERTY_ENTER -> {
-                if (!mService.handleEnter()) {
-                    mService.pressEnter()
-                }
-            }
+            KEYCODE_QWERTY_ENTER -> if (!mService.handleEnter()) mService.pressEnter()
             KEYCODE_QWERTY_TOJP -> mService.handleKanaKey()
             KEYCODE_QWERTY_TOSYM -> keyboard = mSymbolsKeyboard
             KEYCODE_QWERTY_TOLATIN -> keyboard = mLatinKeyboard
             else -> {
-                val code = if (keyboard === mLatinKeyboard && (isShifted xor mFlicked)) Character.toUpperCase(primaryCode) else primaryCode
+                val code = if (keyboard === mLatinKeyboard && (isShifted xor mFlicked)) {
+                    Character.toUpperCase(primaryCode)
+                } else {
+                    primaryCode
+                }
                 mService.commitTextSKK(code.toChar().toString(), 1)
             }
         }

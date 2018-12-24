@@ -34,37 +34,42 @@ class CandidateView(context: Context, attrs: AttributeSet) : View(context, attrs
     private lateinit var mContainer: CandidateViewContainer
     private lateinit var mService: SKKService
     private val mSuggestions = mutableListOf<String>()
-    private var mSelectedIndex: Int = 0
+    private var mSelectedIndex = 0
 
     private var mChoosedIndex = 0
 
     private var mTouchX = OUT_OF_BOUNDS
     private val mSelectionHighlight: Drawable
-    private var mScrollPixels: Int = 0
+    private var mScrollPixels = 0
 
     private val mWordWidth = IntArray(MAX_SUGGESTIONS)
     private val mWordX = IntArray(MAX_SUGGESTIONS)
 
-    private var mScrolled: Boolean = false
+    private var mScrolled = false
 
     private val mColorNormal: Int
     private val mColorRecommended: Int
     private val mColorOther: Int
     private val mPaint = Paint()
 
-    private var mTargetScrollX: Int = 0
+    private var mTargetScrollX = 0
 
-    private var mTotalWidth: Int = 0
+    private var mTotalWidth = 0
 
     private val mGestureDetector: GestureDetector
 
-    private var mScrollX: Int = 0
+    private var mScrollX = 0
 
     init {
         val r = context.resources
 
         mSelectionHighlight = r.getDrawable(R.drawable.ic_suggest_scroll_background)
-        mSelectionHighlight.state = intArrayOf(android.R.attr.state_enabled, android.R.attr.state_focused, android.R.attr.state_window_focused, android.R.attr.state_pressed)
+        mSelectionHighlight.state = intArrayOf(
+                android.R.attr.state_enabled,
+                android.R.attr.state_focused,
+                android.R.attr.state_window_focused,
+                android.R.attr.state_pressed
+        )
 
         setBackgroundColor(r.getColor(R.color.candidate_background))
 
@@ -82,8 +87,12 @@ class CandidateView(context: Context, attrs: AttributeSet) : View(context, attrs
         }
 
         mGestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
-            override fun onScroll(e1: MotionEvent, e2: MotionEvent,
-                                  distanceX: Float, distanceY: Float): Boolean {
+            override fun onScroll(
+                    e1: MotionEvent,
+                    e2: MotionEvent,
+                    distanceX: Float,
+                    distanceY: Float
+            ): Boolean {
                 val width = width
                 mScrolled = true
                 mScrollX = scrollX
@@ -131,8 +140,8 @@ class CandidateView(context: Context, attrs: AttributeSet) : View(context, attrs
         // Get the desired height of the icon menu view (last row of items does
         // not have a divider below)
 /*
-        val padding = new Rect();
-        mSelectionHighlight.getPadding(padding);
+        val padding = new Rect()
+        mSelectionHighlight.getPadding(padding)
         val desiredHeight = mPaint.getTextSize().toInt() + mVerticalPadding
                 + padding.top + padding.bottom
 */
@@ -147,7 +156,9 @@ class CandidateView(context: Context, attrs: AttributeSet) : View(context, attrs
         mTotalWidth = 0
 
         var count = mSuggestions.size
-        if (count > MAX_SUGGESTIONS) count = MAX_SUGGESTIONS
+        if (count > MAX_SUGGESTIONS) {
+            count = MAX_SUGGESTIONS
+        }
 
         var x = 0
         for (i in 0 until count) {
@@ -165,9 +176,7 @@ class CandidateView(context: Context, attrs: AttributeSet) : View(context, attrs
     }
 
     override fun onDraw(canvas: Canvas?) {
-        if (canvas != null) {
-            super.onDraw(canvas)
-        }
+        if (canvas != null) super.onDraw(canvas)
 
         val height = height
         val paint = mPaint
@@ -177,11 +186,16 @@ class CandidateView(context: Context, attrs: AttributeSet) : View(context, attrs
         val y = ((height - paint.textSize) / 2 - paint.ascent()).toInt()
 
         var count = mSuggestions.size
-        if (count > MAX_SUGGESTIONS) count = MAX_SUGGESTIONS
+        if (count > MAX_SUGGESTIONS) {
+            count = MAX_SUGGESTIONS
+        }
 
         for (i in 0 until count) {
             paint.color = mColorNormal
-            if (touchX + scrollX >= mWordX[i] && touchX + scrollX < mWordX[i] + mWordWidth[i] && !scrolled) {
+            if (touchX + scrollX >= mWordX[i]
+                    && touchX + scrollX < mWordX[i] + mWordWidth[i]
+                    && !scrolled
+            ) {
                 if (canvas != null) {
                     canvas.translate(mWordX[i].toFloat(), 0f)
                     mSelectionHighlight.setBounds(0, 0, mWordWidth[i], height)
@@ -200,15 +214,16 @@ class CandidateView(context: Context, attrs: AttributeSet) : View(context, attrs
                 }
                 canvas.drawText(mSuggestions[i], (mWordX[i] + X_GAP).toFloat(), y.toFloat(), paint)
                 paint.color = mColorOther
-                canvas.drawLine(mWordX[i].toFloat() + mWordWidth[i].toFloat() + 0.5f, 0f,
-                        mWordX[i].toFloat() + mWordWidth[i].toFloat() + 0.5f, (height + 1).toFloat(), paint)
+                canvas.drawLine(
+                        mWordX[i].toFloat() + mWordWidth[i].toFloat() + 0.5f, 0f,
+                        mWordX[i].toFloat() + mWordWidth[i].toFloat() + 0.5f, (height + 1).toFloat(),
+                        paint
+                )
                 paint.isFakeBoldText = false
             }
         }
 
-        if (scrolled && mTargetScrollX != getScrollX()) {
-            scrollToTarget()
-        }
+        if (scrolled && mTargetScrollX != getScrollX()) scrollToTarget()
     }
 
     private fun scrollToTarget() {
@@ -277,7 +292,9 @@ class CandidateView(context: Context, attrs: AttributeSet) : View(context, attrs
             i++
         }
         var leftEdge = mWordX[firstItem] + mWordWidth[firstItem] - width
-        if (leftEdge < 0) leftEdge = 0
+        if (leftEdge < 0) {
+            leftEdge = 0
+        }
         updateScrollPosition(leftEdge)
     }
 
@@ -310,9 +327,7 @@ class CandidateView(context: Context, attrs: AttributeSet) : View(context, attrs
 
     override fun onTouchEvent(me: MotionEvent): Boolean {
         // スクロールした時にはここで処理されて終わりのようだ。ソースの頭で定義している。
-        if (mGestureDetector.onTouchEvent(me)) {
-            return true
-        }
+        if (mGestureDetector.onTouchEvent(me)) { return true }
 
         val action = me.action
         val x = me.x.toInt()
@@ -324,8 +339,8 @@ class CandidateView(context: Context, attrs: AttributeSet) : View(context, attrs
                 mScrolled = false
                 invalidate()
             }
-            MotionEvent.ACTION_MOVE // よってここのコードは生きていない。使用されない。
-            -> {
+            MotionEvent.ACTION_MOVE -> {
+                // よってここのコードは生きていない。使用されない。
                 if (y <= 0) {
                     // Fling up!?
                     if (mSelectedIndex >= 0) {
@@ -335,12 +350,10 @@ class CandidateView(context: Context, attrs: AttributeSet) : View(context, attrs
                 }
                 invalidate()
             }
-            MotionEvent.ACTION_UP // ここは生きている。
-            -> {
+            MotionEvent.ACTION_UP -> {
+                // ここは生きている。
                 if (!mScrolled) {
-                    if (mSelectedIndex >= 0) {
-                        mService.pickCandidateViewManually(mSelectedIndex)
-                    }
+                    if (mSelectedIndex >= 0) mService.pickCandidateViewManually(mSelectedIndex)
                 }
                 mSelectedIndex = -1
                 mTouchX = OUT_OF_BOUNDS
