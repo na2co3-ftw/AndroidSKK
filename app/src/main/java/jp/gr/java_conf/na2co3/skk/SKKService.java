@@ -232,9 +232,11 @@ public class SKKService extends InputMethodService {
         Context context = getApplicationContext();
         mFlickJPInputView = new FlickJPKeyboardView(context, null);
         mFlickJPInputView.setService(this);
-        mQwertyInputView = new QwertyKeyboardView(context, null);
+
+        mQwertyInputView = getLayoutInflater().inflate(R.layout.qwerty, null).findViewById(R.id.keyboard_view);
         mQwertyInputView.setService(this);
-        mAbbrevKeyboardView = new AbbrevKeyboardView(context, null);
+
+        mAbbrevKeyboardView = getLayoutInflater().inflate(R.layout.abbrev, null).findViewById(R.id.keyboard_view);
         mAbbrevKeyboardView.setService(this);
 
         readPrefsForInputView();
