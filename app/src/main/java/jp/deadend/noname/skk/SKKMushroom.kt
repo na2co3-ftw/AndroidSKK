@@ -27,7 +27,7 @@ class SKKMushroom : ListActivity() {
         super.onCreate(icicle)
 
         val extras = intent.extras
-        mStr = if (extras == null) "" else extras.getString(REPLACE_KEY)
+        mStr = if (extras == null) "" else { extras.getString(REPLACE_KEY) ?: "" }
         listAdapter = AppListAdapter(this, loadMushroomAppList())
     }
 

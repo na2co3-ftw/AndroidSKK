@@ -634,11 +634,8 @@ class SKKEngine(
         mKanjiKey.setLength(0)
         mOkurigana = null
         mCandidatesList = null
-
-        //setCandidatesViewShown()ではComposingTextがflushされるので消す
-        val ic = mService.currentInputConnection
-        ic?.setComposingText("", 1)
-        mService.setCandidatesViewShown(false)
+        mService.clearCandidatesView()
+        mService.currentInputConnection.setComposingText("", 1)
     }
 
     internal fun changeInputMode(pcode: Int, toKatakana: Boolean): Boolean {
@@ -678,8 +675,7 @@ class SKKEngine(
             reset()
             mService.changeSoftKeyboard(state)
             if (!mRegistrationStack.isEmpty()) setComposingTextSKK("", 1)
-            // ComposingTextのflush回避のためreset()で一旦消してるので，
-            // 登録中はここまで来てからComposingText復活
+            // reset()で一旦消してるので， 登録中はここまで来てからComposingText復活
         }
 
         when (state) {

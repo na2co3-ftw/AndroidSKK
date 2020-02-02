@@ -102,7 +102,7 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         val key = mHighlightedKey
-        key?.let {
+        if (key != null && canvas != null) {
             mHighlightedDrawable.apply {
                 setBounds(key.x, key.y, key.x + key.width, key.y + key.height)
                 draw(canvas)

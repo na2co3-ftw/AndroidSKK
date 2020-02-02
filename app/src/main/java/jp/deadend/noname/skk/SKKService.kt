@@ -144,8 +144,16 @@ class SKKService : InputMethodService() {
             override fun onRmsChanged(rmsdB: Float) {}
             override fun onResults(results: Bundle?) {
                 results?.let {
-                    val matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    commitTextSKK(matches[0], 0)
+                    it.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.let { matches ->
+                        if (matches.size == 1) {
+                            commitTextSKK(matches[0], 0)
+                        } else {
+                            val intent = Intent(this@SKKService, SKKSpeechRecognitionResultsList::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            intent.putStringArrayListExtra(SKKSpeechRecognitionResultsList.RESULTS_KEY, matches)
+                            startActivity(intent)
+                        }
+                    }
                 }
                 mFlickJPInputView?.setHighlightedKey(-1)
                 mIsRecording = false
@@ -384,6 +392,12 @@ class SKKService : InputMethodService() {
             ACTION_READ_PREFS -> readPrefs()
             ACTION_RELOAD_DICS -> mEngine.reopenDictionaries(openDictionaries())
         }
+    }
+
+    override fun onComputeInsets(outInsets: Insets?) {
+        super.onComputeInsets(outInsets)
+        outInsets?.apply { contentTopInsets = visibleTopInsets }
+        // CandidatesViewに対して強制的にActivityをリサイズさせるためのhack
     }
 
     /**
@@ -646,6 +660,7 @@ class SKKService : InputMethodService() {
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
         intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, this.packageName)
         intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
         mSpeechRecognizer.startListening(intent)
     }
 
@@ -661,6 +676,10 @@ class SKKService : InputMethodService() {
 
     fun requestChooseCandidate(index: Int) {
         mCandidateView?.choose(index)
+    }
+
+    fun clearCandidatesView() {
+        mCandidateView?.setContents(listOf())
     }
 
     // カーソル直前に引数と同じ文字列があるなら，それを消してtrue なければfalse

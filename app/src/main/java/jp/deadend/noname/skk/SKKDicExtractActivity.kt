@@ -38,7 +38,7 @@ class SKKDicExtractActivity : Activity() {
             dicExtractMessage.text = getString(R.string.message_cancelled)
         }
 
-        dicExtractButton.text = getString(R.string.label_OK)
+        dicExtractButton.text = getString(android.R.string.ok)
         dicExtractButton.setOnClickListener { finish() }
     }
 
@@ -51,7 +51,7 @@ class SKKDicExtractActivity : Activity() {
                 val zis = ZipInputStream(BufferedInputStream(inputs))
                 val ze = zis.nextEntry
                 val bos = BufferedOutputStream(FileOutputStream(File(filesDir, ze.name)))
-                val extractedSize = java.lang.Long.valueOf(ze.size)!!.toInt()
+                val extractedSize = java.lang.Long.valueOf(ze.size).toInt()
                 val buf = ByteArray(1024)
                 var size: Int
                 var sizeProcessed = 0

@@ -4,8 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.os.Environment
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.view.inputmethod.InputMethodManager
 import android.view.LayoutInflater
 import android.view.Menu
@@ -36,17 +35,16 @@ class SKKUserDicTool : AppCompatActivity() {
     private var isOpened = false
     private var mEntryList = mutableListOf<Tuple>()
     private lateinit var mAdapter: EntryAdapter
-    private lateinit var mExternalStorageDir: File
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.userdictool)
-        mExternalStorageDir = Environment.getExternalStorageDirectory()
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         userDictoolList.emptyView = findViewById(R.id.EmptyListItem)
         userDictoolList.onItemClickListener =
                 AdapterView.OnItemClickListener { parent, _, position, _ ->
-            val dialog = ConfirmationDialogFragment.newInstance(R.string.message_confirm_remove)
+            val dialog = ConfirmationDialogFragment.newInstance(getString(R.string.message_confirm_remove))
             dialog.setListener(
                 object : ConfirmationDialogFragment.Listener {
                     override fun onPositiveClick() {
@@ -80,33 +78,51 @@ class SKKUserDicTool : AppCompatActivity() {
         val id = item.itemId
         when (id) {
             R.id.menu_user_dic_tool_import -> {
-                val intent = Intent(this@SKKUserDicTool, FileChooser::class.java)
-                intent.putExtra(FileChooser.KEY_MODE, FileChooser.MODE_OPEN)
-                intent.putExtra(FileChooser.KEY_DIRNAME, mExternalStorageDir.path)
-                startActivityForResult(intent, REQUEST_IMPORT)
+                val dir = getExternalFilesDir(null)
+                if (dir != null) {
+                    val intent = Intent(this@SKKUserDicTool, FileChooser::class.java)
+                    intent.putExtra(FileChooser.KEY_MODE, FileChooser.MODE_OPEN)
+                    intent.putExtra(FileChooser.KEY_DIRNAME, dir.path)
+                    startActivityForResult(intent, REQUEST_IMPORT)
+                } else {
+                    val errorDialog = SimpleMessageDialogFragment.newInstance(
+                            getString(R.string.error_open_external_storage)
+                    )
+                    errorDialog.show(supportFragmentManager, "dialog")
+                }
                 return true
             }
             R.id.menu_user_dic_tool_export -> {
-                try {
-                    writeToExternalStorage()
-                } catch (e: IOException) {
+                val dir = getExternalFilesDir(null)
+                if (dir != null) {
+                    try {
+                        writeToExternalStorage(dir)
+                    } catch (e: IOException) {
+                        val errorDialog = SimpleMessageDialogFragment.newInstance(
+                                getString(R.string.error_write_to_external_storage)
+                        )
+                        errorDialog.show(supportFragmentManager, "dialog")
+                        return true
+                    }
+
+                    val msgDialog = SimpleMessageDialogFragment.newInstance(
+                            getString(
+                                    R.string.message_written_to_external_storage,
+                                    dir.path + "/" + getString(R.string.dic_name_user) + ".txt"
+                            )
+                    )
+                    msgDialog.show(supportFragmentManager, "dialog")
+                } else {
                     val errorDialog = SimpleMessageDialogFragment.newInstance(
-                            getString(R.string.error_write_to_external_storage)
+                            getString(R.string.error_open_external_storage)
                     )
                     errorDialog.show(supportFragmentManager, "dialog")
-                    return true
                 }
-
-                val msgDialog = SimpleMessageDialogFragment.newInstance(
-                        getString(R.string.message_written_to_external_storage,
-                                mExternalStorageDir.path + "/" + getString(R.string.dic_name_user) + ".txt")
-                )
-                msgDialog.show(supportFragmentManager, "dialog")
                 return true
             }
             R.id.menu_user_dic_tool_clear -> {
                 val cfDialog = ConfirmationDialogFragment.newInstance(
-                        R.string.message_confirm_clear
+                        getString(R.string.message_confirm_clear)
                 )
                 cfDialog.setListener(
                     object : ConfirmationDialogFragment.Listener {
@@ -116,16 +132,17 @@ class SKKUserDicTool : AppCompatActivity() {
                 cfDialog.show(supportFragmentManager, "dialog")
                 return true
             }
+            android.R.id.home -> finish()
         }
 
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         openUserDict()
 
         if (requestCode == REQUEST_IMPORT && resultCode == Activity.RESULT_OK) {
-            val str = intent.getStringExtra(FileChooser.KEY_FILEPATH) ?: return
+            val str = intent?.getStringExtra(FileChooser.KEY_FILEPATH) ?: return
             try {
                 loadFromTextDic(str, mRecMan, mBtree, false)
             } catch (e: IOException) {
@@ -181,14 +198,17 @@ class SKKUserDicTool : AppCompatActivity() {
     }
 
     private fun onFailToOpenUserDict() {
-        val dialog = ConfirmationDialogFragment.newInstance(R.string.error_open_user_dic)
+        val dialog = ConfirmationDialogFragment.newInstance(getString(R.string.error_open_user_dic))
         dialog.setListener(
             object : ConfirmationDialogFragment.Listener {
                 override fun onPositiveClick() {
-                    try {
-                        writeToExternalStorage()
-                    } catch (e: IOException) {
-                        dlog("onFailToOpenUserDict(): " + e.toString())
+                    val dir = getExternalFilesDir(null)
+                    dir?.let {
+                        try {
+                            writeToExternalStorage(dir)
+                        } catch (e: IOException) {
+                            dlog("onFailToOpenUserDict(): " + e.toString())
+                        }
                     }
 
                     recreateUserDic()
@@ -268,9 +288,9 @@ class SKKUserDicTool : AppCompatActivity() {
     }
 
     @Throws(IOException::class)
-    private fun writeToExternalStorage() {
+    private fun writeToExternalStorage(dir: File) {
         if (!isOpened) return
-        val outputFile = File(mExternalStorageDir, getString(R.string.dic_name_user) + ".txt")
+        val outputFile = File(dir, getString(R.string.dic_name_user) + ".txt")
 
         val tuple = Tuple()
         val browser = mBtree.browse()

@@ -2,10 +2,8 @@ package jp.deadend.noname.dialog
 
 import android.app.Dialog
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
-import android.support.v7.app.AlertDialog
-
-import jp.deadend.noname.skk.R
+import androidx.fragment.app.DialogFragment
+import androidx.appcompat.app.AlertDialog
 
 class ConfirmationDialogFragment : DialogFragment() {
     private var mListener: Listener? = null
@@ -20,14 +18,14 @@ class ConfirmationDialogFragment : DialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return AlertDialog.Builder(activity)
-                .setMessage(arguments.getInt("message"))
+        return AlertDialog.Builder(requireContext())
+                .setMessage(arguments?.getString("message"))
                 .setCancelable(true)
-                .setPositiveButton(R.string.label_OK) { _, _ ->
+                .setPositiveButton(android.R.string.ok) { _, _ ->
                     mListener?.onPositiveClick()
                     dismiss()
                 }
-                .setNegativeButton(R.string.label_CANCEL) { _, _ ->
+                .setNegativeButton(android.R.string.cancel) { _, _ ->
                     mListener?.onNegativeClick()
                     dismiss()
                 }
@@ -35,10 +33,10 @@ class ConfirmationDialogFragment : DialogFragment() {
     }
 
     companion object {
-        fun newInstance(message: Int): ConfirmationDialogFragment {
+        fun newInstance(message: String): ConfirmationDialogFragment {
             val frag = ConfirmationDialogFragment()
             val args = Bundle()
-            args.putInt("message", message)
+            args.putString("message", message)
             frag.arguments = args
             return frag
         }

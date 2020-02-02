@@ -2,6 +2,7 @@
 <resources>
 	<string name="ime_name">SKK for Android</string>
 	<string name="label_mushroom">マッシュルーム</string>
+	<string name="label_speech_recognition_results">認識結果</string>
 	<string name="label_extdic_activity">辞書ファイル解凍</string>
 	<string name="label_pref_activity">SKK for Androidの設定</string>
 	<string name="label_pref_softkeyboard">ソフトウェアキーボードの設定...</string>
@@ -21,7 +22,9 @@
 	<string name="label_filechooser_save_as">名前をつけて保存</string>
 	<string name="label_filechooser_open">ファイルを開く</string>
 	<string name="label_filechooser_opendir">ディレクトリを開く</string>
+    <string name="label_filechooser_parent_dir">&#9166; 親ディレクトリ</string>
 	<string name="error_access_failed">アクセスできません: %1$s</string>
+    <string name="error_open_external_storage">外部ストレージが開けません</string>
 
 	<string name="message_extract">辞書ファイルを解凍中...</string>
 	<string name="message_cancelled">中断しました</string>
@@ -42,8 +45,6 @@
 
 	<string name="label_YES">はい</string>
 	<string name="label_NO">いいえ</string>
-	<string name="label_OK">OK</string>
-	<string name="label_CANCEL">キャンセル</string>
 
 	<string translatable="false" name="prefkey_kutouten_type">PrefKeyKutoutenType</string>
 	<string translatable="false" name="prefkey_kana_key">PrefKeyKanaKey</string>

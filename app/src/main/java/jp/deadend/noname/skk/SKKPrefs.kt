@@ -6,9 +6,8 @@ import android.preference.CheckBoxPreference
 import android.preference.Preference.OnPreferenceClickListener
 import android.preference.PreferenceActivity
 import android.preference.PreferenceManager
-import android.support.v7.app.AppCompatDelegate
+import androidx.appcompat.app.AppCompatDelegate
 import android.view.inputmethod.InputMethodManager
-import kotlinx.android.synthetic.main.skkprefs.pref_toolbar
 
 class SKKPrefs : PreferenceActivity() {
     private val delegate: AppCompatDelegate by lazy {
@@ -29,8 +28,9 @@ class SKKPrefs : PreferenceActivity() {
         delegate.installViewFactory()
         delegate.onCreate(icicle)
         delegate.setContentView(R.layout.skkprefs)
-        delegate.setSupportActionBar(pref_toolbar)
         addPreferencesFromResource(R.xml.prefs)
+
+        delegate.supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val stickyPr = findPreference(getString(R.string.prefkey_sticky_meta)) as CheckBoxPreference
         val sandsPr = findPreference(getString(R.string.prefkey_sands)) as CheckBoxPreference

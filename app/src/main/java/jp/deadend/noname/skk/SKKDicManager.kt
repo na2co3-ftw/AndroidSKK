@@ -4,11 +4,11 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.os.Environment
 import android.preference.PreferenceManager
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
@@ -38,7 +38,9 @@ class SKKDicManager : AppCompatActivity() {
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.dic_manager)
-        val externalStorageDir = Environment.getExternalStorageDirectory()
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        val externalStorageDir = getExternalFilesDir(null)
 
         if (externalStorageDir != null) {
             dicManagerButton.setOnClickListener {
@@ -61,7 +63,7 @@ class SKKDicManager : AppCompatActivity() {
         dicManagerList.adapter = TupleAdapter(this, mDics)
         dicManagerList.onItemClickListener = AdapterView.OnItemClickListener { _, _, position, _ ->
             if (position == 0) return@OnItemClickListener
-            val dialog = ConfirmationDialogFragment.newInstance(R.string.message_confirm_remove_dic)
+            val dialog = ConfirmationDialogFragment.newInstance(getString(R.string.message_confirm_remove_dic))
             dialog.setListener(
                     object : ConfirmationDialogFragment.Listener {
                         override fun onPositiveClick() {
@@ -99,9 +101,9 @@ class SKKDicManager : AppCompatActivity() {
         super.onPause()
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         if (requestCode == REQUEST_TEXTDIC && resultCode == Activity.RESULT_OK) {
-            val str = intent.getStringExtra(FileChooser.KEY_FILEPATH) ?: return
+            val str = intent?.getStringExtra(FileChooser.KEY_FILEPATH) ?: return
             mAddingDic = str
         }
     }
@@ -112,6 +114,15 @@ class SKKDicManager : AppCompatActivity() {
             addDic(mAddingDic) // use dialog after fragments resumed
             mAddingDic = ""
         }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            android.R.id.home -> finish()
+            else -> return super.onOptionsItemSelected(item)
+        }
+
+        return true
     }
 
     private fun addDic(filePath: String) {
@@ -218,7 +229,9 @@ class SKKDicManager : AppCompatActivity() {
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
             val view = convertView
                     ?: mLayoutInflater.inflate(android.R.layout.simple_list_item_1, parent, false)
-            (view as TextView).text = getItem(position).key as String
+            getItem(position)?.let {
+                (view as TextView).text = it.key as String
+            }
 
             return view
         }

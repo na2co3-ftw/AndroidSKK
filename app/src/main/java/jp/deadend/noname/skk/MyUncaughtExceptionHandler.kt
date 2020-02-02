@@ -11,9 +11,8 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager.NameNotFoundException
 import android.os.Build
-import android.os.Environment
 
-internal class MyUncaughtExceptionHandler(context: Context) : UncaughtExceptionHandler {
+internal class MyUncaughtExceptionHandler(val context: Context) : UncaughtExceptionHandler {
     private val mDefaultUEH: UncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
     private val mVersionName: String
 
@@ -45,12 +44,8 @@ internal class MyUncaughtExceptionHandler(context: Context) : UncaughtExceptionH
         val df = SimpleDateFormat("yyyyMMddHHmm")
         val dateTimeStr = df.format(d)
 
-        val file = File(
-                Environment.getExternalStorageDirectory().path
-                        + File.separator
-                        + "SKK_strace_"
-                        + dateTimeStr
-                        + ".txt")
+        val dir = context.getExternalFilesDir(null) ?: return
+        val file = File(dir, "SKK_strace_$dateTimeStr.txt")
         val pw = PrintWriter(FileOutputStream(file))
 
         pw.println("This is a crash report of SKK.")

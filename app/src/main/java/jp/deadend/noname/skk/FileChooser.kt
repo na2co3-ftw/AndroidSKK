@@ -1,8 +1,9 @@
 package jp.deadend.noname.skk
 
 import android.app.Activity
-import android.app.ListActivity
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
 import android.os.Environment
 import android.view.Gravity
@@ -14,14 +15,12 @@ import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
-import kotlinx.android.synthetic.main.filechooser.buttonCancel
-import kotlinx.android.synthetic.main.filechooser.buttonOK
-import kotlinx.android.synthetic.main.filechooser.editTextFileName
-import kotlinx.android.synthetic.main.filechooser.textViewDirName
+import androidx.appcompat.app.AppCompatActivity
+import kotlinx.android.synthetic.main.filechooser.*
 import java.io.File
 import java.util.Locale
 
-class FileChooser : ListActivity() {
+class FileChooser : AppCompatActivity() {
     private lateinit var mCurrentDir: File
     private lateinit var mMode: String
     private lateinit var mSearchToast: Toast
@@ -70,7 +69,7 @@ class FileChooser : ListActivity() {
 
         buttonOK.setOnClickListener {
             val intent = Intent()
-            val currentDirStr = mCurrentDir.absolutePath + "/"
+            val currentDirStr = mCurrentDir.absolutePath + File.separator
             if (mMode == MODE_DIR) {
                 intent.putExtra(KEY_FILENAME, "")
                 intent.putExtra(KEY_DIRNAME, currentDirStr)
@@ -94,6 +93,24 @@ class FileChooser : ListActivity() {
             val intent = Intent()
             setResult(Activity.RESULT_CANCELED, intent)
             finish()
+        }
+
+        listView.setOnItemClickListener { _, _, position, _ ->
+            val item = listView.adapter.getItem(position) as String
+
+            if (item.startsWith(getString(R.string.label_filechooser_parent_dir))) {
+                checkAndChangeDir(mCurrentDir.parentFile)
+            } else if (item.substring(item.length - 1) == File.separator) {
+                checkAndChangeDir(File(mCurrentDir, item))
+            } else {
+                if (mMode == MODE_OPEN) {
+                    editTextFileName.setText(item)
+                    buttonOK.requestFocus()
+                } else if (mMode == MODE_SAVE) {
+                    editTextFileName.setText(item)
+                    editTextFileName.requestFocus()
+                }
+            }
         }
 
         // quick search
@@ -143,25 +160,6 @@ class FileChooser : ListActivity() {
         })
     }
 
-    override fun onListItemClick(list: ListView, view: View, position: Int, id: Long) {
-        super.onListItemClick(list, view, position, id)
-        val item = listAdapter.getItem(position) as String
-
-        if (item == "..") {
-            checkAndChangeDir(mCurrentDir.parentFile)
-        } else if (item.substring(item.length - 1) == "/") {
-            checkAndChangeDir(File(mCurrentDir, item))
-        } else {
-            if (mMode == MODE_OPEN) {
-                editTextFileName.setText(item)
-                buttonOK.requestFocus()
-            } else if (mMode == MODE_SAVE) {
-                editTextFileName.setText(item)
-                editTextFileName.requestFocus()
-            }
-        }
-    }
-
     private fun checkAndChangeDir(newDir: File) {
         if (newDir.isDirectory && newDir.canRead()) {
             mCurrentDir = newDir
@@ -192,14 +190,16 @@ class FileChooser : ListActivity() {
         val files = mutableListOf<String>()
         for (file in filesArray) {
             if (file.isDirectory) {
-                dirs.add(file.name + "/")
+                dirs.add(file.name + File.separator)
             } else {
                 files.add(file.name)
             }
         }
         dirs.sort()
         files.sort()
-        if (mCurrentDir.absolutePath != "/") dirs.add(0, "..")
+        if (mCurrentDir.absolutePath != File.separator) {
+            dirs.add(0, getString(R.string.label_filechooser_parent_dir) + File.separator)
+        }
         val items = dirs.plus(files)
 
         val fileList: ArrayAdapter<String>
@@ -210,9 +210,13 @@ class FileChooser : ListActivity() {
                     view.textSize = mFontSize.toFloat()
 
                     val text = view.text.toString()
-                    if (!(text == ".." || text.substring(text.length - 1) == "/")) {
+                    if (text.substring(text.length - 1) != File.separator) {
                         // not a directory
-                        view.setTextColor(-0x7f7f80)
+                        view.setTextColor(Color.parseColor("#9E9E9E"))
+                        view.setTypeface(null, Typeface.NORMAL)
+                    } else {
+                        view.setTextColor(Color.BLACK)
+                        view.setTypeface(null, Typeface.BOLD)
                     }
                     return view
                 }
@@ -226,7 +230,7 @@ class FileChooser : ListActivity() {
                 }
             }
         }
-        listAdapter = fileList
+        listView.adapter = fileList
     }
 
     companion object {

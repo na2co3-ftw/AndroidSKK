@@ -2,8 +2,8 @@ package jp.deadend.noname.dialog
 
 import android.app.Dialog
 import android.os.Bundle
-import android.support.v4.app.DialogFragment
-import android.support.v7.app.AlertDialog
+import androidx.fragment.app.DialogFragment
+import androidx.appcompat.app.AlertDialog
 import android.widget.EditText
 
 import jp.deadend.noname.skk.R
@@ -32,15 +32,15 @@ class TextInputDialogFragment : DialogFragment() {
             mEditText.setSingleLine()
         }
 
-        return AlertDialog.Builder(activity)
-                .setMessage(arguments.getString("message"))
+        return AlertDialog.Builder(requireContext())
+                .setMessage(arguments?.getString("message"))
                 .setView(mEditText)
                 .setCancelable(true)
-                .setPositiveButton(R.string.label_OK) { _, _ ->
+                .setPositiveButton(android.R.string.ok) { _, _ ->
                     mListener?.onPositiveClick(mEditText.text.toString())
                     dismiss()
                 }
-                .setNegativeButton(R.string.label_CANCEL) { _, _ ->
+                .setNegativeButton(android.R.string.cancel) { _, _ ->
                     mListener?.onNegativeClick()
                     dismiss()
                 }
