@@ -1,5 +1,7 @@
 package jp.deadend.noname.skk
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -9,20 +11,23 @@ import android.inputmethodservice.InputMethodService
 import android.media.AudioManager
 import android.os.Bundle
 import android.os.Handler
-import android.preference.PreferenceManager
+import android.os.Looper
+import androidx.preference.PreferenceManager
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
-import android.text.ClipboardManager
+import android.content.ClipboardManager
+import android.os.Build
 import android.text.InputType
+import android.util.Log
 import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.view.WindowManager
 import android.widget.Toast
 
 import jp.deadend.noname.skk.engine.*
+import java.io.*
 
 class SKKService : InputMethodService() {
     private var mCandidateViewContainer: CandidateViewContainer? = null
@@ -30,7 +35,6 @@ class SKKService : InputMethodService() {
     private var mFlickJPInputView: FlickJPKeyboardView? = null
     private var mQwertyInputView: QwertyKeyboardView? = null
     private var mAbbrevKeyboardView: AbbrevKeyboardView? = null
-    private var mScreenHeight = 0
 
     private val mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
     private var mIsRecording = false
@@ -52,74 +56,100 @@ class SKKService : InputMethodService() {
 
     private var mUseSoftKeyboard = false
 
-    private var mMushroomWord: String? = null
-    private val hMushroom = Handler()
-    private val rMushroom = Runnable {
-        val word = mMushroomWord
-        word?.let {
-            if (word.isNotEmpty()) {
-                currentInputConnection.commitText(word, 1)
-                mMushroomWord = null
-                keyDownUp(KeyEvent.KEYCODE_DPAD_CENTER)
-            }
-        }
-    }
-    private val mMushroomReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            val extras = intent.extras
-            extras?.let { mMushroomWord = extras.getString(SKKMushroom.REPLACE_KEY) }
-            hMushroom.postDelayed(rMushroom, 250)
+    private val mHandler = Handler(Looper.getMainLooper())
 
+    private var mPendingInput: String? = null
+
+    private val mMushroomReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            mPendingInput = intent?.getStringExtra(SKKMushroom.REPLACE_KEY)
 //                if (mMushroomWord != null) {
 //                    val cm = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
 //                    cm.setText(mMushroomWord)
 //                }
         }
     }
+    private val mReloadReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.getStringExtra(KEY_COMMAND)) {
+                COMMAND_COMMIT_USERDIC -> {
+                    dlog("commit user dictionary!")
+                    mEngine.commitUserDictChanges()
+                }
+                COMMAND_READ_PREFS -> readPrefs()
+                COMMAND_RELOAD_DICS -> mEngine.reopenDictionaries(openDictionaries())
+                COMMAND_SPEECH_RECOGNITION -> {
+                    mPendingInput = intent.getStringExtra(SKKSpeechRecognitionResultsList.RESULTS_KEY)
+                }
+            }
+        }
+    }
+
+    private fun extractDictionary(): Boolean {
+        try {
+            dlog("dic extract start")
+            mHandler.post {
+                Toast.makeText(
+                    applicationContext, getText(R.string.message_extracting_dic), Toast.LENGTH_SHORT
+                ).show()
+            }
+
+            unzipFile(resources.assets.open(DICT_ZIP_FILE), filesDir)
+
+            mHandler.post {
+                Toast.makeText(
+                    applicationContext, getText(R.string.message_dic_extracted), Toast.LENGTH_SHORT
+                ).show()
+            }
+            return true
+        } catch (e: IOException) {
+            Log.e("SKK", "I/O error in extracting dictionary files: $e")
+            mHandler.post {
+                Toast.makeText(
+                    applicationContext, getText(R.string.error_extracting_dic_failed), Toast.LENGTH_LONG
+                ).show()
+            }
+            return false
+        }
+    }
 
     private fun openDictionaries(): List<SKKDictionary> {
         val result = mutableListOf<SKKDictionary>()
         val dd = filesDir.absolutePath
-        dlog("dict dir: " + dd)
+        dlog("dict dir: $dd")
 
-        result.add(SKKDictionary(dd + "/" + getString(R.string.dic_name_main), getString(R.string.btree_name)))
-        if (!result[0].isValid) {
-            Toast.makeText(this@SKKService, getString(R.string.error_dic), Toast.LENGTH_LONG).show()
-            stopSelf()
+        SKKDictionary.newInstance(
+            dd + "/" + getString(R.string.dic_name_main), getString(R.string.btree_name)
+        )?.also {
+            result.add(it)
+        } ?: run {
+            dlog("dict open failed")
+            if (!extractDictionary()) { stopSelf() }
+            SKKDictionary.newInstance(
+                dd + "/" + getString(R.string.dic_name_main), getString(R.string.btree_name)
+            )?.also {
+                result.add(it)
+            } ?: run {
+                mHandler.post {
+                    Toast.makeText(
+                        applicationContext, getString(R.string.error_dic), Toast.LENGTH_LONG
+                    ).show()
+                }
+                stopSelf()
+            }
         }
-
         val prefVal = PreferenceManager.getDefaultSharedPreferences(this)
                 .getString(getString(R.string.prefkey_optional_dics), "")
-        prefVal?.let {
-            if (prefVal.isNotEmpty()) {
-                val vals = prefVal.split("/").dropLastWhile { it.isEmpty() }
-                var i = 1
-                while (i < vals.size) {
-                    result.add(SKKDictionary(dd + "/" + vals[i], getString(R.string.btree_name)))
-                    val last = result.size - 1
-                    if (!result[last].isValid) result.removeAt(last)
-                    i += 2
-                }
+        if (!prefVal.isNullOrEmpty()) {
+            val vals = prefVal.split("/").dropLastWhile { it.isEmpty() }
+            for (i in 1 until vals.size step 2) {
+                SKKDictionary.newInstance(
+                    dd + "/" + vals[i], getString(R.string.btree_name)
+                )?.let { result.add(it) }
             }
         }
 
         return result
-    }
-
-    private fun openUserDictionary(): SKKUserDictionary {
-        val dd = filesDir.absolutePath
-        val dic = SKKUserDictionary(
-                dd + "/" + getString(R.string.dic_name_user), getString(R.string.btree_name)
-        )
-        if (!dic.isValid) {
-            Toast.makeText(
-                    this@SKKService, getString(R.string.error_user_dic),
-                    Toast.LENGTH_LONG
-            ).show()
-            stopSelf()
-        }
-
-        return dic
     }
 
     override fun onCreate() {
@@ -127,11 +157,35 @@ class SKKService : InputMethodService() {
 
         Thread.setDefaultUncaughtExceptionHandler(MyUncaughtExceptionHandler(applicationContext))
 
-        mEngine = SKKEngine(this@SKKService, openDictionaries(), openUserDictionary())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
+            val notificationManager: NotificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val dics = openDictionaries()
+        if (dics.isEmpty()) { stopSelf() }
+
+        val userDic = SKKUserDictionary.newInstance(
+            filesDir.absolutePath + "/" + getString(R.string.dic_name_user),
+            getString(R.string.btree_name)
+        )
+        if (userDic == null) {
+            mHandler.post {
+                Toast.makeText(
+                    applicationContext, getString(R.string.error_user_dic), Toast.LENGTH_LONG
+                ).show()
+            }
+            stopSelf()
+        }
+
+        mEngine = SKKEngine(this@SKKService, dics, userDic!!)
 
         val filter = IntentFilter(SKKMushroom.ACTION_BROADCAST)
         filter.addCategory(SKKMushroom.CATEGORY_BROADCAST)
         registerReceiver(mMushroomReceiver, filter)
+        registerReceiver(mReloadReceiver, IntentFilter(ACTION_COMMAND))
 
         mSpeechRecognizer.setRecognitionListener(object : RecognitionListener {
             override fun onBeginningOfSpeech() {}
@@ -155,9 +209,12 @@ class SKKService : InputMethodService() {
                         }
                     }
                 }
-                mFlickJPInputView?.setHighlightedKey(-1)
+                mFlickJPInputView?.let {
+                    it.keyboard.keys[2].on = false // 「声」キー
+                    it.invalidateKey(2)
+                }
                 mIsRecording = false
-                Handler().postDelayed({
+                mHandler.postDelayed({
                     mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, mStreamVolume, 0)
                 }, 500)
             }
@@ -169,9 +226,9 @@ class SKKService : InputMethodService() {
 
     private fun readPrefs() {
         val context = applicationContext
-        mStickyShift = SKKPrefs.getStickyMeta(context)
-        mSandS = SKKPrefs.getSandS(context)
-        mEngine.setZenkakuPunctuationMarks(SKKPrefs.getKutoutenType(context))
+        mStickyShift = skkPrefs.useStickyMeta
+        mSandS = skkPrefs.useSandS
+        mEngine.setZenkakuPunctuationMarks(skkPrefs.kutoutenType)
 
         mUseSoftKeyboard = checkUseSoftKeyboard()
         updateInputViewShown()
@@ -179,7 +236,7 @@ class SKKService : InputMethodService() {
         if (mFlickJPInputView != null) readPrefsForInputView()
         val container = mCandidateViewContainer
         container?.let {
-            val sp = SKKPrefs.getCandidatesSize(context)
+            val sp = skkPrefs.candidatesSize
             val px = TypedValue.applyDimension(
                     TypedValue.COMPLEX_UNIT_SP, sp.toFloat(), context.resources.displayMetrics
             ).toInt()
@@ -199,55 +256,69 @@ class SKKService : InputMethodService() {
         val keyWidth: Int
         when (config.orientation) {
             Configuration.ORIENTATION_PORTRAIT -> {
-                keyHeight = SKKPrefs.getKeyHeightPort(context)
-                keyWidth = SKKPrefs.getKeyWidthPort(context)
+                keyHeight = skkPrefs.keyHeightPort
+                keyWidth = skkPrefs.keyWidthPort
             }
             Configuration.ORIENTATION_LANDSCAPE -> {
-                keyHeight = SKKPrefs.getKeyHeightLand(context)
-                keyWidth = SKKPrefs.getKeyWidthLand(context)
+                keyHeight = skkPrefs.keyHeightLand
+                keyWidth = skkPrefs.keyWidthLand
             }
             else -> {
                 keyHeight = 30
                 keyWidth = 100
             }
         }
+        val alpha = skkPrefs.backgroundAlpha
+        flick.prepareNewKeyboard(context, keyWidth, keyHeight, skkPrefs.keyPosition)
+        flick.backgroundAlpha = 255 * alpha / 100
 
-        flick.prepareNewKeyboard(
-                applicationContext,
-                keyWidth, mScreenHeight * keyHeight / (4 * 100), SKKPrefs.getKeyPosition(context)
-        )
         val density = context.resources.displayMetrics.density
-        val sensitivity = when (SKKPrefs.getFlickSensitivity(context)) {
+        val sensitivity = when (skkPrefs.flickSensitivity) {
             "low"  -> (36 * density + 0.5f).toInt()
             "high" -> (12 * density + 0.5f).toInt()
             else   -> (24 * density + 0.5f).toInt()
         }
         qwerty.setFlickSensitivity(sensitivity)
-        qwerty.changeKeyHeight(mScreenHeight * keyHeight / (4 * 100))
-        abbrev.changeKeyHeight(mScreenHeight * keyHeight / (4 * 100))
+        qwerty.backgroundAlpha = 255 * alpha / 100
+        abbrev.backgroundAlpha = 255 * alpha / 100
     }
 
     private fun checkUseSoftKeyboard(): Boolean {
         var result = true
-        val use_softkey = SKKPrefs.getUseSoftKey(applicationContext)
-        if (use_softkey == "on") {
-            dlog("software keyboard forced")
-            result = true
-        } else if (use_softkey == "off") {
-            dlog("software keyboard disabled")
-            result = false
-        } else {
-            val config = resources.configuration
-            if (config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
-                result = false
-            } else if (config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES) {
+        when (skkPrefs.useSoftKey) {
+            "on" -> {
+                dlog("software keyboard forced")
                 result = true
+            }
+            "off" -> {
+                dlog("software keyboard disabled")
+                result = false
+            }
+            else -> {
+                val config = resources.configuration
+                if (config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO) {
+                    result = false
+                } else if (config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_YES) {
+                    result = true
+                }
             }
         }
 
         if (result) hideStatusIcon()
 
         return result
+    }
+
+    override fun onBindInput() {
+        super.onBindInput()
+
+        if (mPendingInput.isNullOrEmpty()) {
+            return
+        } else {
+            currentInputConnection.commitText(mPendingInput, 1)
+            mPendingInput = null
+            keyDownUp(KeyEvent.KEYCODE_DPAD_CENTER)
+        }
     }
 
     /**
@@ -257,15 +328,14 @@ class SKKService : InputMethodService() {
     override fun onInitializeInterface() {
         mUseSoftKeyboard = checkUseSoftKeyboard()
         updateInputViewShown()
-        mScreenHeight = (getSystemService(Context.WINDOW_SERVICE) as WindowManager)
-                .defaultDisplay.height
     }
 
     override fun onEvaluateInputViewShown(): Boolean {
+        super.onEvaluateInputViewShown()
         return mUseSoftKeyboard
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration?) {
+    override fun onConfigurationChanged(newConfig: Configuration) {
         mFlickJPInputView = null
         mQwertyInputView = null
         mAbbrevKeyboardView = null
@@ -313,7 +383,7 @@ class SKKService : InputMethodService() {
             InputType.TYPE_CLASS_NUMBER,
             InputType.TYPE_CLASS_DATETIME,
             InputType.TYPE_CLASS_PHONE -> {
-                if (mEngine.state !== SKKASCIIState) mEngine.processKey('l'.toInt())
+                if (mEngine.state !== SKKASCIIState) mEngine.processKey('l'.code)
             }
             InputType.TYPE_CLASS_TEXT -> {
                 val variation = attribute.inputType and InputType.TYPE_MASK_VARIATION
@@ -324,9 +394,14 @@ class SKKService : InputMethodService() {
                         || variation == InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
                         || variation == InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
                 ) {
-                    if (mEngine.state !== SKKASCIIState) mEngine.processKey('l'.toInt())
+                    if (mEngine.state !== SKKASCIIState) mEngine.processKey('l'.code)
                 }
             }
+        }
+
+        if (mUseSoftKeyboard || skkPrefs.useCandidatesView) {
+            setCandidatesViewShown(true)
+            mCandidateViewContainer?.setAlpha(32)
         }
     }
 
@@ -335,7 +410,7 @@ class SKKService : InputMethodService() {
      * needs to be generated, like [.onCreateInputView].
      */
     override fun onCreateCandidatesView(): View {
-        val container = layoutInflater.inflate(R.layout.candidates, null) as CandidateViewContainer
+        val container = layoutInflater.inflate(R.layout.view_candidates, null) as CandidateViewContainer
         container.initViews()
         val view = container.findViewById(R.id.candidates) as CandidateView
         view.setService(this)
@@ -343,7 +418,7 @@ class SKKService : InputMethodService() {
         mCandidateView = view
 
         val context = applicationContext
-        val sp = SKKPrefs.getCandidatesSize(context)
+        val sp = skkPrefs.candidatesSize
         val px = TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_SP, sp.toFloat(), context.resources.displayMetrics
         ).toInt()
@@ -370,29 +445,21 @@ class SKKService : InputMethodService() {
     override fun onFinishInput() {
         super.onFinishInput()
 
+        mQwertyInputView?.handleBack()
+        mAbbrevKeyboardView?.handleBack()
         setCandidatesViewShown(false)
     }
 
     override fun onDestroy() {
         mEngine.commitUserDictChanges()
         unregisterReceiver(mMushroomReceiver)
+        unregisterReceiver(mReloadReceiver)
 
         super.onDestroy()
     }
 
     // never use fullscreen mode
     override fun onEvaluateFullscreenMode() = false
-
-    override fun onAppPrivateCommand(action: String, data: Bundle?) {
-        when (action) {
-            ACTION_COMMIT_USERDIC -> {
-                dlog("commit user dictionary!")
-                mEngine.commitUserDictChanges()
-            }
-            ACTION_READ_PREFS -> readPrefs()
-            ACTION_RELOAD_DICS -> mEngine.reopenDictionaries(openDictionaries())
-        }
-    }
 
     override fun onComputeInsets(outInsets: Insets?) {
         super.onComputeInsets(outInsets)
@@ -418,7 +485,7 @@ class SKKService : InputMethodService() {
             KeyEvent.KEYCODE_SPACE -> {
                 if (mSandS) {
                     mSpacePressed = false
-                    if (!mSandSUsed) processKey(' '.toInt())
+                    if (!mSandSUsed) processKey(' '.code)
                     mSandSUsed = false
                     return true
                 }
@@ -445,12 +512,11 @@ class SKKService : InputMethodService() {
      * them or let them continue to the app.
      */
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        val context = applicationContext
         val engineState = mEngine.state
-        val encodedKey = SetKeyPreference.encodeKey(event)
+        val encodedKey = SetKeyDialogFragment.encodeKey(event)
 
         // Process special keys
-        if (encodedKey == SKKPrefs.getKanaKey(context)) {
+        if (encodedKey == skkPrefs.kanaKey) {
             mEngine.handleKanaKey()
             return true
         }
@@ -459,7 +525,7 @@ class SKKService : InputMethodService() {
             return super.onKeyDown(keyCode, event)
         }
 
-        if (encodedKey == SKKPrefs.getCancelKey(context)) {
+        if (encodedKey == skkPrefs.cancelKey) {
             if (handleCancel()) { return true }
         }
 
@@ -504,7 +570,7 @@ class SKKService : InputMethodService() {
                 if (mSandS) {
                     mSpacePressed = true
                 } else {
-                    processKey(' '.toInt())
+                    processKey(' '.code)
                 }
                 return true
             }
@@ -584,16 +650,17 @@ class SKKService : InputMethodService() {
 
     fun handleDpad(keyCode: Int): Boolean {
         if (mStickyShift) mShiftKey.useState()
-        if (mEngine.isRegistering) {
-            return true
-        } else if (mEngine.state === SKKChooseState) {
-            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-                mEngine.chooseAdjacentCandidate(false)
-            } else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                mEngine.chooseAdjacentCandidate(true)
+        when {
+            mEngine.isRegistering -> { return true }
+            mEngine.state === SKKChooseState -> {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_DPAD_LEFT -> mEngine.chooseAdjacentCandidate(false)
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> mEngine.chooseAdjacentCandidate(true)
+                }
+                return true
             }
-            return true
-        } else if (mEngine.state.isTransient) { return true }
+            mEngine.state.isTransient -> { return true }
+        }
 
         return false
     }
@@ -633,11 +700,9 @@ class SKKService : InputMethodService() {
     }
 
     fun sendToMushroom() {
-        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val cs = cm.text
-        val clip = cs?.toString() ?: ""
-
-        val str = mEngine.prepareToMushroom(clip)
+        val clip = (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
+                        .primaryClip?.getItemAt(0)?.coerceToText(this) ?: ""
+        val str = mEngine.prepareToMushroom(clip.toString())
 
         val mushroom = Intent(this, SKKMushroom::class.java)
         mushroom.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -648,12 +713,9 @@ class SKKService : InputMethodService() {
     fun recognizeSpeech() {
         if (mIsRecording) {
             mSpeechRecognizer.stopListening()
-            mFlickJPInputView?.setHighlightedKey(-1)
-            mIsRecording = false
             return
         }
         mIsRecording = true
-        mFlickJPInputView?.setHighlightedKey(2) // 「声」キー
         mStreamVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
@@ -665,13 +727,10 @@ class SKKService : InputMethodService() {
     }
 
     fun setCandidates(list: List<String>?) {
-        if (!isCandidatesViewShownFlag) {
-            if (mUseSoftKeyboard || SKKPrefs.getUseCandidatesView(this)) {
-                setCandidatesViewShown(true)
-            }
+        if (list != null) {
+            mCandidateView?.setContents(list)
+            mCandidateViewContainer?.setAlpha(255)
         }
-
-        if (list != null) mCandidateView?.setContents(list)
     }
 
     fun requestChooseCandidate(index: Int) {
@@ -680,6 +739,7 @@ class SKKService : InputMethodService() {
 
     fun clearCandidatesView() {
         mCandidateView?.setContents(listOf())
+        mCandidateViewContainer?.setAlpha(32)
     }
 
     // カーソル直前に引数と同じ文字列があるなら，それを消してtrue なければfalse
@@ -722,8 +782,14 @@ class SKKService : InputMethodService() {
     }
 
     companion object {
-        internal const val ACTION_COMMIT_USERDIC = "jp.deadend.noname.skk.ACTION_COMMIT_USERDIC"
-        internal const val ACTION_READ_PREFS = "jp.deadend.noname.skk.ACTION_READ_PREFS"
-        internal const val ACTION_RELOAD_DICS = "jp.deadend.noname.skk.ACTION_RELOAD_DICS"
+        internal const val ACTION_COMMAND = "jp.deadend.noname.skk.ACTION_COMMAND"
+        internal const val KEY_COMMAND = "jp.deadend.noname.skk.KEY_COMMAND"
+        internal const val COMMAND_COMMIT_USERDIC = "jp.deadend.noname.skk.COMMAND_COMMIT_USERDIC"
+        internal const val COMMAND_READ_PREFS = "jp.deadend.noname.skk.COMMAND_READ_PREFS"
+        internal const val COMMAND_RELOAD_DICS = "jp.deadend.noname.skk.COMMAND_RELOAD_DICS"
+        internal const val COMMAND_SPEECH_RECOGNITION = "jp.deadend.noname.skk.COMMAND_SPEECH_RECOGNITION"
+        internal const val DICT_ZIP_FILE = "skk_dict_btree_db.zip"
+        private const val CHANNEL_ID = "skk_notification"
+        private const val CHANNEL_NAME = "SKK"
     }
 }

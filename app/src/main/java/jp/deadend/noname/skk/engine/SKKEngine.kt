@@ -1,14 +1,7 @@
 package jp.deadend.noname.skk.engine
 
+import jp.deadend.noname.skk.*
 import java.util.ArrayDeque
-import jp.deadend.noname.skk.dlog
-import jp.deadend.noname.skk.isAlphabet
-import jp.deadend.noname.skk.processConcatAndEscape
-import jp.deadend.noname.skk.removeAnnotation
-import jp.deadend.noname.skk.SKKDictionary
-import jp.deadend.noname.skk.SKKPrefs
-import jp.deadend.noname.skk.SKKService
-import jp.deadend.noname.skk.SKKUserDictionary
 
 class SKKEngine(
         private val mService: SKKService,
@@ -37,7 +30,7 @@ class SKKEngine(
     val isRegistering: Boolean
         get() = !mRegistrationStack.isEmpty()
     internal val toggleKanaKey: Boolean
-        get() = SKKPrefs.getToggleKanaKey(mService)
+        get() = skkPrefs.toggleKanaKey
 
     // 単語登録のための情報
     private val mRegistrationStack = ArrayDeque<RegistrationInfo>()
@@ -151,10 +144,10 @@ class SKKEngine(
                 changeState(SKKHiraganaState)
                 return true
             }
-            if (!mRegistrationStack.isEmpty()) {
-                val regEntry = mRegistrationStack.peekFirst().entry
-                if (regEntry.isNotEmpty()) {
-                    regEntry.deleteCharAt(regEntry.length - 1)
+            val firstEntry = mRegistrationStack.peekFirst()?.entry
+            if (firstEntry != null) {
+                if (firstEntry.isNotEmpty()) {
+                    firstEntry.deleteCharAt(firstEntry.length - 1)
                     setComposingTextSKK("", 1)
                 }
             } else {
@@ -184,8 +177,9 @@ class SKKEngine(
     fun commitTextSKK(text: CharSequence, newCursorPosition: Int) {
         val ic = mService.currentInputConnection ?: return
 
-        if (!mRegistrationStack.isEmpty()) {
-            mRegistrationStack.peekFirst().entry.append(text)
+        val firstEntry = mRegistrationStack.peekFirst()?.entry
+        if (firstEntry != null) {
+            firstEntry.append(text)
             setComposingTextSKK("", newCursorPosition)
         } else {
             ic.commitText(text, newCursorPosition)
@@ -341,10 +335,10 @@ class SKKEngine(
                 val cs = ic.getTextBeforeCursor(1, 0) ?: return
                 val newLastChar = RomajiConverter.convertLastChar(cs.toString(), type) ?: return
 
-                if (!mRegistrationStack.isEmpty()) {
-                    val regEntry = mRegistrationStack.peekFirst().entry
-                    regEntry.deleteCharAt(regEntry.length - 1)
-                    regEntry.append(newLastChar)
+                val firstEntry = mRegistrationStack.peekFirst()?.entry
+                if (firstEntry != null) {
+                    firstEntry.deleteCharAt(firstEntry.length - 1)
+                    firstEntry.append(newLastChar)
                     setComposingTextSKK("", 1)
                 } else {
                     ic.deleteSurroundingText(1, 0)
@@ -373,15 +367,17 @@ class SKKEngine(
             repeat(depth) { ct.append("]") }
 
             val regInfo = mRegistrationStack.peekFirst()
-            if (regInfo.okurigana == null) {
-                ct.append(regInfo.key)
-            } else {
-                ct.append(regInfo.key.substring(0, regInfo.key.length - 1))
-                ct.append("*")
-                ct.append(regInfo.okurigana)
+            if (regInfo != null) {
+                if (regInfo.okurigana == null) {
+                    ct.append(regInfo.key)
+                } else {
+                    ct.append(regInfo.key.substring(0, regInfo.key.length - 1))
+                    ct.append("*")
+                    ct.append(regInfo.okurigana)
+                }
+                ct.append("：")
+                ct.append(regInfo.entry)
             }
-            ct.append("：")
-            ct.append(regInfo.entry)
         }
 
         if (state === SKKAbbrevState || state === SKKKanjiState || state === SKKOkuriganaState) {
@@ -443,7 +439,7 @@ class SKKEngine(
         val lastConv = mLastConversion ?: return false
 
         val s = lastConv.candidate
-        dlog("last conversion: " + s)
+        dlog("last conversion: $s")
         if (mService.prepareReConversion(s)) {
             mUserDict.rollBack()
 
@@ -539,25 +535,27 @@ class SKKEngine(
         val list2 = entry?.candidates
 
         if (list1.isEmpty() && list2 == null) {
-            dlog("Dictoinary: Can't find Kanji for " + key)
+            dlog("Dictoinary: Can't find Kanji for $key")
             return null
         }
 
         if (list2 != null) {
             var idx = 0
             for (s in list2) {
-                if (mOkurigana != null) {
-                    if (entry.okuri_blocks.all { it[0] != mOkurigana || !it.contains(s) }) continue
-                    //送りがなブロックに見つからなければ，追加しない
+                when {
+                    mOkurigana == null
+                     || entry.okuri_blocks.any { it.first == mOkurigana && it.second == s } -> {
+                        //個人辞書の候補を先頭に追加
+                        list1.remove(s)
+                        list1.add(idx, s)
+                        idx++
+                    }
+                    !list1.contains(s) -> { list1.add(s) } //送りがなブロックにマッチしない場合も、無ければ最後に追加
                 }
-                //個人辞書の候補を先頭に追加
-                list1.remove(s)
-                list1.add(idx, s)
-                idx++
             }
         }
 
-        return if (list1.isNotEmpty()) list1 else null
+        return list1.ifEmpty { null }
     }
 
     fun setCurrentCandidateToComposing() {
@@ -641,7 +639,7 @@ class SKKEngine(
     internal fun changeInputMode(pcode: Int, toKatakana: Boolean): Boolean {
         // 入力モード変更操作．変更したらtrue
         when (pcode) {
-            'q'.toInt() -> {
+            'q'.code -> {
                 if (toKatakana) {
                     changeState(SKKKatakanaState)
                 } else {
@@ -649,17 +647,17 @@ class SKKEngine(
                 }
                 return true
             }
-            'l'.toInt() ->  {
+            'l'.code ->  {
                 if (mComposing.length != 1 || mComposing[0] != 'z') {
                     changeState(SKKASCIIState)
                     return true
                 }
             } // 「→」を入力するための例外
-            'L'.toInt() -> {
+            'L'.code -> {
                 changeState(SKKZenkakuState)
                 return true
             }
-            '/'.toInt() -> if (mComposing.isEmpty()) {
+            '/'.code -> if (mComposing.isEmpty()) {
                 changeState(SKKAbbrevState)
                 return true
             }

@@ -1,8 +1,6 @@
 package jp.deadend.noname.skk
 
 import android.content.Context
-import android.inputmethodservice.Keyboard
-import android.inputmethodservice.KeyboardView
 import android.text.ClipboardManager
 import android.util.AttributeSet
 import android.view.KeyEvent
@@ -11,12 +9,9 @@ import android.util.SparseArray
 import android.view.LayoutInflater
 import android.widget.PopupWindow
 import android.content.Context.CLIPBOARD_SERVICE
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.drawable.ShapeDrawable
 import android.widget.TextView
+import jp.deadend.noname.skk.databinding.PopupFlickguideBinding
 import jp.deadend.noname.skk.engine.SKKEngine
-import kotlinx.android.synthetic.main.popup_flickguide.view.*
 
 class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener {
     private lateinit var mService: SKKService
@@ -39,17 +34,13 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
     private val mPopupOffset = intArrayOf(0, 0)
     private val mFixedPopupPos = intArrayOf(0, 0)
 
-    private val mJPKeyboard: SKKKeyboard
-    private val mNumKeyboard: SKKKeyboard
-    private val mVoiceKeyboard: SKKKeyboard
+    private val mJPKeyboard: Keyboard
+    private val mNumKeyboard: Keyboard
+    private val mVoiceKeyboard: Keyboard
 
     private var mKutoutenLabel = "，．？！"
     private val mKutoutenKey: Keyboard.Key
     private val mQwertyKey: Keyboard.Key
-
-    private var mHighlightedKey: Keyboard.Key? = null
-    private val mHighlightedDrawable =
-            ShapeDrawable().apply { paint.color = Color.parseColor("#66FF0000") }
 
     //フリックガイドTextView用
     private val mFlickGuideLabelList = SparseArray<Array<String>>()
@@ -78,11 +69,11 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
         isPreviewEnabled = false
         setBackgroundColor(0x00000000)
 
-        mJPKeyboard = SKKKeyboard(context, R.xml.keys_flick_jp, 4)
+        mJPKeyboard = Keyboard(context, R.xml.keys_flick_jp)
         mKutoutenKey = checkNotNull(findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_CHAR_TEN)) { "BUG: no kutoten key" }
         mQwertyKey = checkNotNull(findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_TOQWERTY)) { "BUG: no qwerty key" }
-        mNumKeyboard = SKKKeyboard(context, R.xml.keys_flick_number, 4)
-        mVoiceKeyboard = SKKKeyboard(context, R.xml.keys_flick_voice, 4)
+        mNumKeyboard = Keyboard(context, R.xml.keys_flick_number)
+        mVoiceKeyboard = Keyboard(context, R.xml.keys_flick_voice)
         keyboard = mJPKeyboard
     }
 
@@ -91,29 +82,12 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
         isPreviewEnabled = false
         setBackgroundColor(0x00000000)
 
-        mJPKeyboard = SKKKeyboard(context, R.xml.keys_flick_jp, 4)
+        mJPKeyboard = Keyboard(context, R.xml.keys_flick_jp)
         mKutoutenKey = checkNotNull(findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_CHAR_TEN)) { "BUG: no kutoten key" }
         mQwertyKey = checkNotNull(findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_TOQWERTY)) { "BUG: no qwerty key" }
-        mNumKeyboard = SKKKeyboard(context, R.xml.keys_flick_number, 4)
-        mVoiceKeyboard = SKKKeyboard(context, R.xml.keys_flick_voice, 4)
+        mNumKeyboard = Keyboard(context, R.xml.keys_flick_number)
+        mVoiceKeyboard = Keyboard(context, R.xml.keys_flick_voice)
         keyboard = mJPKeyboard
-    }
-
-    override fun onDraw(canvas: Canvas?) {
-        super.onDraw(canvas)
-        val key = mHighlightedKey
-        if (key != null && canvas != null) {
-            mHighlightedDrawable.apply {
-                setBounds(key.x, key.y, key.x + key.width, key.y + key.height)
-                draw(canvas)
-            }
-        }
-    }
-
-    fun setHighlightedKey(index: Int) {
-        val keys = keyboard.keys
-        mHighlightedKey = if (index in 0 until keys.size) keys[index] else null
-        invalidateAllKeys()
     }
 
     fun setService(listener: SKKService) {
@@ -190,53 +164,26 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
             var key = findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_PASTE)
             if (key != null) {
                 key.codes[0] = KEYCODE_FLICK_JP_LEFT
-                key.label = "←"
+                key.label = ""
             }
             key = findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_RIGHT)
             if (key != null) {
-                key.label = "→"
+                key.label = ""
             }
         }
         invalidateAllKeys()
     }
 
-    private fun adjustKeysHorizontally(
-            keyboard: SKKKeyboard,
-            maxKeyWidth: Int,
-            ratio: Double,
-            position: String
-    ) {
-        var y = 0
-        var colNo = 0
-        val newWidth = (maxKeyWidth * ratio).toInt()
-        val gap = when (position) {
-            "right" -> (maxKeyWidth - newWidth) * 5
-            "center" -> ((maxKeyWidth - newWidth) * 2.5).toInt()
-            else -> 0
-        }
-        for (key in keyboard.keys) {
-            key.width = newWidth
-            if (key.y != y) {
-                y = key.y
-                colNo = 0
-            }
-            key.x = gap + key.width * colNo
-            colNo++
-        }
-    }
-
-    // widthはパーセントでheightはpxなので注意
+    // width・height両方ともパーセント
     internal fun prepareNewKeyboard(context: Context, width: Int, height: Int, position: String) {
-        val keyWidth = mJPKeyboard.keys[0].width
-        adjustKeysHorizontally(mJPKeyboard, keyWidth, width.toDouble() / 100, position)
-        mJPKeyboard.changeKeyHeight(height)
+        mJPKeyboard.resizeByPercentageOfScreen(width, height)
+        mJPKeyboard.setLeftOffset(position)
+        mNumKeyboard.resizeByPercentageOfScreen(width, height)
+        mNumKeyboard.setLeftOffset(position)
+        mVoiceKeyboard.resizeByPercentageOfScreen(width, height)
+        mVoiceKeyboard.setLeftOffset(position)
         keyboard = mJPKeyboard
-
-        adjustKeysHorizontally(mNumKeyboard, keyWidth, width.toDouble() / 100, position)
-        mNumKeyboard.changeKeyHeight(height)
-
-        adjustKeysHorizontally(mVoiceKeyboard, keyWidth, width.toDouble() / 100, position)
-        mVoiceKeyboard.changeKeyHeight(height)
+        invalidateAllKeys()
 
         readPrefs(context)
     }
@@ -244,20 +191,20 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
     private fun readPrefs(context: Context) {
         // フリック感度
         val density = context.resources.displayMetrics.density
-        val sensitivity = when (SKKPrefs.getFlickSensitivity(context)) {
+        val sensitivity = when (skkPrefs.flickSensitivity) {
             "low"  -> (36 * density + 0.5f).toInt()
             "high" -> (12 * density + 0.5f).toInt()
             else   -> (24 * density + 0.5f).toInt()
         }
         mFlickSensitivitySquared = sensitivity * sensitivity
         // カーブフリック感度
-        mCurveSensitivityMultiplier = when (SKKPrefs.getCurveSensitivity(context)) {
+        mCurveSensitivityMultiplier = when (skkPrefs.curveSensitivity) {
             "low" -> 0.5f
             "mid" -> 1.0f
             else -> 2.0f
         }
         // 句読点
-        when (SKKPrefs.getKutoutenType(context)) {
+        when (skkPrefs.kutoutenType) {
             "en" -> {
                 mKutoutenLabel = "，．？！"
                 mFlickGuideLabelList.put(
@@ -279,7 +226,7 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
         }
         mKutoutenKey.label = mKutoutenLabel
         // キャンセルキー
-        if (SKKPrefs.getUseSoftCancelKey(context)) {
+        if (skkPrefs.useSoftCancelKey) {
             val key = findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_KOMOJI)
             if (key != null) {
                 key.label = "CXL"
@@ -287,28 +234,29 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
             }
         }
         // ポップアップ
-        mUsePopup = SKKPrefs.getUsePopup(context)
+        mUsePopup = skkPrefs.usePopup
         if (mUsePopup) {
-            mFixedPopup = SKKPrefs.getFixedPopup(context)
+            mFixedPopup = skkPrefs.useFixedPopup
             if (mPopup == null) {
                 val popup = createPopupGuide(context)
                 mPopup = popup
+                val binding = PopupFlickguideBinding.bind(popup.contentView)
                 mPopupTextView = arrayOf(
-                        popup.contentView.labelA,
-                        popup.contentView.labelI,
-                        popup.contentView.labelU,
-                        popup.contentView.labelE,
-                        popup.contentView.labelO,
-                        popup.contentView.labelLeftA,
-                        popup.contentView.labelRightA,
-                        popup.contentView.labelLeftI,
-                        popup.contentView.labelRightI,
-                        popup.contentView.labelLeftU,
-                        popup.contentView.labelRightU,
-                        popup.contentView.labelLeftE,
-                        popup.contentView.labelRightE,
-                        popup.contentView.labelLeftO,
-                        popup.contentView.labelRightO
+                        binding.labelA,
+                        binding.labelI,
+                        binding.labelU,
+                        binding.labelE,
+                        binding.labelO,
+                        binding.labelLeftA,
+                        binding.labelRightA,
+                        binding.labelLeftI,
+                        binding.labelRightI,
+                        binding.labelLeftU,
+                        binding.labelRightU,
+                        binding.labelLeftE,
+                        binding.labelRightE,
+                        binding.labelLeftO,
+                        binding.labelRightO
                 )
             }
         }
@@ -578,23 +526,23 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
     }
 
     private fun processFlickForLetter(keyCode: Int, flick: Int, isShifted: Boolean) {
-        var vowel: Int = 'a'.toInt()
+        var vowel: Int = 'a'.code
         when (flick) {
-            FLICK_STATE_LEFT, FLICK_STATE_LEFT_LEFT, FLICK_STATE_LEFT_RIGHT -> vowel = 'i'.toInt()
-            FLICK_STATE_UP, FLICK_STATE_UP_LEFT, FLICK_STATE_UP_RIGHT -> vowel = 'u'.toInt()
-            FLICK_STATE_RIGHT, FLICK_STATE_RIGHT_LEFT, FLICK_STATE_RIGHT_RIGHT -> vowel = 'e'.toInt()
-            FLICK_STATE_DOWN, FLICK_STATE_DOWN_LEFT, FLICK_STATE_DOWN_RIGHT -> vowel = 'o'.toInt()
+            FLICK_STATE_LEFT, FLICK_STATE_LEFT_LEFT, FLICK_STATE_LEFT_RIGHT -> vowel = 'i'.code
+            FLICK_STATE_UP, FLICK_STATE_UP_LEFT, FLICK_STATE_UP_RIGHT -> vowel = 'u'.code
+            FLICK_STATE_RIGHT, FLICK_STATE_RIGHT_LEFT, FLICK_STATE_RIGHT_RIGHT -> vowel = 'e'.code
+            FLICK_STATE_DOWN, FLICK_STATE_DOWN_LEFT, FLICK_STATE_DOWN_RIGHT -> vowel = 'o'.code
         }
 
         val consonant: Int
         when (keyCode) {
             KEYCODE_FLICK_JP_CHAR_A -> {
                 if (isLeftCurve(flick)) {
-                    mService.processKey('x'.toInt())
+                    mService.processKey('x'.code)
                     mService.processKey(vowel)
                 } else if (!isHiragana && flick == FLICK_STATE_UP_RIGHT) {
-                    mService.processKey('v'.toInt())
-                    mService.processKey('u'.toInt())
+                    mService.processKey('v'.code)
+                    mService.processKey('u'.code)
                 } else if (isShifted) {
                     mService.processKey(Character.toUpperCase(vowel))
                 } else {
@@ -602,59 +550,59 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
                 }
                 return
             }
-            KEYCODE_FLICK_JP_CHAR_KA -> consonant = (if (isRightCurve(flick)) 'g' else 'k').toInt()
-            KEYCODE_FLICK_JP_CHAR_SA -> consonant = (if (isRightCurve(flick)) 'z' else 's').toInt()
-            KEYCODE_FLICK_JP_CHAR_TA -> consonant = (if (isRightCurve(flick)) 'd' else 't').toInt()
-            KEYCODE_FLICK_JP_CHAR_NA -> consonant = 'n'.toInt()
+            KEYCODE_FLICK_JP_CHAR_KA -> consonant = (if (isRightCurve(flick)) 'g' else 'k').code
+            KEYCODE_FLICK_JP_CHAR_SA -> consonant = (if (isRightCurve(flick)) 'z' else 's').code
+            KEYCODE_FLICK_JP_CHAR_TA -> consonant = (if (isRightCurve(flick)) 'd' else 't').code
+            KEYCODE_FLICK_JP_CHAR_NA -> consonant = 'n'.code
             KEYCODE_FLICK_JP_CHAR_HA -> consonant = when {
-                isRightCurve(flick) -> 'b'.toInt()
-                isLeftCurve(flick)  -> 'p'.toInt()
-                else -> 'h'.toInt()
+                isRightCurve(flick) -> 'b'.code
+                isLeftCurve(flick)  -> 'p'.code
+                else -> 'h'.code
             }
-            KEYCODE_FLICK_JP_CHAR_MA -> consonant = 'm'.toInt()
-            KEYCODE_FLICK_JP_CHAR_YA -> consonant = 'y'.toInt()
-            KEYCODE_FLICK_JP_CHAR_RA -> consonant = 'r'.toInt()
+            KEYCODE_FLICK_JP_CHAR_MA -> consonant = 'm'.code
+            KEYCODE_FLICK_JP_CHAR_YA -> consonant = 'y'.code
+            KEYCODE_FLICK_JP_CHAR_RA -> consonant = 'r'.code
             KEYCODE_FLICK_JP_CHAR_WA -> {
                 when (flick) {
                     FLICK_STATE_NONE -> {
                         if (isShifted) {
-                            mService.processKey('W'.toInt())
+                            mService.processKey('W'.code)
                         } else {
-                            mService.processKey('w'.toInt())
+                            mService.processKey('w'.code)
                         }
-                        mService.processKey('a'.toInt())
+                        mService.processKey('a'.code)
                     }
                     FLICK_STATE_LEFT -> {
-                        mService.processKey('w'.toInt())
-                        mService.processKey('o'.toInt())
+                        mService.processKey('w'.code)
+                        mService.processKey('o'.code)
                     }
                     FLICK_STATE_UP -> {
                         if (isShifted) {
-                            mService.processKey('N'.toInt())
+                            mService.processKey('N'.code)
                         } else {
-                            mService.processKey('n'.toInt())
+                            mService.processKey('n'.code)
                         }
-                        mService.processKey('n'.toInt())
+                        mService.processKey('n'.code)
                     }
-                    FLICK_STATE_RIGHT -> mService.processKey('-'.toInt())
+                    FLICK_STATE_RIGHT -> mService.processKey('-'.code)
                 }
                 return
             }
             KEYCODE_FLICK_JP_CHAR_TEN -> {
                 when (flick) {
-                    FLICK_STATE_NONE  -> mService.processKey(','.toInt())
-                    FLICK_STATE_LEFT  -> mService.processKey('.'.toInt())
-                    FLICK_STATE_UP    -> mService.processKey('?'.toInt())
-                    FLICK_STATE_RIGHT -> mService.processKey('!'.toInt())
+                    FLICK_STATE_NONE  -> mService.processKey(','.code)
+                    FLICK_STATE_LEFT  -> mService.processKey('.'.code)
+                    FLICK_STATE_UP    -> mService.processKey('?'.code)
+                    FLICK_STATE_RIGHT -> mService.processKey('!'.code)
                 }
                 return
             }
             KEYCODE_FLICK_JP_CHAR_TEN_SHIFTED -> {
                 when (flick) {
-                    FLICK_STATE_NONE  -> mService.processKey('('.toInt())
-                    FLICK_STATE_LEFT  -> mService.processKey('['.toInt())
-                    FLICK_STATE_UP    -> mService.processKey(']'.toInt())
-                    FLICK_STATE_RIGHT -> mService.processKey(')'.toInt())
+                    FLICK_STATE_NONE  -> mService.processKey('('.code)
+                    FLICK_STATE_LEFT  -> mService.processKey('['.code)
+                    FLICK_STATE_UP    -> mService.processKey(']'.code)
+                    FLICK_STATE_RIGHT -> mService.processKey(')'.code)
                 }
                 return
             }
@@ -678,8 +626,8 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
         mService.processKey(vowel)
 
         if (isLeftCurve(flick)) {
-            if (consonant == 't'.toInt() && vowel == 'u'.toInt()
-                    || consonant == 'y'.toInt() && (vowel == 'a'.toInt() || vowel == 'u'.toInt() || vowel == 'o'.toInt())) {
+            if (consonant == 't'.code && vowel == 'u'.code
+                    || consonant == 'y'.code && (vowel == 'a'.code || vowel == 'u'.code || vowel == 'o'.code)) {
                 mService.changeLastChar(SKKEngine.LAST_CONVERTION_SMALL)
             }
         }
@@ -751,7 +699,7 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
         mFixedPopupPos[1] = windowLocation[1] - size / 2 + mPopupOffset[1]
     }
 
-    override fun onKey(primaryCode: Int, keyCodes: IntArray) {
+    override fun onKey(primaryCode: Int) {
         when (primaryCode) {
             Keyboard.KEYCODE_SHIFT -> {
                 isShifted = !isShifted
@@ -780,7 +728,7 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
 
     private fun release() {
         when (mLastPressedKey) {
-            KEYCODE_FLICK_JP_SPACE  -> mService.processKey(' '.toInt())
+            KEYCODE_FLICK_JP_SPACE  -> mService.processKey(' '.code)
             KEYCODE_FLICK_JP_ENTER  -> if (!mService.handleEnter()) mService.pressEnter()
             KEYCODE_FLICK_JP_KOMOJI -> when (mFlickState) {
                 FLICK_STATE_NONE  -> mService.changeLastChar(SKKEngine.LAST_CONVERTION_SMALL)
@@ -789,17 +737,17 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
             }
             KEYCODE_FLICK_JP_CANCEL -> mService.handleCancel()
             KEYCODE_FLICK_JP_MOJI   -> when (mFlickState) {
-                FLICK_STATE_NONE -> mService.processKey('q'.toInt())
-                FLICK_STATE_LEFT -> mService.processKey(':'.toInt())
+                FLICK_STATE_NONE -> mService.processKey('q'.code)
+                FLICK_STATE_LEFT -> mService.processKey(':'.code)
                 FLICK_STATE_UP   -> if (keyboard !== mNumKeyboard) { keyboard = mNumKeyboard }
-                FLICK_STATE_RIGHT-> mService.processKey('>'.toInt())
+                FLICK_STATE_RIGHT-> mService.processKey('>'.code)
                 FLICK_STATE_DOWN -> if (keyboard !== mVoiceKeyboard) { keyboard = mVoiceKeyboard }
             }
             KEYCODE_FLICK_JP_TOKANA -> if (keyboard !== mJPKeyboard) { keyboard = mJPKeyboard }
             KEYCODE_FLICK_JP_TOQWERTY -> if (isShifted) {
-                mService.processKey('/'.toInt())
+                mService.processKey('/'.code)
             } else {
-                mService.processKey('l'.toInt())
+                mService.processKey('l'.code)
             }
             KEYCODE_FLICK_JP_SPEECH -> mService.recognizeSpeech()
             KEYCODE_FLICK_JP_CHAR_A, KEYCODE_FLICK_JP_CHAR_KA, KEYCODE_FLICK_JP_CHAR_SA,
