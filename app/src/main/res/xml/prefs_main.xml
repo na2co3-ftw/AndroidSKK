@@ -24,13 +24,13 @@
     <Preference
         app:title="@string/label_dicmanager_activity" >
         <intent android:action="android.intent.action.MAIN"
-            android:targetPackage="jp.deadend.noname.skk"
+            android:targetPackage="jp.gr.java_conf.na2co3.skk"
             android:targetClass="jp.deadend.noname.skk.SKKDicManager" />
     </Preference>
     <Preference
         app:title="@string/label_dictool_activity" >
         <intent android:action="android.intent.action.MAIN"
-            android:targetPackage="jp.deadend.noname.skk"
+            android:targetPackage="jp.gr.java_conf.na2co3.skk"
             android:targetClass="jp.deadend.noname.skk.SKKUserDicTool" />
     </Preference>
     <Preference

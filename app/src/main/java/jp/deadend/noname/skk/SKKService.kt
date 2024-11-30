@@ -873,12 +873,12 @@ class SKKService : InputMethodService() {
     }
 
     companion object {
-        internal const val ACTION_COMMAND = "jp.deadend.noname.skk.ACTION_COMMAND"
-        internal const val KEY_COMMAND = "jp.deadend.noname.skk.KEY_COMMAND"
-        internal const val COMMAND_COMMIT_USERDIC = "jp.deadend.noname.skk.COMMAND_COMMIT_USERDIC"
-        internal const val COMMAND_READ_PREFS = "jp.deadend.noname.skk.COMMAND_READ_PREFS"
-        internal const val COMMAND_RELOAD_DICS = "jp.deadend.noname.skk.COMMAND_RELOAD_DICS"
-        internal const val COMMAND_SPEECH_RECOGNITION = "jp.deadend.noname.skk.COMMAND_SPEECH_RECOGNITION"
+        internal const val ACTION_COMMAND = "jp.gr.java_conf.na2co3.skk.ACTION_COMMAND"
+        internal const val KEY_COMMAND = "jp.gr.java_conf.na2co3.skk.KEY_COMMAND"
+        internal const val COMMAND_COMMIT_USERDIC = "jp.gr.java_conf.na2co3.skk.COMMAND_COMMIT_USERDIC"
+        internal const val COMMAND_READ_PREFS = "jp.gr.java_conf.na2co3.skk.COMMAND_READ_PREFS"
+        internal const val COMMAND_RELOAD_DICS = "jp.gr.java_conf.na2co3.skk.COMMAND_RELOAD_DICS"
+        internal const val COMMAND_SPEECH_RECOGNITION = "jp.gr.java_conf.na2co3.skk.COMMAND_SPEECH_RECOGNITION"
         internal const val DICT_ZIP_FILE = "skk_dict_btree_db.zip"
         internal const val FREQUENCY_LIST_FILE = "en_US_wordlist.txt"
         private const val CHANNEL_ID = "skk_notification"
