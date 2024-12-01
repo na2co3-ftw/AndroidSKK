@@ -320,11 +320,10 @@ class SKKEngine(
                 val okuri = mOkurigana ?: return
                 val newOkuri = RomajiConverter.convertLastChar(okuri, type) ?: return
 
-                // 例外: 送りがなが「っ」になる場合は，どのみち必ずt段の音なのでmKanjiKeyはそのまま
-                // 「ゃゅょ」で送りがなが始まる場合はないはず
-                if (type != LAST_CONVERTION_SMALL) {
+                val consonantForVoiced = RomajiConverter.getConsonantForVoiced(newOkuri)
+                if (consonantForVoiced != null) {
                     mKanjiKey.deleteCharAt(mKanjiKey.length - 1)
-                    mKanjiKey.append(RomajiConverter.getConsonantForVoiced(newOkuri))
+                    mKanjiKey.append(consonantForVoiced)
                 }
                 mOkurigana = newOkuri
                 conversionStart(mKanjiKey) //変換やりなおし
@@ -693,7 +692,6 @@ class SKKEngine(
 
     companion object {
         const val LAST_CONVERTION_SMALL = "small"
-        const val LAST_CONVERTION_DAKUTEN = "daku"
-        const val LAST_CONVERTION_HANDAKUTEN = "handaku"
+        const val LAST_CONVERTION_ROTATE = "rotate"
     }
 }

@@ -60,7 +60,6 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
         a.append(KEYCODE_FLICK_JP_CHAR_TEN, arrayOf("、", "。", "？", "！", "", "", ""))
         a.append(KEYCODE_FLICK_JP_CHAR_TEN_SHIFTED, arrayOf("（", "「", "」", "）", "", "", ""))
         a.append(KEYCODE_FLICK_JP_CHAR_TEN_NUM, arrayOf("，", "．", "−", "：", "", "", ""))
-        a.append(KEYCODE_FLICK_JP_KOMOJI, arrayOf("小", "゛", "", "゜", "", "", ""))
         a.append(KEYCODE_FLICK_JP_MOJI, arrayOf("仮", "：", "数", "＞", "声", "", ""))
     }
 
@@ -227,7 +226,7 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
         mKutoutenKey.label = mKutoutenLabel
         // キャンセルキー
         if (skkPrefs.useSoftCancelKey) {
-            val key = findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_KOMOJI)
+            val key = findKeyByCode(mJPKeyboard, KEYCODE_FLICK_JP_ROTATE)
             if (key != null) {
                 key.label = "CXL"
                 key.codes[0] = KEYCODE_FLICK_JP_CANCEL
@@ -730,11 +729,7 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
         when (mLastPressedKey) {
             KEYCODE_FLICK_JP_SPACE  -> mService.processKey(' '.code)
             KEYCODE_FLICK_JP_ENTER  -> if (!mService.handleEnter()) mService.pressEnter()
-            KEYCODE_FLICK_JP_KOMOJI -> when (mFlickState) {
-                FLICK_STATE_NONE  -> mService.changeLastChar(SKKEngine.LAST_CONVERTION_SMALL)
-                FLICK_STATE_LEFT  -> mService.changeLastChar(SKKEngine.LAST_CONVERTION_DAKUTEN)
-                FLICK_STATE_RIGHT -> mService.changeLastChar(SKKEngine.LAST_CONVERTION_HANDAKUTEN)
-            }
+            KEYCODE_FLICK_JP_ROTATE -> mService.changeLastChar(SKKEngine.LAST_CONVERTION_ROTATE)
             KEYCODE_FLICK_JP_CANCEL -> mService.handleCancel()
             KEYCODE_FLICK_JP_MOJI   -> when (mFlickState) {
                 FLICK_STATE_NONE -> mService.processKey('q'.code)
@@ -805,7 +800,7 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
         private const val KEYCODE_FLICK_JP_TOQWERTY = -1003
         private const val KEYCODE_FLICK_JP_SPACE = -1004
         private const val KEYCODE_FLICK_JP_MOJI = -1005
-        private const val KEYCODE_FLICK_JP_KOMOJI = -1006
+        private const val KEYCODE_FLICK_JP_ROTATE = -1006
         private const val KEYCODE_FLICK_JP_ENTER = -1007
         private const val KEYCODE_FLICK_JP_SEARCH = -1008
         private const val KEYCODE_FLICK_JP_CANCEL = -1009

@@ -70,39 +70,43 @@ object RomajiConverter {
         "ャ" to "ヤ", "ュ" to "ユ", "ョ" to "ヨ", "ッ" to "ツ"
     )
 
-    private val mDakutenMap = mapOf(
+    private val mRotateKanaMap = mapOf(
+        "あ" to "ぁ", "い" to "ぃ", "う" to "ぅ", "え" to "ぇ", "お" to "ぉ",
+        "ぁ" to "あ", "ぃ" to "い", "ぅ" to "う", "ぇ" to "え", "ぉ" to "お",
         "か" to "が", "き" to "ぎ", "く" to "ぐ", "け" to "げ", "こ" to "ご",
         "が" to "か", "ぎ" to "き", "ぐ" to "く", "げ" to "け", "ご" to "こ",
         "さ" to "ざ", "し" to "じ", "す" to "ず", "せ" to "ぜ", "そ" to "ぞ",
         "ざ" to "さ", "じ" to "し", "ず" to "す", "ぜ" to "せ", "ぞ" to "そ",
-        "た" to "だ", "ち" to "ぢ", "つ" to "づ", "て" to "で", "と" to "ど",
+        "た" to "だ", "ち" to "ぢ", "つ" to "っ", "て" to "で", "と" to "ど",
+        "っ" to "づ",
         "だ" to "た", "ぢ" to "ち", "づ" to "つ", "で" to "て", "ど" to "と",
         "は" to "ば", "ひ" to "び", "ふ" to "ぶ", "へ" to "べ", "ほ" to "ぼ",
-        "ば" to "は", "び" to "ひ", "ぶ" to "ふ", "べ" to "へ", "ぼ" to "ほ",
+        "ば" to "ぱ", "び" to "ぴ", "ぶ" to "ぷ", "べ" to "ぺ", "ぼ" to "ぽ",
+        "ぱ" to "は", "ぴ" to "ひ", "ぷ" to "ふ", "ぺ" to "へ", "ぽ" to "ほ",
+        "や" to "ゃ", "ゆ" to "ゅ", "よ" to "ょ",
+        "ゃ" to "や", "ゅ" to "ゆ", "ょ" to "よ",
+        "ア" to "ァ", "イ" to "ィ", "ウ" to "ゥ", "エ" to "ェ", "オ" to "ォ",
+        "ァ" to "ア", "ィ" to "イ", "ゥ" to "ヴ", "ェ" to "エ", "ォ" to "オ",
+        "ヴ" to "ウ",
         "カ" to "ガ", "キ" to "ギ", "ク" to "グ", "ケ" to "ゲ", "コ" to "ゴ",
         "ガ" to "カ", "ギ" to "キ", "グ" to "ク", "ゲ" to "ケ", "ゴ" to "コ",
-        "サ" to "ザ", "シ" to "ジ", "ス" to "ズ", "セ" to "セ", "ソ" to "ゾ",
-        "ザ" to "サ", "ジ" to "シ", "ズ" to "ス", "ゼ" to "ゼ", "ゾ" to "ソ",
-        "タ" to "ダ", "チ" to "ヂ", "ツ" to "ヅ", "テ" to "デ", "ト" to "ド",
+        "サ" to "ザ", "シ" to "ジ", "ス" to "ズ", "セ" to "ゼ", "ソ" to "ゾ",
+        "ザ" to "サ", "ジ" to "シ", "ズ" to "ス", "ゼ" to "セ", "ゾ" to "ソ",
+        "タ" to "ダ", "チ" to "ヂ", "ツ" to "ッ", "テ" to "デ", "ト" to "ド",
+        "ッ" to "ヅ",
         "ダ" to "タ", "ヂ" to "チ", "ヅ" to "ツ", "デ" to "テ", "ド" to "ト",
         "ハ" to "バ", "ヒ" to "ビ", "フ" to "ブ", "ヘ" to "ベ", "ホ" to "ボ",
-        "バ" to "ハ", "ビ" to "ヒ", "ブ" to "フ", "ベ" to "ヘ", "ボ" to "ホ",
-        "ウ" to "ヴ", "ヴ" to "ウ"
-    )
-
-    private val mHandakutenMap = mapOf(
-        "は" to "ぱ", "ひ" to "ぴ", "ふ" to "ぷ", "へ" to "ぺ", "ほ" to "ぽ",
-        "ぱ" to "は", "ぴ" to "ひ", "ぷ" to "ふ", "ぺ" to "へ", "ぽ" to "ほ",
-        "ハ" to "パ", "ヒ" to "ピ", "フ" to "プ", "ヘ" to "ペ", "ホ" to "ポ",
-        "パ" to "ハ", "ピ" to "ヒ", "プ" to "フ", "ペ" to "ヘ", "ポ" to "ホ"
+        "バ" to "パ", "ビ" to "ピ", "ブ" to "プ", "ベ" to "ペ", "ボ" to "ポ",
+        "パ" to "ハ", "ピ" to "ヒ", "プ" to "フ", "ペ" to "ヘ", "ポ" to "ホ",
+        "ヤ" to "ャ", "ユ" to "ュ", "ヨ" to "ョ",
+        "ャ" to "ヤ", "ュ" to "ユ", "ョ" to "ヨ"
     )
 
     fun convert(romaji: String) = mRomajiMap[romaji]
     fun getConsonantForVoiced(kana: String) = mConsonantMap[kana]
     fun convertLastChar(kana: String, type: String) = when (type) {
         SKKEngine.LAST_CONVERTION_SMALL      -> mSmallKanaMap[kana]
-        SKKEngine.LAST_CONVERTION_DAKUTEN    -> mDakutenMap[kana]
-        SKKEngine.LAST_CONVERTION_HANDAKUTEN -> mHandakutenMap[kana]
+        SKKEngine.LAST_CONVERTION_ROTATE     -> mRotateKanaMap[kana]
         else -> null
     }
     // 1文字目と2文字目を合わせて"ん"・"っ"になるか判定
