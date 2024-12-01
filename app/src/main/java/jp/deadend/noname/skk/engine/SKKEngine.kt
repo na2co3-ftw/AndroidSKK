@@ -329,11 +329,31 @@ class SKKEngine(
                 conversionStart(mKanjiKey) //変換やりなおし
             }
             mComposing.isEmpty() && mKanjiKey.isEmpty() -> {
+                val regInfo = mRegistrationStack.peekFirst()
+                if (regInfo != null && regInfo.entry.isEmpty()) {
+                    val okuri = regInfo.okurigana ?: return
+                    val newOkuri = RomajiConverter.convertLastChar(okuri, type) ?: return
+
+                    mRegistrationStack.removeFirst()
+                    mService.onFinishRegister()
+
+                    mKanjiKey.setLength(0)
+                    mKanjiKey.append(regInfo.key)
+                    val consonantForVoiced = RomajiConverter.getConsonantForVoiced(newOkuri)
+                    if (consonantForVoiced != null) {
+                        mKanjiKey.deleteCharAt(mKanjiKey.length - 1)
+                        mKanjiKey.append(consonantForVoiced)
+                    }
+                    mOkurigana = newOkuri
+                    conversionStart(mKanjiKey) //変換やりなおし
+                    return
+                }
+
                 val ic = mService.currentInputConnection ?: return
                 val cs = ic.getTextBeforeCursor(1, 0) ?: return
                 val newLastChar = RomajiConverter.convertLastChar(cs.toString(), type) ?: return
 
-                val firstEntry = mRegistrationStack.peekFirst()?.entry
+                val firstEntry = regInfo?.entry
                 if (firstEntry != null) {
                     firstEntry.deleteCharAt(firstEntry.length - 1)
                     firstEntry.append(newLastChar)
