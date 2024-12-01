@@ -5,7 +5,7 @@
 	app:verticalGap="0dip"
 	app:keyHeight="8%p">
 	<Row>
-		<Key app:codes="0" />
+		<Key app:codes="-1010" app:keyLabel="かな" />
 		<Key app:codes="49" app:keyLabel="1" />
 		<Key app:codes="50" app:keyLabel="2" />
 		<Key app:codes="51" app:keyLabel="3" />
@@ -19,7 +19,7 @@
 		<Key app:codes="-1002" app:keyIcon="@drawable/ic_keyboard_arrow_right" app:isRepeatable="true" />
 	</Row>
 	<Row>
-		<Key app:codes="-1010" app:keyLabel="かな" />
+		<Key app:codes="0" />
 		<Key app:codes="55" app:keyLabel="7" />
 		<Key app:codes="56" app:keyLabel="8" />
 		<Key app:codes="57" app:keyLabel="9" />

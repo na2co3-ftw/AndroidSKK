@@ -19,29 +19,29 @@
     </Row>
 
     <Row>
-        <Key app:codes="33" app:keyLabel="!" app:keyEdgeFlags="left"/>
-        <Key app:codes="64" app:keyLabel="\@"/>
-        <Key app:codes="35" app:keyLabel="\#"/>
-        <Key app:codes="36" app:keyLabel="$"/>
-        <Key app:codes="37" app:keyLabel="%"/>
-        <Key app:codes="94" app:keyLabel="^"/>
-        <Key app:codes="38" app:keyLabel="&amp;"/>
+        <Key app:codes="64" app:keyLabel="\@" app:keyEdgeFlags="left"/>
         <Key app:codes="42" app:keyLabel="*"/>
+        <Key app:codes="35" app:keyLabel="\#"/>
+        <Key app:codes="95" app:keyLabel="_"/>
+        <Key app:codes="45" app:keyLabel="-"/>
+        <Key app:codes="43" app:keyLabel="+"/>
         <Key app:codes="40" app:keyLabel="("/>
-        <Key app:codes="41" app:keyLabel=")" app:keyEdgeFlags="right"/>
+        <Key app:codes="41" app:keyLabel=")"/>
+        <Key app:codes="91" app:keyLabel="["/>
+        <Key app:codes="93" app:keyLabel="]" app:keyEdgeFlags="right"/>
     </Row>
 
     <Row>
         <Key app:codes="-1" app:keyIcon="@drawable/ic_keyboard_shift"
                 app:keyWidth="15%p" app:isModifier="true"
                 app:isSticky="true" app:keyEdgeFlags="left"/>
-        <Key app:codes="45" app:keyLabel="-" />
-        <Key app:codes="61" app:keyLabel="="/>
-        <Key app:codes="91" app:keyLabel="["/>
-        <Key app:codes="93" app:keyLabel="]"/>
+        <Key app:codes="47" app:keyLabel="/" />
+        <Key app:codes="34" app:keyLabel="&quot;"/>
+        <Key app:codes="39" app:keyLabel="\'"/>
+        <Key app:codes="58" app:keyLabel=":"/>
         <Key app:codes="59" app:keyLabel=";"/>
-        <Key app:codes="39" app:keyLabel="\'" />
-        <Key app:codes="47" app:keyLabel="/"/>
+        <Key app:codes="33" app:keyLabel="!"/>
+        <Key app:codes="63" app:keyLabel="\?"/>
         <Key app:codes="-5" app:keyIcon="@drawable/ic_keyboard_backspace"
                 app:keyWidth="15%p" app:keyEdgeFlags="right"
                 app:isRepeatable="true"/>
@@ -49,12 +49,14 @@
 
     <Row  app:rowEdgeFlags="bottom">
         <Key app:codes="-1008" app:keyLabel="JP"
-                app:keyWidth="20%p" app:keyEdgeFlags="left"/>
+                app:keyWidth="15%p" app:keyEdgeFlags="left"/>
         <Key app:codes="-1010" app:keyLabel="ABC" app:keyWidth="15%p"/>
+        <Key app:codes="44" app:keyLabel=","
+                app:keyWidth="10%p"/>
         <Key app:codes="32" app:keyIcon="@drawable/ic_keyboard_spacebar"
                 app:keyWidth="30%p" app:isRepeatable="true"/>
-        <Key app:codes="46,44" app:keyLabel=". ,"
-                app:keyWidth="15%p"/>
+        <Key app:codes="46" app:keyLabel="."
+                app:keyWidth="10%p"/>
         <Key app:codes="-1011" app:keyIcon="@drawable/ic_keyboard_return"
                 app:keyWidth="20%p" app:keyEdgeFlags="right"/>
     </Row>
