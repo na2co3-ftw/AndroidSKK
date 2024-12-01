@@ -28,4 +28,6 @@
 	<color name="key_checked_color">#FF00E2FF</color>
 	<color name="key_char_color">#FF000000</color>
 	<color name="popup_background_color">#DCDCDC</color>
+	<color name="input_editing">#400060ff</color>
+	<color name="input_converting">#40ff6000</color>
 </resources>

@@ -1,5 +1,10 @@
 package jp.deadend.noname.skk.engine
 
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.BackgroundColorSpan
+import android.text.style.UnderlineSpan
+import androidx.core.content.res.ResourcesCompat
 import jp.deadend.noname.skk.*
 import java.util.ArrayDeque
 
@@ -49,7 +54,16 @@ class SKKEngine(
     )
     private var mLastConversion: ConversionInfo? = null
 
-    init { setZenkakuPunctuationMarks("en") }
+    private val mColorEditing: Int
+    private val mColorConverting: Int
+
+    init {
+        setZenkakuPunctuationMarks("en")
+
+        val r = mService.resources
+        mColorEditing = ResourcesCompat.getColor(r, R.color.input_editing, null)
+        mColorConverting = ResourcesCompat.getColor(r, R.color.input_converting, null)
+    }
 
     fun reopenDictionaries(dics: List<SKKDictionary>) {
         for (dic in mDicts) { dic.close() }
@@ -386,7 +400,7 @@ class SKKEngine(
     internal fun setComposingTextSKK(text: CharSequence, newCursorPosition: Int) {
         val ic = mService.currentInputConnection ?: return
 
-        val ct = StringBuilder()
+        val ct = SpannableStringBuilder()
 
         if (!mRegistrationStack.isEmpty()) {
             val depth = mRegistrationStack.size
@@ -404,20 +418,35 @@ class SKKEngine(
                     ct.append(regInfo.okurigana)
                 }
                 ct.append("：")
+                ct.setSpan(BackgroundColorSpan(mColorConverting), 0, ct.length, Spanned.SPAN_COMPOSING)
+
                 ct.append(regInfo.entry)
             }
         }
 
+        var bg: BackgroundColorSpan? = null
+        val bgStart = ct.length
         if (state === SKKAbbrevState || state === SKKKanjiState || state === SKKOkuriganaState) {
+            bg = BackgroundColorSpan(mColorEditing)
             ct.append("▽")
         } else if (state === SKKChooseState || state === SKKNarrowingState) {
+            bg = BackgroundColorSpan(mColorConverting)
             ct.append("▼")
         }
         ct.append(text)
-        if (state === SKKNarrowingState) {
-            ct.append(" hint: ", SKKNarrowingState.mHint, mComposing)
+        if (bg != null) {
+            ct.setSpan(bg, bgStart, ct.length, Spanned.SPAN_COMPOSING)
         }
 
+        if (state === SKKNarrowingState) {
+            ct.append(" hint: ", BackgroundColorSpan(mColorConverting), Spanned.SPAN_COMPOSING)
+
+            val hintStart = ct.length
+            ct.append(SKKNarrowingState.mHint, mComposing)
+            ct.setSpan(BackgroundColorSpan(mColorEditing), hintStart, ct.length, Spanned.SPAN_COMPOSING)
+        }
+
+        ct.setSpan(UnderlineSpan(), 0, ct.length, Spanned.SPAN_COMPOSING)
         ic.setComposingText(ct, newCursorPosition)
     }
 
