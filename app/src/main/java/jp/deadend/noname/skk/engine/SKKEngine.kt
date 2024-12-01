@@ -150,6 +150,9 @@ class SKKEngine(
                 if (firstEntry.isNotEmpty()) {
                     firstEntry.deleteCharAt(firstEntry.length - 1)
                     setComposingTextSKK("", 1)
+                } else {
+                    cancelRegister()
+                    return true
                 }
             } else {
                 return state.isTransient
