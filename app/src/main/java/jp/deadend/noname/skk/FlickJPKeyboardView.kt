@@ -59,7 +59,7 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
         a.append(KEYCODE_FLICK_JP_CHAR_RA, arrayOf("ら", "り", "る", "れ", "ろ", "", ""))
         a.append(KEYCODE_FLICK_JP_CHAR_WA, arrayOf("わ", "を", "ん", "ー", "", "", ""))
         a.append(KEYCODE_FLICK_JP_CHAR_TEN, arrayOf("、", "。", "？", "！", "", "", ""))
-        a.append(KEYCODE_FLICK_JP_CHAR_TEN_SHIFTED, arrayOf("・", "（", "〜", "）", "…", "", ""))
+        a.append(KEYCODE_FLICK_JP_CHAR_TEN_SHIFTED, arrayOf("・", "(", "〜", ")", "…", "", ""))
         a.append(KEYCODE_FLICK_JP_CHAR_TEN_NUM, arrayOf("，", "．", "−", "：", "", "", ""))
         a.append(KEYCODE_FLICK_JP_MOJI, arrayOf("仮", "：", "数", "＞", "声", "", ""))
     }
@@ -140,7 +140,7 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
     private fun onSetShifted(isShifted: Boolean) {
         if (isShifted) {
             mKutoutenKey.codes[0] = KEYCODE_FLICK_JP_CHAR_TEN_SHIFTED
-            mKutoutenKey.label = "・〜…（）"
+            mKutoutenKey.label = "・〜…()"
             mQwertyKey.label = "abbr"
         } else {
             mKutoutenKey.codes[0] = KEYCODE_FLICK_JP_CHAR_TEN
