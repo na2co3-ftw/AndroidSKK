@@ -19,6 +19,7 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
     private var isHiragana = true
 
     private var mFlickSensitivitySquared = 100
+    private var mUseCurve = false
     private var mCurveSensitivityMultiplier = 2.0f
     private var mLastPressedKey = KEYCODE_FLICK_JP_NONE
     private var mFlickState = FLICK_STATE_NONE
@@ -196,6 +197,8 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
             else   -> (24 * density + 0.5f).toInt()
         }
         mFlickSensitivitySquared = sensitivity * sensitivity
+        // カーブフリック
+        mUseCurve = skkPrefs.useCurve
         // カーブフリック感度
         mCurveSensitivityMultiplier = when (skkPrefs.curveSensitivity) {
             "low" -> 0.5f
@@ -283,6 +286,28 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
             it.text = ""
             it.setBackgroundResource(R.drawable.popup_label)
         }
+
+        if (!mUseCurve) {
+            labels[0].text = mCurrentPopupLabels[0]
+            labels[1].text = mCurrentPopupLabels[1]
+            labels[2].text = mCurrentPopupLabels[2]
+            labels[3].text = mCurrentPopupLabels[3]
+            labels[4].text = mCurrentPopupLabels[4]
+
+            val labelIndex = when (mFlickState) {
+                FLICK_STATE_NONE -> 0
+                FLICK_STATE_LEFT -> 1
+                FLICK_STATE_UP -> 2
+                FLICK_STATE_RIGHT -> 3
+                FLICK_STATE_DOWN -> 4
+                else -> null
+            }
+            if (labelIndex != null) {
+                labels[labelIndex].setBackgroundResource(R.drawable.popup_label_highlighted)
+            }
+            return
+        }
+
         when (mFlickState) {
             FLICK_STATE_NONE -> {
                 labels[0].text = mCurrentPopupLabels[0]
@@ -421,16 +446,22 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
 
                 val dx = event.rawX - mFlickStartX
                 val dy = event.rawY - mFlickStartY
-                if (dx * dx + dy * dy < mFlickSensitivitySquared) { return true }
+                if (mUseCurve) {
+                    if (dx * dx + dy * dy < mFlickSensitivitySquared) {
+                        return true
+                    }
 
-                if (mFlickState == FLICK_STATE_NONE) {
-                    // 一回目の終了座標を記憶
-                    mFlickStartX = event.rawX
-                    mFlickStartY = event.rawY
+                    if (mFlickState == FLICK_STATE_NONE) {
+                        // 一回目の終了座標を記憶
+                        mFlickStartX = event.rawX
+                        mFlickStartY = event.rawY
 
-                    processFirstFlick(dx, dy)
+                        processFirstFlick(dx, dy)
+                    } else {
+                        processCurveFlick(dx, dy)
+                    }
                 } else {
-                    processCurveFlick(dx, dy)
+                    processSingleFlick(dx, dy)
                 }
 
                 if (mUsePopup) setupPopupTextView()
@@ -521,6 +552,21 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
 
         if (hasLeftCurve && isLeftCurve(newstate) || hasRightCurve && isRightCurve(newstate)) {
             mFlickState = newstate
+        }
+    }
+
+    private fun processSingleFlick(dx: Float, dy: Float) {
+        if (dx * dx + dy * dy < mFlickSensitivitySquared) {
+            mFlickState = FLICK_STATE_NONE
+            return
+        }
+
+        val dAngle = diamondAngle(dx, dy)
+        mFlickState = when (dAngle) {
+            in 0.5f..1.5f   -> FLICK_STATE_DOWN
+            in 1.5f..2.5f  -> FLICK_STATE_LEFT
+            in 2.5f..3.5f -> FLICK_STATE_UP
+            else -> FLICK_STATE_RIGHT
         }
     }
 

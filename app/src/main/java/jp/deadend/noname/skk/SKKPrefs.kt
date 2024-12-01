@@ -39,6 +39,10 @@ class SKKPrefs(context: Context) {
         get() = prefs.getString(res.getString(R.string.prefkey_flick_sensitivity2), null) ?: "mid"
         set(value) = prefs.edit().putString(res.getString(R.string.prefkey_flick_sensitivity2), value).apply()
 
+    var useCurve: Boolean
+        get() = prefs.getBoolean(res.getString(R.string.prefkey_use_curve), false)
+        set(value) = prefs.edit().putBoolean(res.getString(R.string.prefkey_use_curve), value).apply()
+
     var curveSensitivity: String
         get() = prefs.getString(res.getString(R.string.prefkey_curve_sensitivity), null) ?: "high"
         set(value) = prefs.edit().putString(res.getString(R.string.prefkey_curve_sensitivity), value).apply()

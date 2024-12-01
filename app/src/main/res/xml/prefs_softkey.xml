@@ -26,6 +26,13 @@
             app:iconSpaceReserved="false"
             />
         <CheckBoxPreference
+            app:key="@string/prefkey_use_curve"
+            app:title="カーブフリックの使用"
+            app:summary="フリック方向を途中で曲げることで濁点等を入力します"
+            app:defaultValue="false"
+            app:iconSpaceReserved="false"
+            />
+        <CheckBoxPreference
             app:key="@string/prefkey_use_popup"
             app:title="ポップアップの使用"
             app:summary="フリック入力用のガイドを表示します"
