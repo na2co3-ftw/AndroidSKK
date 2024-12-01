@@ -31,8 +31,11 @@ class QwertyKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener {
         onKeyboardActionListener = this
     }
 
-    override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if (keyboard !== mLatinKeyboard) {
+            keyboard = mLatinKeyboard
+        }
         isShifted = false
     }
 
@@ -109,21 +112,22 @@ class QwertyKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener {
                 return
             }
             Keyboard.KEYCODE_SHIFT -> {
-                isShifted = !isShifted
-                if (keyboard === mSymbolsKeyboard) {
-                    mSymbolsKeyboard.isShifted = true
+                if (keyboard === mLatinKeyboard) {
+                    isShifted = !isShifted
+                } else if (keyboard === mSymbolsKeyboard) {
                     keyboard = mSymbolsShiftedKeyboard
                     mSymbolsShiftedKeyboard.isShifted = true
                 } else if (keyboard === mSymbolsShiftedKeyboard) {
-                    mSymbolsShiftedKeyboard.isShifted = false
                     keyboard = mSymbolsKeyboard
-                    mSymbolsKeyboard.isShifted = false
                 }
             }
             KEYCODE_QWERTY_ENTER -> if (!mService.handleEnter()) mService.pressEnter()
             KEYCODE_QWERTY_TOJP -> mService.handleKanaKey()
             KEYCODE_QWERTY_TOSYM -> keyboard = mSymbolsKeyboard
-            KEYCODE_QWERTY_TOLATIN -> keyboard = mLatinKeyboard
+            KEYCODE_QWERTY_TOLATIN -> {
+                keyboard = mLatinKeyboard
+                mLatinKeyboard.isShifted = isShifted
+            }
             else -> {
                 val code = if (keyboard === mLatinKeyboard && (isShifted xor mFlicked)) {
                     Character.toUpperCase(primaryCode)
