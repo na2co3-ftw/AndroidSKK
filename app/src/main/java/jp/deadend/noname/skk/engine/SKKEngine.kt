@@ -82,6 +82,12 @@ class SKKEngine(
     }
 
     fun processKey(pcode: Int) {
+        if (pcode == ' '.code && !state.isTransient && mComposing.isEmpty()) {
+            val regInfo = mRegistrationStack.peekFirst()
+            if (regInfo != null && regInfo.entry.isEmpty()) {
+                return
+            }
+        }
         state.processKey(this, pcode)
     }
 
