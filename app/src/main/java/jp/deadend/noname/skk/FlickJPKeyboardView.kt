@@ -55,11 +55,11 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
         a.append(KEYCODE_FLICK_JP_CHAR_NA, arrayOf("な", "に", "ぬ", "ね", "の", "", ""))
         a.append(KEYCODE_FLICK_JP_CHAR_HA, arrayOf("は", "ひ", "ふ", "へ", "ほ", "゜", "゛"))
         a.append(KEYCODE_FLICK_JP_CHAR_MA, arrayOf("ま", "み", "む", "め", "も", "", ""))
-        a.append(KEYCODE_FLICK_JP_CHAR_YA, arrayOf("や", "", "ゆ", "", "よ", "小", ""))
+        a.append(KEYCODE_FLICK_JP_CHAR_YA, arrayOf("や", "「", "ゆ", "」", "よ", "小", ""))
         a.append(KEYCODE_FLICK_JP_CHAR_RA, arrayOf("ら", "り", "る", "れ", "ろ", "", ""))
         a.append(KEYCODE_FLICK_JP_CHAR_WA, arrayOf("わ", "を", "ん", "ー", "", "", ""))
         a.append(KEYCODE_FLICK_JP_CHAR_TEN, arrayOf("、", "。", "？", "！", "", "", ""))
-        a.append(KEYCODE_FLICK_JP_CHAR_TEN_SHIFTED, arrayOf("（", "「", "」", "）", "", "", ""))
+        a.append(KEYCODE_FLICK_JP_CHAR_TEN_SHIFTED, arrayOf("・", "（", "〜", "）", "…", "", ""))
         a.append(KEYCODE_FLICK_JP_CHAR_TEN_NUM, arrayOf("，", "．", "−", "：", "", "", ""))
         a.append(KEYCODE_FLICK_JP_MOJI, arrayOf("仮", "：", "数", "＞", "声", "", ""))
     }
@@ -140,7 +140,7 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
     private fun onSetShifted(isShifted: Boolean) {
         if (isShifted) {
             mKutoutenKey.codes[0] = KEYCODE_FLICK_JP_CHAR_TEN_SHIFTED
-            mKutoutenKey.label = "「」（）"
+            mKutoutenKey.label = "・〜…（）"
             mQwertyKey.label = "abbr"
         } else {
             mKutoutenKey.codes[0] = KEYCODE_FLICK_JP_CHAR_TEN
@@ -605,7 +605,13 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
                 else -> 'h'.code
             }
             KEYCODE_FLICK_JP_CHAR_MA -> consonant = 'm'.code
-            KEYCODE_FLICK_JP_CHAR_YA -> consonant = 'y'.code
+            KEYCODE_FLICK_JP_CHAR_YA -> {
+                when (flick) {
+                    FLICK_STATE_LEFT  -> return mService.processKey('['.code)
+                    FLICK_STATE_RIGHT -> return mService.processKey(']'.code)
+                }
+                consonant = 'y'.code
+            }
             KEYCODE_FLICK_JP_CHAR_RA -> consonant = 'r'.code
             KEYCODE_FLICK_JP_CHAR_WA -> {
                 when (flick) {
@@ -644,10 +650,11 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
             }
             KEYCODE_FLICK_JP_CHAR_TEN_SHIFTED -> {
                 when (flick) {
-                    FLICK_STATE_NONE  -> mService.processKey('('.code)
-                    FLICK_STATE_LEFT  -> mService.processKey('['.code)
-                    FLICK_STATE_UP    -> mService.processKey(']'.code)
+                    FLICK_STATE_NONE  -> mService.processKey('・'.code)
+                    FLICK_STATE_LEFT  -> mService.processKey('('.code)
+                    FLICK_STATE_UP    -> mService.processKey('~'.code)
                     FLICK_STATE_RIGHT -> mService.processKey(')'.code)
+                    FLICK_STATE_DOWN  -> mService.processKey('…'.code)
                 }
                 return
             }

@@ -25,7 +25,8 @@ class SKKEngine(
     // 全角で入力する記号リスト
     private val mZenkakuSeparatorMap = mutableMapOf(
         "-" to "ー", "!" to "！", "?" to "？", "~" to "〜",
-        "[" to "「", "]" to "」", "(" to "（", ")" to "）"
+        "[" to "「", "]" to "」", "(" to "（", ")" to "）",
+        "・" to "・", "…" to "…"
     )
     val isRegistering: Boolean
         get() = !mRegistrationStack.isEmpty()
