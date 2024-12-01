@@ -541,11 +541,22 @@ class SKKEngine(
         val regInfo = mRegistrationStack.removeFirst()
         mKanjiKey.setLength(0)
         mKanjiKey.append(regInfo.key)
+        mOkurigana = regInfo.okurigana
         mComposing.setLength(0)
-        changeState(SKKKanjiState)
-        setComposingTextSKK(mKanjiKey, 1)
-        updateSuggestions(mKanjiKey.toString())
         mService.onFinishRegister()
+
+        changeState(SKKChooseState)
+        val list = findCandidates(regInfo.key)
+        if (list == null) {
+            SKKChooseState.handleCancel(this)
+            return
+        }
+
+        mCandidatesList = list
+        mCurrentCandidateIndex = list.size - 1
+        mService.setCandidates(list)
+        mService.requestChooseCandidate(mCurrentCandidateIndex)
+        setCurrentCandidateToComposing()
     }
 
     private fun findCandidates(key: String): List<String>? {
