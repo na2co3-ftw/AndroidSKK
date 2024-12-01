@@ -356,6 +356,8 @@ class SKKService : InputMethodService() {
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
+        mCandidateViewContainer = null
+        mCandidateView = null
         mFlickJPInputView = null
         mQwertyInputView = null
         mAbbrevKeyboardView = null
