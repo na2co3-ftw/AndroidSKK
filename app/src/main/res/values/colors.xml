@@ -23,11 +23,13 @@
 	<color name="candidate_other">#ff808080</color>
 	<color name="candidate_background">#FFE6E6E6</color>
 	<color name="key_background_color">#FFEBEBEB</color>
-	<color name="key_pressed_color">#FFFFFF00</color>
+	<color name="key_pressed_color">#FFDCDCDC</color>
 	<color name="key_stroke_color">#FFC8C8C8</color>
-	<color name="key_checked_color">#FF00E2FF</color>
+	<color name="key_checked_color">#FF80F0FF</color>
+	<color name="key_checked_pressed_color">#FF78E0EE</color>
 	<color name="key_char_color">#FF000000</color>
 	<color name="popup_background_color">#DCDCDC</color>
+	<color name="popup_highlighted_color">#FF00E2FF</color>
 	<color name="input_editing">#400060ff</color>
 	<color name="input_converting">#40ff6000</color>
 </resources>
