@@ -96,7 +96,7 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
 
     internal fun setHiraganaMode() {
         isHiragana = true
-        for (key in keyboard.keys) {
+        for (key in mJPKeyboard.keys) {
             when (key.codes[0]) {
                 KEYCODE_FLICK_JP_CHAR_A  -> key.label = "あ"
                 KEYCODE_FLICK_JP_CHAR_KA -> key.label = "か"
@@ -111,12 +111,17 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
                 KEYCODE_FLICK_JP_MOJI    -> key.label = "カナ"
             }
         }
-        invalidateAllKeys()
+
+        if (keyboard !== mJPKeyboard) {
+            keyboard = mJPKeyboard
+        } else {
+            invalidateAllKeys()
+        }
     }
 
     internal fun setKatakanaMode() {
         isHiragana = false
-        for (key in keyboard.keys) {
+        for (key in mJPKeyboard.keys) {
             when (key.codes[0]) {
                 KEYCODE_FLICK_JP_CHAR_A  -> key.label = "ア"
                 KEYCODE_FLICK_JP_CHAR_KA -> key.label = "カ"
@@ -131,7 +136,18 @@ class FlickJPKeyboardView : KeyboardView, KeyboardView.OnKeyboardActionListener 
                 KEYCODE_FLICK_JP_MOJI    -> key.label = "かな"
             }
         }
-        invalidateAllKeys()
+
+        if (keyboard !== mJPKeyboard) {
+            keyboard = mJPKeyboard
+        } else {
+            invalidateAllKeys()
+        }
+    }
+
+    internal fun setNumberMode() {
+        if (keyboard !== mNumKeyboard) {
+            keyboard = mNumKeyboard
+        }
     }
 
     private fun findKeyByCode(keyboard: Keyboard, code: Int) =

@@ -435,7 +435,12 @@ class SKKService : InputMethodService() {
             InputType.TYPE_CLASS_NUMBER,
             InputType.TYPE_CLASS_DATETIME,
             InputType.TYPE_CLASS_PHONE -> {
-                if (mEngine.state !== SKKASCIIState) mEngine.processKey('l'.code)
+                if (mUseSoftKeyboard) {
+                    mEngine.changeState(SKKHiraganaState)
+                    mFlickJPInputView?.setNumberMode()
+                } else {
+                    if (mEngine.state !== SKKASCIIState) mEngine.processKey('l'.code)
+                }
             }
             InputType.TYPE_CLASS_TEXT -> {
                 val variation = attribute.inputType and InputType.TYPE_MASK_VARIATION
